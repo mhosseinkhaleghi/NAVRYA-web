@@ -3,21 +3,27 @@ import styles from "./Scene.module.css";
 /**
  * The backdrop of the frame.
  *
+ * The plate plays once and holds its closing frame — no `loop`, because the
+ * shot is a reveal that ends on the hunter turning to face the viewer, and
+ * that frame is where the composition comes to rest. A video element with no
+ * `loop` keeps its last frame painted after `ended`, so nothing needs to swap
+ * in behind it.
+ *
  * Sources are ordered so the browser takes the smallest file it can play at the
  * size it needs. The `prefers-reduced-motion: no-preference` guard on every
  * source means a viewer who asks for less motion matches *no* source at all —
- * the video never downloads and the poster stands in its place. That keeps the
- * whole scene free of client-side JavaScript.
+ * the video never downloads and the still behind it stands in permanently.
  */
 export function Scene() {
   return (
     <div className={styles.scene} aria-hidden="true">
+      <div className={styles.still} />
+
       <video
         className={styles.video}
-        poster="/scene/hunter-dawn-poster.jpg"
+        data-scene-video=""
         autoPlay
         muted
-        loop
         playsInline
         preload="auto"
         tabIndex={-1}
@@ -43,8 +49,6 @@ export function Scene() {
           media="(prefers-reduced-motion: no-preference)"
         />
       </video>
-
-      <div className={styles.scrim} />
     </div>
   );
 }

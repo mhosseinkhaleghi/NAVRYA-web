@@ -1,0 +1,137 @@
+/* -----------------------------------------------------------------------------
+ * Language menu.
+ *
+ * Built on <details>, so opening and closing is native: it works with no
+ * JavaScript, is keyboard operable out of the box, and survives the preview
+ * build, which strips hydration. The inline intro script adds the two things
+ * <details> lacks — dismiss on outside click, and dismiss on Escape.
+ * -------------------------------------------------------------------------- */
+
+.menu {
+  position: relative;
+}
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55em;
+  color: var(--c-nav);
+  font-family: var(--font-sans);
+  font-size: var(--fs-nav);
+  letter-spacing: var(--tracking-nav);
+  text-shadow: var(--text-lift);
+  cursor: pointer;
+  list-style: none;
+  transition: color 240ms var(--ease-out);
+}
+
+.trigger::-webkit-details-marker {
+  display: none;
+}
+
+.trigger::marker {
+  content: "";
+}
+
+.trigger:hover,
+.menu[open] > .trigger {
+  color: var(--c-cream);
+}
+
+.globe {
+  inline-size: 1.25em;
+  block-size: 1.25em;
+}
+
+.code {
+  /* Locale codes are always Latin, even inside an RTL bar. */
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.chevron {
+  inline-size: 0.85em;
+  block-size: 0.85em;
+  opacity: 0.9;
+  transition: transform 260ms var(--ease-out);
+}
+
+.menu[open] .chevron {
+  transform: rotate(180deg);
+}
+
+/* ── Panel ────────────────────────────────────────────────────────────────── */
+
+.panel {
+  position: absolute;
+  inset-block-start: calc(100% + 0.9rem);
+  inset-inline-end: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 12.5rem;
+  padding: 0.35rem;
+  border: var(--hairline) solid var(--c-gold-line);
+  border-radius: 6px;
+  background: rgb(3 3 3 / 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  animation: menu-in 260ms var(--ease-cine) both;
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.4rem);
+  }
+}
+
+.option {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 0.62em 0.9em;
+  border-radius: 4px;
+  color: var(--c-nav);
+  font-family: var(--font-sans);
+  font-size: var(--fs-nav);
+  line-height: 1.4;
+  white-space: nowrap;
+  text-shadow: none;
+  transition:
+    color 200ms var(--ease-out),
+    background-color 200ms var(--ease-out);
+}
+
+.option:hover {
+  background-color: rgb(216 166 75 / 0.1);
+  color: var(--c-cream);
+}
+
+.option[aria-current] {
+  color: var(--c-gold);
+}
+
+/* Each endonym carries its own script. Isolating it keeps a Persian or Arabic
+ * name from dragging the row's layout around it. */
+.name {
+  unicode-bidi: isolate;
+}
+
+.optionCode {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-size: 0.82em;
+  letter-spacing: 0.12em;
+  opacity: 0.55;
+}
+
+/* On a compact bar the control sits near the frame edge, so the panel hangs
+ * from the end of the trigger and is allowed to be narrower. */
+@media (max-width: 1023px) {
+  .panel {
+    inset-block-start: calc(100% + 0.7rem);
+    min-inline-size: 11rem;
+  }
+}

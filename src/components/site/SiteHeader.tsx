@@ -1,8 +1,7 @@
-import { ChevronDownIcon } from "@/components/icons/ChevronDownIcon";
-import { GlobeIcon } from "@/components/icons/GlobeIcon";
-import { localeShortLabel, type Locale } from "@/i18n/config";
+import { type Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
 
+import { LanguageMenu } from "./LanguageMenu";
 import styles from "./SiteHeader.module.css";
 
 type NavKey = keyof Dictionary["nav"];
@@ -52,11 +51,7 @@ export function SiteHeader({
       <div className={styles.controls}>
         <span className={styles.divider} aria-hidden="true" />
 
-        <button type="button" className={styles.language} aria-label={actions.language}>
-          <GlobeIcon className={styles.globe} />
-          <span className={styles.languageCode}>{localeShortLabel[locale]}</span>
-          <ChevronDownIcon className={styles.chevron} />
-        </button>
+        <LanguageMenu locale={locale} dictionary={dictionary} />
 
         <button type="button" className={styles.login}>
           {actions.login}

@@ -33,6 +33,7 @@
   letter-spacing: var(--tracking-display);
   text-align: start;
   text-wrap: balance;
+  text-shadow: var(--text-lift);
 }
 
 /* ── Ornamental rule ──────────────────────────────────────────────────────── */
@@ -83,6 +84,7 @@
   line-height: var(--lh-sub);
   letter-spacing: 0;
   text-align: start;
+  text-shadow: var(--text-lift);
 }
 
 /* Each localised line is authored as its own line in the dictionary and keeps
@@ -113,6 +115,7 @@
   line-height: 1;
   letter-spacing: var(--tracking-micro);
   text-transform: uppercase;
+  text-shadow: var(--text-lift);
   /* Tracking adds a trailing gap after the last glyph; pull it back so the
    * label stays optically centred on the frame axis. */
   margin-inline-end: calc(-1 * var(--tracking-micro));
@@ -204,5 +207,152 @@
 
   .sublineLine + .sublineLine::before {
     content: " ";
+  }
+}
+
+/* -----------------------------------------------------------------------------
+ * Intro.
+ *
+ * Held back until the hunter turns to face the viewer at 4.33s, then rising
+ * into the frame the plate comes to rest on. The order carries the hierarchy:
+ * the headline lifts out of focus first, the rule draws from the text's leading
+ * edge, the sub-headline follows a line at a time, and the scroll cue arrives
+ * last, once there is something to scroll away from.
+ *
+ * `armed` is set by an inline script before first paint. With no JavaScript it
+ * is never set, so none of these rules match and the composition is simply
+ * there — the words can never be lost behind the backdrop.
+ * -------------------------------------------------------------------------- */
+
+:global([data-intro="armed"]) .headline,
+:global([data-intro="armed"]) .rule,
+:global([data-intro="armed"]) .sublineLine,
+:global([data-intro="armed"]) .scroll {
+  opacity: 0;
+}
+
+:global([data-intro="armed"]) .scroll {
+  pointer-events: none;
+}
+
+:global([data-intro="shown"]) .headline {
+  animation: hero-focus 1.25s var(--ease-cine) 0.06s both;
+}
+
+:global([data-intro="shown"]) .rule {
+  animation: hero-draw 0.9s var(--ease-cine) 0.52s both;
+}
+
+:global([data-intro="shown"]) .sublineLine {
+  animation: hero-lift 1s var(--ease-cine) both;
+}
+
+:global([data-intro="shown"]) .sublineLine:nth-child(1) {
+  animation-delay: 0.66s;
+}
+
+:global([data-intro="shown"]) .sublineLine:nth-child(2) {
+  animation-delay: 0.78s;
+}
+
+:global([data-intro="shown"]) .sublineLine:nth-child(n + 3) {
+  animation-delay: 0.9s;
+}
+
+:global([data-intro="shown"]) .scroll {
+  animation: hero-lift 1s var(--ease-cine) 1.15s both;
+}
+
+/* The headline resolves rather than slides: out of focus and low, into focus
+ * and settled. It is the one moment in the page that earns a blur. */
+@keyframes hero-focus {
+  from {
+    opacity: 0;
+    transform: translateY(0.42em);
+    filter: blur(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+/* The rule draws from the text's leading edge, which is the start edge in
+ * either direction. */
+@keyframes hero-draw {
+  from {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hero-lift {
+  from {
+    opacity: 0;
+    transform: translateY(0.85em);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rule {
+  transform-origin: left center;
+}
+
+[dir="rtl"] .rule {
+  transform-origin: right center;
+}
+
+/* The node is drawn on by the rule, so it should not arrive with it. */
+:global([data-intro="shown"]) .ruleNode {
+  animation: node-appear 0.5s var(--ease-cine) 1.24s both;
+}
+
+@keyframes node-appear {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(45deg) scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(45deg) scale(1);
+  }
+}
+
+/* An animation the viewer explicitly asked not to see. The reveal itself is
+ * already skipped upstream — the script marks the page shown immediately — but
+ * these keep the settle from running at all. */
+@media (prefers-reduced-motion: reduce) {
+  :global([data-intro="shown"]) .headline,
+  :global([data-intro="shown"]) .rule,
+  :global([data-intro="shown"]) .ruleNode,
+  :global([data-intro="shown"]) .sublineLine,
+  :global([data-intro="shown"]) .scroll {
+    animation: none;
+  }
+}
+
+/* On a narrow measure the sub-headline is one flowing paragraph, and an inline
+ * span cannot be moved by a transform — so the paragraph lifts as a block
+ * instead of a line at a time. */
+@media (max-width: 767px) {
+  :global([data-intro="armed"]) .subline {
+    opacity: 0;
+  }
+
+  :global([data-intro="shown"]) .sublineLine {
+    animation: none;
+    opacity: 1;
+  }
+
+  :global([data-intro="shown"]) .subline {
+    animation: hero-lift 1s var(--ease-cine) 0.66s both;
   }
 }

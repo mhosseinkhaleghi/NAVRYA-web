@@ -1,10 +1,8 @@
 /* -----------------------------------------------------------------------------
  * Scene — the cinematic backdrop layer of the frame.
  *
- * Sits behind everything and fills the frame regardless of aspect ratio. The
- * footage is a 4s seamless loop: the hunter holds the left of the composition,
- * the valley and the sunrise open up on the right, which is exactly the rail
- * the hero text sits on. The scrim is what keeps the two from fighting.
+ * The plate is shown raw: no scrim, no tint, no gradient. Whatever grading the
+ * footage carries is exactly what reaches the screen.
  * -------------------------------------------------------------------------- */
 
 .scene {
@@ -16,94 +14,71 @@
   pointer-events: none;
 }
 
+/* The opening frame, behind the video. It stands in until the first frames
+ * have decoded, so playback starts without a visible jump — and it is sized
+ * and mirrored on exactly the same rules, so the handover is invisible. */
+.still {
+  position: absolute;
+  inset: 0;
+  background-image: url("/scene/hunter-dawn-first.jpg");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+/* `contain`, not `cover`: the whole plate stays on screen on a desktop frame.
+ * Where the viewport is wider or taller than 16:9 the page's own near-black
+ * shows at the edges, which reads as a letterbox rather than a crop. */
 .video {
+  position: relative;
   inline-size: 100%;
   block-size: 100%;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
 }
 
 /* RTL moves the text block to the right of the frame, so the footage mirrors
  * with it — the figure keeps the closed side and the text keeps the open
  * valley, exactly as the composition intends in either direction. */
-[dir="rtl"] .video {
+[dir="rtl"] .video,
+[dir="rtl"] .still {
   transform: scaleX(-1);
-}
-
-/* -----------------------------------------------------------------------------
- * Scrim.
- *
- * Two passes. The horizontal one is the working layer: light over the figure so
- * the silhouette reads, heavy across the rail so cream type holds its contrast
- * against the sunrise. The vertical one only protects the nav at the top and
- * the scroll cue at the bottom. Tune the alphas here — nothing else reads them.
- * -------------------------------------------------------------------------- */
-
-.scrim {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(
-      to right,
-      rgb(3 3 3 / 0.18) 0%,
-      rgb(3 3 3 / 0.3) 22%,
-      rgb(3 3 3 / 0.62) 42%,
-      rgb(3 3 3 / 0.7) 100%
-    ),
-    linear-gradient(
-      to bottom,
-      rgb(3 3 3 / 0.45) 0%,
-      rgb(3 3 3 / 0.12) 26%,
-      rgb(3 3 3 / 0.14) 66%,
-      rgb(3 3 3 / 0.55) 100%
-    );
-}
-
-[dir="rtl"] .scrim {
-  background:
-    linear-gradient(
-      to left,
-      rgb(3 3 3 / 0.18) 0%,
-      rgb(3 3 3 / 0.3) 22%,
-      rgb(3 3 3 / 0.62) 42%,
-      rgb(3 3 3 / 0.7) 100%
-    ),
-    linear-gradient(
-      to bottom,
-      rgb(3 3 3 / 0.45) 0%,
-      rgb(3 3 3 / 0.12) 26%,
-      rgb(3 3 3 / 0.14) 66%,
-      rgb(3 3 3 / 0.55) 100%
-    );
 }
 
 /* -----------------------------------------------------------------------------
  * Frames narrower than the plate.
  *
- * Keyed to aspect ratio, not width: what breaks the composition is a frame
- * taller than the 16:9 footage, which crops the sides away and loses the
- * hunter entirely. Under ~1.4 the crop is pulled onto him — he is what the
- * shot is about, and his silhouette is a better bed for cream type than the
- * lit sky — and the scrim goes even, because the text now shares his side of
- * the frame instead of sitting across the open valley.
+ * Keyed to aspect ratio, not width: a frame taller than the 16:9 footage would
+ * letterbox it down to a thin strip. Below ~1.4 the plate fills instead, with
+ * the crop pulled onto the figure — he is what the shot is about, and a
+ * portrait crop of a 16:9 plate shows only its middle ~26%.
+ *
+ * `object-position` picks the crop window in source coordinates, before the RTL
+ * mirror flips the painted result, so both directions select the same window.
  * -------------------------------------------------------------------------- */
 
 @media (max-aspect-ratio: 7 / 5) {
-  /* `object-position` chooses the crop window in source coordinates, before the
-   * RTL mirror flips the painted result — so both directions select the same
-   * window and the mirror alone moves the figure across. */
   .video {
+    object-fit: cover;
     object-position: 14% center;
   }
 
-  .scrim,
-  [dir="rtl"] .scrim {
-    background: linear-gradient(
-      to bottom,
-      rgb(3 3 3 / 0.74) 0%,
-      rgb(3 3 3 / 0.62) 22%,
-      rgb(3 3 3 / 0.64) 64%,
-      rgb(3 3 3 / 0.8) 100%
-    );
+  .still {
+    background-size: cover;
+    background-position: 14% center;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+ * Reduced motion.
+ *
+ * No <source> matches, so the video never downloads and the element stays
+ * transparent — the still takes its place permanently. It switches to the
+ * closing frame, because that is the composition the page comes to rest on.
+ * -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .still {
+    background-image: url("/scene/hunter-dawn-last.jpg");
   }
 }

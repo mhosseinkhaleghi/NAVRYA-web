@@ -62,6 +62,7 @@
   font-weight: 500;
   line-height: 1;
   letter-spacing: var(--tracking-wordmark);
+  text-shadow: var(--text-lift);
   /* The wordmark is a brand mark: it stays Latin and LTR in every locale. */
   direction: ltr;
   unicode-bidi: isolate;
@@ -118,6 +119,7 @@
   font-weight: 400;
   letter-spacing: var(--tracking-nav);
   white-space: nowrap;
+  text-shadow: var(--text-lift);
   transition: color 240ms var(--ease-out);
 }
 
@@ -154,38 +156,6 @@
   background: var(--c-gold-line);
 }
 
-.language {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55em;
-  color: var(--c-nav);
-  font-family: var(--font-sans);
-  font-size: var(--fs-nav);
-  letter-spacing: var(--tracking-nav);
-  transition: color 240ms var(--ease-out);
-}
-
-.language:hover {
-  color: var(--c-cream);
-}
-
-.globe {
-  inline-size: 1.25em;
-  block-size: 1.25em;
-}
-
-.languageCode {
-  /* Locale codes are always Latin, even inside an RTL bar. */
-  direction: ltr;
-  unicode-bidi: isolate;
-}
-
-.chevron {
-  inline-size: 0.85em;
-  block-size: 0.85em;
-  opacity: 0.9;
-}
-
 .login {
   display: inline-flex;
   align-items: center;
@@ -198,6 +168,7 @@
   font-size: var(--fs-nav);
   letter-spacing: var(--tracking-nav);
   white-space: nowrap;
+  text-shadow: var(--text-lift);
   transition:
     background-color 260ms var(--ease-out),
     color 260ms var(--ease-out);
@@ -299,3 +270,26 @@
   }
 }
 
+/* -----------------------------------------------------------------------------
+ * Intro.
+ *
+ * The bar is held back with the rest of the interface until the hunter turns,
+ * then settles down into the frame. `armed` is set by an inline script before
+ * first paint; with no JavaScript it is never set, and the bar is just there.
+ * -------------------------------------------------------------------------- */
+
+:global([data-intro="armed"]) .header {
+  opacity: 0;
+  pointer-events: none;
+}
+
+:global([data-intro="shown"]) .header {
+  animation: header-settle 1s var(--ease-cine) both;
+}
+
+@keyframes header-settle {
+  from {
+    opacity: 0;
+    transform: translateY(-0.75rem);
+  }
+}

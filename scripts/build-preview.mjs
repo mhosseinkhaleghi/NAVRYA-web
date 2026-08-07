@@ -6,10 +6,14 @@
  *   npm run build && npx next start -p 4173
  *   node scripts/build-preview.mjs [baseUrl] [outFile]
  *
- * It pulls each locale's rendered body, inlines the CSS chunks and every font
- * as a data URI, strips the hydration scripts (the hero is pure HTML + CSS —
- * there is nothing to hydrate), and stacks the five locales in one page behind
- * a small preview control.
+ * It pulls each locale's rendered body, inlines the CSS chunks, every font and
+ * the backdrop as data URIs, drops Next's hydration payload, and stacks the
+ * five locales in one page.
+ *
+ * The site's own inline scripts are carried over, so the intro sequence and the
+ * language menu behave exactly as they do in production. The menu's links point
+ * at real routes, which do not exist inside a single file, so the harness
+ * intercepts them and swaps panes instead.
  */
 
 import { readFile, writeFile, mkdir } from "node:fs/promises";
@@ -34,41 +38,70 @@ const text = async (url) => {
   return res.text();
 };
 
-/** Rendered body, minus Next's hydration payload and streaming markers. */
+/**
+ * Rendered body, minus Next's hydration payload and streaming markers.
+ *
+ * The project's own inline scripts are kept — the intro sequence and the
+ * language-menu dismissals are plain inline JS by design, so the preview shows
+ * the real behaviour rather than an approximation of it. Only Next's loader
+ * and its streamed payload are dropped.
+ */
 function extractBody(html) {
   const body = /<body[^>]*>([\s\S]*)<\/body>/.exec(html)?.[1] ?? "";
   return body
-    .replace(/<script[\s\S]*?<\/script>/g, "")
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, (tag) =>
+      /\bsrc=/.test(tag) || tag.includes("__next_f") || tag.includes("__NEXT")
+        ? ""
+        : tag,
+    )
     .replace(/<template[\s\S]*?<\/template>/g, "")
     .replace(/<div hidden="">[\s\S]*?<\/div>/, "")
     .replace(/<!--\/?\$-->/g, "")
     .trim();
 }
 
+/** Pulls the page's inline scripts out so they can run once, not per locale. */
+function takeInlineScripts(html) {
+  const scripts = [];
+  const stripped = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, (tag) => {
+    scripts.push(tag);
+    return "";
+  });
+  return { stripped, scripts };
+}
+
 function cssHrefs(html) {
   return [...html.matchAll(/href="(\/_next\/static\/[^"]+\.css)"/g)].map((m) => m[1]);
 }
 
-/** Fonts must travel with the page: the artifact CSP blocks every other host. */
-async function inlineFonts(css) {
-  const refs = [...new Set([...css.matchAll(/url\((['"]?)(\/fonts\/[^'")]+\.woff2)\1\)/g)].map((m) => m[0]))];
-  const files = [];
-  for (const ref of refs) {
-    const file = /(\/fonts\/[^'")]+\.woff2)/.exec(ref)[1];
-    const buf = await readFile(join(ROOT, "public", file));
-    css = css.replaceAll(ref, `url(data:font/woff2;base64,${buf.toString("base64")})`);
-    files.push(file);
-  }
-  return { css, count: files.length };
-}
-
-const MIME = { mp4: "video/mp4", webm: "video/webm", jpg: "image/jpeg", png: "image/png", webp: "image/webp" };
+const MIME = {
+  mp4: "video/mp4", webm: "video/webm",
+  jpg: "image/jpeg", png: "image/png", webp: "image/webp",
+  woff2: "font/woff2",
+};
 const dataUri = async (path) => {
   const buf = await readFile(join(ROOT, "public", path));
   return `data:${MIME[path.split(".").pop()]};base64,${buf.toString("base64")}`;
 };
 
-const SCENE_RE = /<div class="[^"]*__scene"[\s\S]*?__scrim"[^>]*><\/div><\/div>/;
+/**
+ * Everything the stylesheet reaches for has to travel inside the page: the
+ * artifact CSP blocks every other host, and a file:// preview has no server.
+ * That means the font subsets and the scene stills alike.
+ */
+async function inlineCssAssets(css) {
+  const pattern = /url\((['"]?)(\/(?:fonts|scene)\/[^'")]+)\1\)/g;
+  const refs = [...new Set([...css.matchAll(pattern)].map((m) => m[0]))];
+  const files = [];
+  for (const ref of refs) {
+    const file = /(\/(?:fonts|scene)\/[^'")]+)/.exec(ref)[1];
+    css = css.replaceAll(ref, `url(${await dataUri(file)})`);
+    files.push(file);
+  }
+  return { css, files };
+}
+
+const SCENE_RE = /<div class="[^"]*__scene"[\s\S]*?<\/video><\/div>/;
 
 /**
  * The backdrop is identical in all five locales, and a data URI cannot be
@@ -108,58 +141,43 @@ async function inlineScene(scene, seen) {
 }
 
 const HARNESS_CSS = `
-/* Preview control — deliberately mute, and built from Navrya's own tokens so
-   it never competes with the composition it is framing. */
-.nvp{position:fixed;left:16px;bottom:16px;z-index:9999;display:flex;align-items:center;
-  gap:2px;padding:5px;border:1px solid rgb(216 166 75 / .34);border-radius:999px;
-  background:rgb(3 3 3 / .74);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  font-family:'DM Sans',system-ui,sans-serif;line-height:1;
-  transition:opacity .3s cubic-bezier(.22,.61,.36,1)}
-.nvp:not(:hover){opacity:.62}
-.nvp button{appearance:none;margin:0;border:0;background:none;cursor:pointer;
-  font:inherit;color:rgb(237 234 227 / .74);font-size:10px;letter-spacing:.18em;
-  padding:7px 9px;border-radius:999px;transition:color .2s,background-color .2s}
-.nvp button:hover{color:#ede4d2}
-.nvp button[aria-pressed="true"]{color:#d8a64b;background:rgb(216 166 75 / .12)}
-.nvp button:focus-visible{outline:1px solid #d8a64b;outline-offset:2px}
-.nvp .nvp-sep{width:1px;height:14px;margin:0 4px;background:rgb(216 166 75 / .3)}
-.nvp .nvp-node{width:6px;height:6px;border:1px solid #d8a64b;transform:rotate(45deg)}
-.nvp-toggle{display:flex;align-items:center;justify-content:center;padding:8px !important}
-.nvp[data-open="false"] .nvp-langs,.nvp[data-open="false"] .nvp-sep{display:none}
 .nv-locale[hidden]{display:none}
 /* The backdrop is shared across the panes, so it lives behind them and the
    panes' own frame background steps aside to let it through. */
 #nv-scene{position:fixed;inset:0;z-index:0}
 #nv-scene>div{position:absolute;inset:0}
 .nv-locale>div{background-color:transparent}
-@media (prefers-reduced-motion:reduce){.nvp{transition:none}}
 `;
 
 const HARNESS_JS = `
 (function(){
-  var bar=document.querySelector('.nvp');
+  var CODES=${JSON.stringify(LOCALES.map((l) => l.code))};
   var panes=document.querySelectorAll('.nv-locale');
   var scene=document.getElementById('nv-scene');
+
   function show(code){
     panes.forEach(function(p){
       p.hidden=p.dataset.loc!==code;
       if(!p.hidden&&scene) scene.dir=p.dir;
     });
-    bar.querySelectorAll('[data-set]').forEach(function(b){
-      b.setAttribute('aria-pressed',String(b.dataset.set===code));
-    });
     if(location.hash.slice(1)!==code) history.replaceState(null,'','#'+code);
   }
-  bar.addEventListener('click',function(e){
-    var b=e.target.closest('button'); if(!b) return;
-    if(b.dataset.set) show(b.dataset.set);
-    else bar.dataset.open=bar.dataset.open==='true'?'false':'true';
+
+  // The site's real language menu is the switcher. Its links go to /fa, /ar and
+  // so on, which cannot resolve inside a single file, so they change pane here.
+  document.addEventListener('click',function(e){
+    var link=e.target.closest&&e.target.closest('a[href]');
+    if(!link) return;
+    var match=/^\\/([a-z]{2})$/.exec(link.getAttribute('href')||'');
+    if(!match||CODES.indexOf(match[1])<0) return;
+    e.preventDefault();
+    var menu=link.closest('details[data-language-menu]');
+    if(menu) menu.open=false;
+    show(match[1]);
   });
+
   var start=location.hash.slice(1);
-  show(${JSON.stringify(LOCALES.map((l) => l.code))}.indexOf(start)>-1?start:'en');
-  // On a narrow frame the expanded row would sit over the scroll cue, so it
-  // starts collapsed and stays out of the composition until it is asked for.
-  if(window.innerWidth<480) bar.dataset.open='false';
+  show(CODES.indexOf(start)>-1?start:'en');
 })();
 `;
 
@@ -173,44 +191,46 @@ async function main() {
 
   let css = "";
   for (const href of hrefs) css += (await text(BASE + href)) + "\n";
-  const inlined = await inlineFonts(css);
+  const inlined = await inlineCssAssets(css);
 
   const panes = [];
   const media = new Set();
   let scene = "";
+  let siteScripts = [];
   for (const { code } of LOCALES) {
     const html = code === "en" ? first : await text(`${BASE}/${code}`);
     const dir = /<html[^>]*\bdir="(\w+)"/.exec(html)?.[1] ?? "ltr";
     let body = extractBody(html);
+
     const found = SCENE_RE.exec(body);
     if (found) {
       if (!scene) scene = await inlineScene(found[0], media);
       body = body.replace(found[0], "");
     }
-    panes.push(pane(code, dir, body));
+
+    // Identical in every locale: run them once, not five times over.
+    const taken = takeInlineScripts(body);
+    if (!siteScripts.length) siteScripts = taken.scripts;
+    panes.push(pane(code, dir, taken.stripped));
   }
+
   const sceneLayer = scene ? `<div id="nv-scene" dir="ltr">${scene}</div>\n` : "";
 
-  const controls = LOCALES.map(
-    ({ code, label }) =>
-      `<button type="button" data-set="${code}" aria-pressed="${code === "en"}">${label}</button>`,
-  ).join("");
-
+  // The site's scripts go *before* the panes: the intro marks the document
+  // held-back before the composition is parsed, so nothing flashes on screen.
+  // The harness goes after, because it needs the panes to exist.
   const page = `<title>Navrya — Hero Section</title>
 <style>${inlined.css}${HARNESS_CSS}</style>
-${sceneLayer}${panes.join("\n")}
-<div class="nvp" data-open="true" role="group" aria-label="Preview language">
-  <button type="button" class="nvp-toggle" aria-label="Toggle preview controls"><span class="nvp-node"></span></button>
-  <span class="nvp-sep"></span>
-  <span class="nvp-langs">${controls}</span>
-</div>
+${sceneLayer}${siteScripts.join("\n")}
+${panes.join("\n")}
 <script>${HARNESS_JS}</script>`;
 
   await mkdir(dirname(OUT), { recursive: true });
   await writeFile(OUT, page);
   console.log(
-    `${OUT}\n  ${LOCALES.length} locales · ${inlined.count} fonts · ` +
+    `${OUT}\n  ${LOCALES.length} locales · ${inlined.files.length} css assets · ` +
       `${media.size} media (${[...media].map((m) => m.split("/").pop()).join(", ") || "none"}) · ` +
+      `${siteScripts.length} inline script(s) carried · ` +
       `${(page.length / 1024 / 1024).toFixed(2)} MB`,
   );
 }

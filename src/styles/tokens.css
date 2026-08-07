@@ -60,7 +60,16 @@
   --node-size: clamp(0.3rem, 0.42vw, 0.5rem);
   --hairline: 1px;
 
+  /* Type sits directly on the plate now — no scrim between them. This lifts it
+   * off the brightest frames without touching a single pixel of the footage.
+   * Set it to `none` to see the type completely untreated. */
+  --text-lift:
+    0 0.04em 0.6em rgb(0 0 0 / 0.55),
+    0 0.01em 0.08em rgb(0 0 0 / 0.4);
+
   --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  /* Long, decelerating settle — the entrance easing. */
+  --ease-cine: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Arabic and Persian are set in Amiri / Vazirmatn, which run smaller on the

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 
+import { introScript } from "@/components/frame/intro-script";
 import { getDirection, isLocale, locales, type Locale } from "@/i18n/config";
 
 import "../globals.css";
@@ -35,7 +36,12 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} dir={getDirection(locale as Locale)}>
-      <body>{children}</body>
+      <body>
+        {/* Runs before the composition is painted, so the intro can hold it
+         * back without it flashing on screen first. */}
+        <script dangerouslySetInnerHTML={{ __html: introScript }} />
+        {children}
+      </body>
     </html>
   );
 }
