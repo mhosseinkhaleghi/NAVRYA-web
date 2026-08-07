@@ -6,18 +6,30 @@
  * scroll cue centred on the frame's own axis. Both are reproduced literally.
  * -------------------------------------------------------------------------- */
 
+/*
+ * Three rows: the bar's band, the block's band, the cue's band — the same
+ * structure the panels use, and for the same reason. A centred block that
+ * outgrows its box overflows both ends of it, so the bands have to be tracks
+ * rather than padding for the navigation and the cue to be genuinely safe.
+ */
 .hero {
   position: absolute;
   inset: 0;
   z-index: 1;
   display: grid;
-  align-content: center;
-  justify-items: start;
-  padding-inline: max(var(--gutter), var(--hero-inline-start)) var(--gutter);
-  padding-block: env(safe-area-inset-top, 0px) env(safe-area-inset-bottom, 0px);
+  /* The rail is a column rather than padding, so the cue can span the whole
+   * frame and still centre on it while the block keeps its inset. */
+  grid-template-columns: max(var(--gutter), var(--hero-inline-start)) 1fr var(--gutter);
+  grid-template-rows:
+    calc(var(--header-h) + env(safe-area-inset-top, 0px))
+    minmax(0, 1fr)
+    auto;
 }
 
 .content {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: center;
   inline-size: 100%;
 }
 
@@ -95,15 +107,19 @@
 
 /* ── Scroll cue ───────────────────────────────────────────────────────────── */
 
+/* A row rather than an overlay, so the band above it is measured off the cue
+ * itself instead of a computed guess — see the note in `PanelSection`. */
 .scroll {
-  position: absolute;
-  inset-inline: 0;
-  inset-block-end: calc(var(--scroll-bottom) + env(safe-area-inset-bottom, 0px));
+  grid-column: 1 / -1;
+  grid-row: 3;
+  justify-self: center;
   z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(0.4rem, 0.84vw, 1rem);
+  gap: var(--s2-cue-gap);
+  margin-block: clamp(0.75rem, 1.6vh, 1.75rem)
+    calc(var(--scroll-bottom) + env(safe-area-inset-bottom, 0px));
   pointer-events: none;
 }
 
@@ -180,13 +196,22 @@
 @media (max-width: 1023px) {
   /* The header is in the column now, so the scene takes whatever is left and
    * centres inside it — no header-height guesswork, at any bar height. */
+  .content {
+    grid-row: 1;
+  }
+
   .hero {
     position: relative;
     inset: auto;
     grid-row: 2;
     grid-column: 1;
     min-block-size: 0;
-    padding-block: 0 calc(var(--scroll-reserve) + env(safe-area-inset-bottom, 0px));
+    /* The bar is a row of the stage here, so the top band goes. */
+    grid-template-rows: 1fr auto;
+  }
+
+  .scroll {
+    grid-row: 2;
   }
 
   .content {

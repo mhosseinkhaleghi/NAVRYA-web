@@ -1,6 +1,6 @@
 # Navrya — web
 
-A premium cinematic marketing site. **Current scope: sections 1–5.**
+A premium cinematic marketing site. **Current scope: sections 1–6.**
 
 ```bash
 npm install
@@ -31,7 +31,7 @@ sequence proportionally.
 
 ## The sequence
 
-One continuous shot in six plates, driven end to end by scroll **position** — so
+One continuous shot in seven plates, driven end to end by scroll **position** — so
 it runs backwards exactly as readily as forwards. Nothing latches, nothing fires
 once. `components/frame/stage-script.ts` maps scroll onto the beats:
 
@@ -45,6 +45,9 @@ once. `components/frame/stage-script.ts` maps scroll onto the beats:
 | `clear` | 160vh | Section 4 leaves, over the closing frame and nothing else. The release is the loudest moment in the sequence and the text is off the screen before it. |
 | `arrow` | 520vh | `arrow-learns` scrubs: the release, the flight, the fall to black. At **2.00s** the arrow is dead centre and section 5's headline arrives above it; from **5.15s** the valley falls away and the paragraph fades up with it. |
 | `learn` | 520vh | The paragraph lights up a word at a time, and the edge light draws itself round the frame. |
+| `depart` | 320vh | Section 5's words leave, the arrow follows them off, the frame dips through black, and the next morning fades up. |
+| `miss` | 420vh | `forest-miss` scrubs. The arrow buries itself in the tree at **0.67s** and section 6's statement lands on it; the block lifts as the stag turns and runs at **1.30s**; the frame is empty by **3.95s**. |
+| `traits` | 660vh | The psychology features, one slide per stretch of scroll, over a plate that has come to rest. |
 | `rest` | 40vh | Tail room, so the last reveal is not pinned to the very bottom. |
 
 The shape repeats: a plate runs, its panel arrives on a cue taken from the
@@ -88,6 +91,26 @@ ring came out as a few dozen little segments scattered round the frame. The path
 traces the frame exactly, so its perimeter is twice the width plus twice the
 height, which CSS can state directly.
 
+### Section 6
+
+Two states over one plate. The statement is centred, because the shot it sits
+on is a wide empty meadow with its subject leaving; the features are two
+columns, because they are a product screen and the words about it. The
+statement's block *lifts as the stag runs*, so the words travel with the animal
+rather than watching it go.
+
+The features are a carousel the wheel drives. `--in` and `--out` are the two
+progresses the controller writes onto each slide, so there is no index and no
+state anywhere — scroll back and the deck runs backwards. Every slide occupies
+the same grid cell, so the deck is as tall as the tallest of them and nothing
+reflows as they change. The dots read the same two properties, which makes them
+the carousel rather than a readout of it.
+
+The plate settles to black under them, as the comp draws it. That is the scene
+ending rather than a scrim over footage: the stag is already gone and nothing in
+the frame moves by then, so the picture is never dimmed while there is anything
+happening in it.
+
 ### Handovers are cuts
 
 The clips are pieces of one continuous render, so a plate's closing frame *is*
@@ -95,6 +118,12 @@ the next plate's opening frame, and a translation search over each handover
 finds its minimum at exactly (0,0). Measured in the browser at the instant of
 each cut, 0.3%–4.4% of pixels differ by more than 12/255, against 39% for a
 single frame of real motion and 0.0% for the same frame screenshotted twice.
+
+There is exactly one deliberate exception, at the end. The closing plate is a
+black studio frame and the plate after it is a forest at dawn, with nothing
+continuous between them, so that handover dips through black: the arrow fades
+down, the frame is empty for a moment, then the morning fades up. The two are
+never on screen together, so the one-plate rule holds even there.
 
 Two separate things used to break this, and both were mine.
 
@@ -343,6 +372,30 @@ locale code stay Latin and LTR in every locale via `unicode-bidi: isolate`.
 
 Adding a string: add the key to `i18n/dictionaries/en.json` — it types the
 shape of all five — then fill in the other four files.
+
+## Fitting the frame
+
+Every scene is one screen that never scrolls, so the composition has to fit in
+*both* axes — and width alone does not tell you the height available. A 1920×1080
+monitor is a 1920×937 viewport once the browser's chrome is gone; a 14" MacBook
+is 1512×830. Both are far wider than 16:9, so a width-keyed type scale sets type
+for a frame taller than the one it has.
+
+Two changes, and between them the composition can no longer outgrow its screen:
+
+- **Every vertical size is `min(<n>vw, <n × 1.778>vh)`.** 1vw is exactly 1.778vh
+  at 16:9, so this changes nothing at the comp's aspect and scales by height on
+  anything shorter. Only sizes in the vertical stack carry it; gutters, rails and
+  text measures stay keyed to width, which is what they are about.
+- **The bar's band and the cue's band are grid rows, not padding.** An item
+  taller than its content box overflows *both* ends of a centred track, so
+  padding cannot hold back something bigger than the box it is in. The cue's row
+  is `auto`, measured off the cue itself — the previous computed reserve was
+  196px against a cue that measured 234px.
+
+`scripts/audit-layout.mjs` is the check: 17 real viewport sizes × 103 scroll
+positions, looking for content under the bar, content in the cue, and anything
+past an edge. Before: 300+ collisions, on every laptop in the list. After: none.
 
 ## Responsive
 

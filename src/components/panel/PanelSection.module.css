@@ -6,21 +6,33 @@
  * further in than the hero's, which is what keeps it clear of the deer.
  * -------------------------------------------------------------------------- */
 
+/*
+ * Three rows, not padding: the bar's band, the block's band, the cue's band.
+ *
+ * Padding was the wrong tool. An item taller than its content box overflows
+ * *both* ends of a centred track, so on any frame where the block did not fit
+ * it slid up under the navigation and down into the cue at the same time —
+ * padding cannot hold back something bigger than the box it is inside. Rows
+ * can: the block is placed in the middle one and centred within it, so the two
+ * reserved bands are structural and nothing can be drawn into them.
+ *
+ * The type scale is keyed to viewport height as well as width (see
+ * `tokens.css`), which is what keeps the block small enough for the middle row
+ * to hold it. These rows are what makes a miss impossible rather than unlikely.
+ */
 .panel {
   position: absolute;
   inset: 0;
   z-index: 2;
   display: grid;
-  align-content: center;
-  justify-items: start;
-  padding-inline: max(var(--gutter), var(--s2-inline-start)) var(--gutter);
-  /* The block centres against the frame, but the bar sits over the top of it
-   * and the cue is pinned to the bottom, so the centring gives both their room
-   * back. Panels differ in height — a feature label that wraps to two lines
-   * makes one of them noticeably taller — and without this the tallest one
-   * grows straight up into the navigation. */
-  padding-block: calc(var(--header-h) + env(safe-area-inset-top, 0px))
-    calc(clamp(5.5rem, 9.5vw, 10rem) + env(safe-area-inset-bottom, 0px));
+  /* The rail is a column rather than padding, so the cue can span the whole
+   * frame and still centre on it while the block keeps its inset. Tracks run
+   * in the inline direction, so RTL mirrors the rail with no override. */
+  grid-template-columns: max(var(--gutter), var(--s2-inline-start)) 1fr var(--gutter);
+  grid-template-rows:
+    calc(var(--header-h) + env(safe-area-inset-top, 0px))
+    minmax(0, 1fr)
+    auto;
   pointer-events: none;
 }
 
@@ -57,6 +69,9 @@
 }
 
 .content {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: center;
   inline-size: 100%;
   max-inline-size: 46rem;
 }
@@ -347,16 +362,25 @@
  * pointing on past the bottom of the frame.
  * -------------------------------------------------------------------------- */
 
+/*
+ * The cue is a row, not an overlay.
+ *
+ * It used to be absolutely placed and the row above it reserved a computed
+ * guess at its height. The guess was wrong — 196px against a cue that measured
+ * 234px on a 14" MacBook — because a stack of type, a border and four gaps does
+ * not add up to the sum of its tokens. An `auto` track measures the thing
+ * itself, so the reserve is exact at every size and cannot drift again.
+ */
 .cue {
-  position: absolute;
-  inset-inline: 0;
-  inset-block-end: calc(
-    clamp(0.75rem, 1.7vw, 1.5rem) + env(safe-area-inset-bottom, 0px)
-  );
+  grid-column: 1 / -1;
+  grid-row: 3;
+  justify-self: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(0.4rem, 0.84vw, 1rem);
+  gap: var(--s2-cue-gap);
+  margin-block: clamp(0.75rem, 1.6vh, 1.75rem)
+    calc(var(--s2-cue-bottom) + env(safe-area-inset-bottom, 0px));
   pointer-events: none;
 }
 
@@ -418,7 +442,7 @@
 
 .cueLine {
   inline-size: var(--hairline);
-  block-size: clamp(1.5rem, 3vw, 3.25rem);
+  block-size: var(--s2-cue-line);
   background: linear-gradient(
     to bottom,
     var(--c-gold-line-strong),
@@ -431,6 +455,9 @@
   block-size: var(--node-size);
   border: var(--hairline) solid var(--c-gold);
   transform: rotate(45deg);
+  /* A square turned 45° paints √2 times its own height, so it reaches past the
+   * box the row measured. This is exactly that overhang. */
+  margin-block-end: calc(var(--node-size) * 0.21);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -453,11 +480,16 @@
     grid-row: 2;
     grid-column: 1;
     min-block-size: 0;
-    /* The bar is a row of the grid here, not an overlay, so no reserve. */
-    padding-block: 0
-      calc(
-        var(--scroll-reserve) + clamp(1.5rem, 3vw, 3.25rem) +
-          env(safe-area-inset-bottom, 0px)
-      );
+    /* The bar is a row of the stage here, not an overlay, so the top band goes
+     * and the block takes the space it leaves. */
+    grid-template-rows: 1fr auto;
+  }
+
+  .content {
+    grid-row: 1;
+  }
+
+  .cue {
+    grid-row: 2;
   }
 }

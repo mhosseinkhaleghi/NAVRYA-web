@@ -72,6 +72,38 @@
     "headline": "Cada Flecha Aprende",
     "body": "Tu IA aprende cómo cazas. Ve el mercado con tus ojos, recuerda cada lección y hace que cada disparo siguiente sea más preciso."
   },
+  "miss": {
+    "eyebrow": "Sección 6",
+    "headline": "El Fallo Cuenta la Historia.",
+    "subline": "Conoce la razón antes de hacer el siguiente disparo.",
+    "traitsLabel": "Psicología",
+    "traits": [
+      {
+        "index": "01",
+        "title": "Rastreo Emocional",
+        "body": [
+          "Descubre cómo el miedo, la codicia, la confianza",
+          "y la duda influyen en tus operaciones."
+        ]
+      },
+      {
+        "index": "02",
+        "title": "Puntuación de Disciplina",
+        "body": [
+          "Comprueba cuánto seguiste tus propias",
+          "reglas, operación tras operación."
+        ]
+      },
+      {
+        "index": "03",
+        "title": "Memoria de Patrones",
+        "body": [
+          "Reconoce los errores que repites,",
+          "antes de volver a repetirlos."
+        ]
+      }
+    ]
+  },
   "a11y": {
     "primaryNav": "Navegación principal"
   }

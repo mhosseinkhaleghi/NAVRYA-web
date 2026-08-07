@@ -72,6 +72,38 @@
     "headline": "Her Ok Öğrenir",
     "body": "Yapay zekân nasıl avlandığını öğrenir. Piyasayı senin gözlerinden görür, her dersi hatırlar ve sonraki her atışı daha isabetli kılar."
   },
+  "miss": {
+    "eyebrow": "Bölüm 6",
+    "headline": "Iskalayış Hikâyeyi Anlatır.",
+    "subline": "Sonraki atışı yapmadan önce nedenini bil.",
+    "traitsLabel": "Psikoloji",
+    "traits": [
+      {
+        "index": "01",
+        "title": "Duygu Takibi",
+        "body": [
+          "Korkunun, açgözlülüğün, güvenin ve tereddüdün",
+          "işlemlerini nasıl etkilediğini keşfet."
+        ]
+      },
+      {
+        "index": "02",
+        "title": "Disiplin Puanı",
+        "body": [
+          "Kendi kurallarına ne kadar bağlı kaldığını",
+          "işlem işlem gör."
+        ]
+      },
+      {
+        "index": "03",
+        "title": "Örüntü Hafızası",
+        "body": [
+          "Tekrarladığın hataları, yeniden",
+          "tekrarlamadan önce fark et."
+        ]
+      }
+    ]
+  },
   "a11y": {
     "primaryNav": "Ana gezinme"
   }

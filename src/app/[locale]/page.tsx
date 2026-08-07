@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { ArrowSection } from "@/components/arrow/ArrowSection";
 import { Hero } from "@/components/hero/Hero";
+import { MissSection } from "@/components/miss/MissSection";
 import { Scene } from "@/components/frame/Scene";
 import { Stage } from "@/components/frame/Stage";
 import { PanelSection } from "@/components/panel/PanelSection";
@@ -33,6 +34,7 @@ export default async function HomePage({
         />
       ))}
       <ArrowSection closing={dictionary.closing} />
+      <MissSection miss={dictionary.miss} />
     </Stage>
   );
 }

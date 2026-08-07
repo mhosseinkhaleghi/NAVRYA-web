@@ -2,8 +2,27 @@
  * Navrya — design tokens
  *
  * The fluid values are derived from the reference comp, which was measured at
- * a 1672px-wide frame. Each `vw` figure is `referencePx / 1672`, so at that
- * width the build reproduces the comp 1:1, and clamps hold it sane elsewhere.
+ * a 1672×941 frame. Each `vw` figure is `referencePx / 1672`, so at that size
+ * the build reproduces the comp 1:1, and clamps hold it sane elsewhere.
+ *
+ * ── Why the vertical ones are `min(<n>vw, <n × 1.778>vh)` ───────────────────
+ *
+ * Every scene is one full screen that never scrolls, so the composition has to
+ * fit the frame in *both* axes — and width alone does not tell you the height
+ * available. A 1920×1080 monitor is a 1920×937 viewport once the browser's own
+ * chrome is gone, and a 14" MacBook is 1512×830: both are far wider than 16:9,
+ * so a width-keyed type scale sets type for a frame taller than the one it has.
+ *
+ * Measured with the old width-only scale, section 3's block came out 626px tall
+ * in the 610px it had on a 1920×937 viewport, 455px in 373px on a 1366×625 one.
+ * It ran under the header at the top and into the scroll cue at the bottom on
+ * every laptop tested.
+ *
+ * 1vw is exactly 1.778vh at 16:9, so pairing each figure with its own value in
+ * vh changes *nothing* at the comp's aspect and scales by height on any frame
+ * shorter than it. The composition can then never outgrow its own screen. Only
+ * sizes that contribute to the vertical stack carry it — gutters, rails, rule
+ * widths and text measures stay keyed to width, which is what they are about.
  * -------------------------------------------------------------------------- */
 
 :root {
@@ -26,17 +45,17 @@
   /* How much document the timeline is spread over, in vh. This single number
    * sets the pace of the whole sequence — the controller works in scroll
    * *position*, so stretching it slows every beat proportionally. */
-  --timeline-vh: 2730;
+  --timeline-vh: 4130;
   --gutter: clamp(1.25rem, 2.87vw, 3.25rem);
-  --header-h: clamp(4rem, 6.04vw, 6.75rem);
+  --header-h: clamp(4rem, min(6.04vw, 10.74vh), 6.75rem);
   --nav-gap: clamp(0.5rem, 1.26vw, 1.5rem);
 
   /* ── Type ───────────────────────────────────────────────────────────────── */
-  --fs-wordmark: clamp(1.65rem, 2.95vw, 3.3rem);
-  --fs-nav: clamp(0.8125rem, 1.1vw, 1.3rem);
-  --fs-display: clamp(2.6rem, 6.4vw, 9.5rem);
-  --fs-sub: clamp(1rem, 2.04vw, 2.6rem);
-  --fs-micro: clamp(0.625rem, 0.837vw, 0.95rem);
+  --fs-wordmark: clamp(1.65rem, min(2.95vw, 5.25vh), 3.3rem);
+  --fs-nav: clamp(0.8125rem, min(1.1vw, 1.96vh), 1.3rem);
+  --fs-display: clamp(2.6rem, min(6.4vw, 11.38vh), 9.5rem);
+  --fs-sub: clamp(1rem, min(2.04vw, 3.63vh), 2.6rem);
+  --fs-micro: clamp(0.625rem, min(0.837vw, 1.49vh), 0.95rem);
 
   --lh-display: 1.04;
   --lh-sub: 1.6;
@@ -50,37 +69,63 @@
   /* The comp sets the text block's leading edge at 608 / 1672 of the frame. */
   --hero-inline-start: 36.4%;
   --hero-rule-w: clamp(9rem, 23.8vw, 27rem);
-  --hero-gap-headline-rule: clamp(1rem, 2.2vw, 2.6rem);
-  --hero-gap-rule-sub: clamp(1.1rem, 2.3vw, 2.75rem);
+  --hero-gap-headline-rule: clamp(1rem, min(2.2vw, 3.91vh), 2.6rem);
+  --hero-gap-rule-sub: clamp(1.1rem, min(2.3vw, 4.09vh), 2.75rem);
 
   /* ── Section 2 — the scenario panel ─────────────────────────────────────── */
   /* Its own rail: the comp sets this block's leading edge at 758 / 1672, further
    * in than the hero's, so it clears the deer's path across the meadow. */
   --s2-inline-start: 45.3%;
-  --fs-s2-display: clamp(2rem, 5.38vw, 7.5rem);
-  --fs-s2-sub: clamp(0.875rem, 1.14vw, 1.35rem);
-  --fs-s2-index: clamp(1.6rem, 3.17vw, 4rem);
-  --fs-s2-feature: clamp(1rem, 1.55vw, 1.85rem);
+  --fs-s2-display: clamp(2rem, min(5.38vw, 9.19vh), 7.5rem);
+  --fs-s2-sub: clamp(0.875rem, min(1.14vw, 1.95vh), 1.35rem);
+  --fs-s2-index: clamp(1.6rem, min(3.17vw, 5.41vh), 4rem);
+  --fs-s2-feature: clamp(1rem, min(1.55vw, 2.65vh), 1.85rem);
   --s2-rule-eyebrow: clamp(4.5rem, 9.7vw, 11rem);
   --s2-rule-headline: clamp(6rem, 15.1vw, 17rem);
   --s2-card-w: clamp(17rem, 33.4vw, 38rem);
-  --s2-gap: clamp(0.6rem, 1.15vw, 1.35rem);
+  --s2-gap: clamp(0.6rem, min(1.15vw, 1.88vh), 1.35rem);
 
   /* ── Section 5 — the closing scene ──────────────────────────────────────── */
   /* Centred rather than railed, and set between the hero's scale and the
    * panels': it is one statement across the middle of the frame, not a block
    * of copy on a rail. */
-  --fs-s5-display: clamp(2.1rem, 5.86vw, 8.25rem);
-  --fs-s5-body: clamp(1.05rem, 1.74vw, 2.15rem);
+  --fs-s5-display: clamp(2.1rem, min(5.86vw, 10.42vh), 8.25rem);
+  /* The one block of running copy on the site, and it carries the whole claim.
+   * It sat at caption size and read as a footnote under the arrow. */
+  --fs-s5-body: clamp(1.15rem, min(2.15vw, 3.82vh), 2.6rem);
   --s5-measure: clamp(20rem, 52vw, 58rem);
 
+  /* ── Section 6 — the miss, and the psychology features ──────────────────── */
+  --fs-s6-display: clamp(2rem, min(5.5vw, 9.4vh), 7.75rem);
+  --fs-s6-sub: clamp(0.95rem, min(1.32vw, 2.26vh), 1.6rem);
+  --fs-s6-trait: clamp(1.5rem, min(3.35vw, 5.72vh), 4.5rem);
+  --s6-measure: clamp(20rem, 58vw, 62rem);
+  --s6-rule: clamp(7rem, 14.2vw, 16rem);
+  --s6-notch: clamp(6rem, 12.5vw, 14rem);
+
   /* ── Scroll indicator ───────────────────────────────────────────────────── */
-  --scroll-bottom: clamp(1.5rem, 3.8vw, 4.5rem);
-  --mouse-w: clamp(1.375rem, 2.21vw, 2.5rem);
+  --scroll-bottom: clamp(1.5rem, min(3.8vw, 6.76vh), 4.5rem);
+  --mouse-w: clamp(1.25rem, min(1.92vw, 3.41vh), 2.2rem);
   --mouse-h: calc(var(--mouse-w) * 2.08);
   /* Vertical room the cue occupies, so the scene can centre above it. */
   --scroll-reserve: calc(
     var(--scroll-bottom) + var(--mouse-h) + var(--fs-micro) + 1.75rem
+  );
+
+  /*
+   * The panels' cue is the hero's with a tail, and it is the tallest ornament
+   * on the site. This is its height, built from the same parts it is drawn
+   * from, so the panel can reserve exactly the room it takes rather than a
+   * guess — the guess was 160px against a cue that measured 219px, which is
+   * most of why the text and the cue collided.
+   */
+  --s2-cue-bottom: clamp(0.75rem, min(1.7vw, 3.02vh), 1.5rem);
+  --s2-cue-gap: clamp(0.35rem, min(0.62vw, 1.1vh), 0.8rem);
+  --s2-cue-line: clamp(1.25rem, min(2.2vw, 3.91vh), 2.6rem);
+  --s2-cue-reserve: calc(
+    var(--s2-cue-bottom) + var(--fs-micro) + var(--s2-cue-gap) * 3 +
+      var(--mouse-h) * 0.86 + var(--s2-cue-line) + var(--node-size) +
+      clamp(0.75rem, 1.6vh, 1.75rem)
   );
 
   /* ── Ornaments ──────────────────────────────────────────────────────────── */
@@ -109,7 +154,7 @@
  * body and much taller in the extenders than the Latin faces. These keep the
  * optical size and leading matched to the LTR composition. */
 [dir="rtl"] {
-  --fs-display: clamp(2.35rem, 6.2vw, 8.75rem);
+  --fs-display: clamp(2.35rem, min(6.2vw, 11.02vh), 8.75rem);
   --lh-display: 1.35;
   --lh-sub: 1.85;
   --tracking-display: 0;
@@ -119,9 +164,10 @@
   --tracking-micro: 0;
   /* Arabic script carries its meaning in fine strokes, so the micro label
    * cannot sit at the Latin caption size and stay legible. */
-  --fs-micro: clamp(0.75rem, 0.95vw, 1.1rem);
-  --fs-s2-display: clamp(1.8rem, 4.7vw, 6.5rem);
-  --fs-s5-display: clamp(1.9rem, 5.2vw, 7.25rem);
+  --fs-micro: clamp(0.75rem, min(0.95vw, 1.69vh), 1.1rem);
+  --fs-s2-display: clamp(1.8rem, min(4.7vw, 8.36vh), 6.5rem);
+  --fs-s5-display: clamp(1.9rem, min(5.2vw, 9.25vh), 7.25rem);
+  --fs-s6-display: clamp(1.8rem, min(4.85vw, 8.29vh), 6.75rem);
 }
 
 /* -----------------------------------------------------------------------------
@@ -136,41 +182,48 @@
 @media (max-width: 1023px) {
   :root {
     --gutter: clamp(1.25rem, 6vw, 2.5rem);
-    --fs-wordmark: clamp(1.6rem, 7.2vw, 2.4rem);
-    --fs-nav: clamp(0.75rem, 3vw, 1rem);
+    --fs-wordmark: clamp(1.6rem, min(7.2vw, 12.8vh), 2.4rem);
+    --fs-nav: clamp(0.75rem, min(3vw, 5.33vh), 1rem);
     --nav-gap: clamp(0.6rem, 3.2vw, 1.4rem);
-    --fs-display: clamp(2.5rem, 13vw, 5.5rem);
-    --fs-sub: clamp(0.9375rem, 4.1vw, 1.35rem);
-    --fs-micro: clamp(0.6rem, 2.5vw, 0.75rem);
+    --fs-display: clamp(2.5rem, min(13vw, 23.11vh), 5.5rem);
+    --fs-sub: clamp(0.9375rem, min(4.1vw, 7.29vh), 1.35rem);
+    --fs-micro: clamp(0.6rem, min(2.5vw, 4.45vh), 0.75rem);
 
     --hero-inline-start: 0%;
     --hero-rule-w: clamp(6rem, 33vw, 12rem);
-    --hero-gap-headline-rule: clamp(1.1rem, 5vw, 2rem);
-    --hero-gap-rule-sub: clamp(1.1rem, 5.2vw, 2.1rem);
+    --hero-gap-headline-rule: clamp(1.1rem, min(5vw, 8.89vh), 2rem);
+    --hero-gap-rule-sub: clamp(1.1rem, min(5.2vw, 9.25vh), 2.1rem);
 
-    --scroll-bottom: clamp(1.5rem, 5vw, 2.5rem);
-    --mouse-w: clamp(1.4rem, 6.6vw, 1.9rem);
+    --scroll-bottom: clamp(1.5rem, min(5vw, 8.89vh), 2.5rem);
+    --mouse-w: clamp(1.4rem, min(6.6vw, 11.73vh), 1.9rem);
     --tracking-display: -0.01em;
 
     --s2-inline-start: 0%;
-    --fs-s2-display: clamp(1.9rem, 9vw, 4rem);
-    --fs-s2-sub: clamp(0.875rem, 3.6vw, 1.15rem);
-    --fs-s2-index: clamp(1.5rem, 7vw, 2.5rem);
-    --fs-s2-feature: clamp(0.9375rem, 4vw, 1.25rem);
+    --fs-s2-display: clamp(1.9rem, min(9vw, 16.0vh), 4rem);
+    --fs-s2-sub: clamp(0.875rem, min(3.6vw, 6.4vh), 1.15rem);
+    --fs-s2-index: clamp(1.5rem, min(7vw, 12.45vh), 2.5rem);
+    --fs-s2-feature: clamp(0.9375rem, min(4vw, 7.11vh), 1.25rem);
     --s2-rule-eyebrow: clamp(4rem, 20vw, 7rem);
     --s2-rule-headline: clamp(5.5rem, 30vw, 10rem);
     --s2-card-w: 100%;
 
-    --fs-s5-display: clamp(2.1rem, 10vw, 4.5rem);
-    --fs-s5-body: clamp(1rem, 4.4vw, 1.4rem);
+    --fs-s5-display: clamp(2.1rem, min(10vw, 17.78vh), 4.5rem);
+    --fs-s5-body: clamp(1rem, min(4.4vw, 7.82vh), 1.4rem);
     --s5-measure: 100%;
+
+    --fs-s6-display: clamp(1.9rem, min(9vw, 16vh), 4rem);
+    --fs-s6-sub: clamp(0.9375rem, min(3.8vw, 6.76vh), 1.2rem);
+    --fs-s6-trait: clamp(1.4rem, min(6.4vw, 11.38vh), 2.6rem);
+    --s6-measure: 100%;
+    --s6-rule: clamp(5rem, 24vw, 8rem);
+    --s6-notch: clamp(4.5rem, 22vw, 7rem);
   }
 
   [dir="rtl"] {
-    --fs-display: clamp(2.2rem, 11.4vw, 4.9rem);
-    --fs-s2-display: clamp(1.7rem, 7.8vw, 3.5rem);
-    --fs-s5-display: clamp(1.9rem, 8.7vw, 4rem);
-    --fs-micro: clamp(0.7rem, 3vw, 0.9rem);
+    --fs-display: clamp(2.2rem, min(11.4vw, 20.27vh), 4.9rem);
+    --fs-s2-display: clamp(1.7rem, min(7.8vw, 13.87vh), 3.5rem);
+    --fs-s5-display: clamp(1.9rem, min(8.7vw, 15.47vh), 4rem);
+    --fs-micro: clamp(0.7rem, min(3vw, 5.33vh), 0.9rem);
     --tracking-display: 0;
   }
 }

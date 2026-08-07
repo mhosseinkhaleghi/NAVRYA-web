@@ -1,0 +1,433 @@
+/* -----------------------------------------------------------------------------
+ * Section 6 — the miss, and what it teaches.
+ *
+ * Two states over one plate. The statement is centred on the frame, because the
+ * shot it sits on is a wide empty meadow with the subject leaving it. The
+ * features are a two-column composition, because they are a product screen and
+ * the words about it.
+ *
+ * Both states carry the same band structure as every other scene: the bar's
+ * band, the content's band, a foot. See the note in `PanelSection.module.css`
+ * for why those are grid rows and not padding.
+ * -------------------------------------------------------------------------- */
+
+.miss {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+
+  /* Written by the controller, all four from scroll position. */
+  --head: 0; /* the statement arrives on the impact */
+  --lift: 0; /* it rises as the stag runs */
+  --told: 0; /* the frame empties, and the features take over */
+  --traits: 0;
+}
+
+.miss:not([data-active]) {
+  visibility: hidden;
+}
+
+/* ── The statement ────────────────────────────────────────────────────────── */
+
+.told {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows:
+    calc(var(--header-h) + env(safe-area-inset-top, 0px))
+    minmax(0, 1fr)
+    clamp(2rem, 6vh, 5rem);
+  grid-template-columns: var(--gutter) minmax(0, 1fr) var(--gutter);
+  justify-items: center;
+
+  opacity: calc(var(--head) * (1 - var(--told)));
+  /* Rises with the stag, then keeps going as the features come up. */
+  transform: translateY(
+    calc(var(--lift) * -7vh + var(--told) * -9vh)
+  );
+  will-change: opacity, transform;
+}
+
+.statement {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: center;
+  display: grid;
+  justify-items: center;
+  inline-size: 100%;
+  max-inline-size: var(--s6-measure);
+  text-align: center;
+}
+
+/* ── The features ─────────────────────────────────────────────────────────── */
+
+.traits {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows:
+    calc(var(--header-h) + env(safe-area-inset-top, 0px))
+    minmax(0, 1fr)
+    clamp(2rem, 6vh, 5rem);
+  grid-template-columns:
+    var(--gutter)
+    minmax(0, 1.04fr)
+    clamp(1.5rem, 4.2vw, 5.5rem)
+    minmax(0, 1fr)
+    var(--gutter);
+  align-items: center;
+
+  opacity: var(--told);
+  will-change: opacity;
+}
+
+/*
+ * The device the product will be shown in.
+ *
+ * Outline only — the interior has to stay transparent, because the plate holds
+ * still behind it and that stillness is the point of the shot. Two rounded
+ * frames, the inner one's top edge interrupted for the notch.
+ */
+.bezel {
+  position: relative;
+  grid-column: 2;
+  grid-row: 2;
+  aspect-ratio: 16 / 10.4;
+  inline-size: 100%;
+  max-block-size: 100%;
+  justify-self: end;
+  border: var(--hairline) solid var(--c-gold-line-strong);
+  border-radius: clamp(0.9rem, 1.5vw, 1.75rem);
+  transform: translateY(calc((1 - var(--told)) * 2.5rem));
+}
+
+.bezel::before {
+  content: "";
+  position: absolute;
+  inset: clamp(0.5rem, 0.75vw, 0.9rem);
+  border-radius: clamp(0.6rem, 1vw, 1.15rem);
+  /* Left, right and bottom are a border; the top is drawn as two bars with a
+   * gap between them, which is what leaves room for the notch. */
+  border: var(--hairline) solid var(--c-gold-line-strong);
+  border-block-start-color: transparent;
+  background:
+    linear-gradient(var(--c-gold-line-strong), var(--c-gold-line-strong)) 0 0 /
+      calc(50% - var(--s6-notch) / 2) var(--hairline) no-repeat,
+    linear-gradient(var(--c-gold-line-strong), var(--c-gold-line-strong)) 100% 0 /
+      calc(50% - var(--s6-notch) / 2) var(--hairline) no-repeat;
+}
+
+/* The notch itself: a shallow trapezoid dipping out of the top edge, with the
+ * house diamond centred in it. Its own element so its angles are fixed in
+ * pixels and never distort with the frame. */
+.bezelNotch {
+  position: absolute;
+  inset-block-start: clamp(0.5rem, 0.75vw, 0.9rem);
+  /* Physical `left`, not `inset-inline-start`. The notch is symmetric, so
+   * centring it has no direction — but pairing the logical offset with a
+   * physical `translateX` puts it a half-width off centre in RTL, because the
+   * offset flips and the transform does not. */
+  left: 50%;
+  inline-size: var(--s6-notch);
+  block-size: calc(var(--s6-notch) * 0.115);
+  transform: translateX(-50%);
+  background:
+    /* The two shoulders. A linear-gradient's colour bands run *perpendicular*
+     * to the direction it is given, so `to bottom left` is what draws a line
+     * falling to the right — the two were the wrong way round and the notch
+     * came out as a pair of detached ticks. */
+    linear-gradient(
+        to bottom left,
+        transparent calc(50% - 0.5px),
+        var(--c-gold-line-strong) calc(50% - 0.5px),
+        var(--c-gold-line-strong) calc(50% + 0.5px),
+        transparent calc(50% + 0.5px)
+      )
+      0 0 / calc(var(--s6-notch) * 0.115) 100% no-repeat,
+    linear-gradient(
+        to bottom right,
+        transparent calc(50% - 0.5px),
+        var(--c-gold-line-strong) calc(50% - 0.5px),
+        var(--c-gold-line-strong) calc(50% + 0.5px),
+        transparent calc(50% + 0.5px)
+      )
+      100% 0 / calc(var(--s6-notch) * 0.115) 100% no-repeat,
+    /* the floor of the dip */
+    linear-gradient(var(--c-gold-line-strong), var(--c-gold-line-strong)) 50% 100% /
+      calc(100% - var(--s6-notch) * 0.23) var(--hairline) no-repeat;
+}
+
+.bezelNotch::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  inset-block-end: calc(var(--node-size) * -0.5);
+  inline-size: var(--node-size);
+  block-size: var(--node-size);
+  border: var(--hairline) solid var(--c-gold);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.rail {
+  grid-column: 4;
+  grid-row: 2;
+  display: grid;
+  justify-items: start;
+  inline-size: 100%;
+}
+
+/*
+ * The deck.
+ *
+ * Every slide occupies the same grid cell, so the deck is as tall as the
+ * tallest of them and nothing reflows as they change. `--in` and `--out` are
+ * written per slide by the controller, which means the carousel has no index
+ * and no state — scroll back and it runs backwards.
+ */
+.deck {
+  display: grid;
+  inline-size: 100%;
+  margin-block-start: calc(var(--s2-gap) * 2.4);
+}
+
+.trait {
+  grid-area: 1 / 1;
+  opacity: calc(var(--in, 0) * (1 - var(--out, 0)));
+  transform: translateY(
+    calc((1 - var(--in, 0)) * 2.2rem + var(--out, 0) * -2.2rem)
+  );
+  will-change: opacity, transform;
+}
+
+.traitIndex {
+  margin: 0;
+  color: var(--c-gold);
+  font-family: var(--font-sans);
+  font-size: var(--fs-micro);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: var(--tracking-micro);
+  text-transform: uppercase;
+  text-shadow: var(--text-lift-micro);
+}
+
+.traitTitle {
+  margin: 0;
+  margin-block-start: calc(var(--s2-gap) * 1.1);
+  color: var(--c-cream);
+  font-family: var(--font-display);
+  font-size: var(--fs-s6-trait);
+  font-weight: 400;
+  line-height: 1.06;
+  letter-spacing: var(--tracking-display);
+  text-align: start;
+  text-shadow: var(--text-lift);
+}
+
+[dir="rtl"] .traitTitle {
+  line-height: 1.4;
+}
+
+.traitBody {
+  margin: 0;
+  margin-block-start: calc(var(--s2-gap) * 1.1);
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-s2-sub);
+  font-weight: 300;
+  line-height: 1.55;
+  text-align: start;
+  text-shadow: var(--text-lift);
+}
+
+.traitLine {
+  display: block;
+}
+
+.dots {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.55rem, 1.1vw, 1.1rem);
+  margin: 0;
+  margin-block-start: calc(var(--s2-gap) * 2.6);
+  padding: 0;
+  list-style: none;
+}
+
+.dot {
+  inline-size: clamp(0.6rem, 0.96vw, 1.1rem);
+  block-size: clamp(0.6rem, 0.96vw, 1.1rem);
+  border: var(--hairline) solid var(--c-gold);
+  border-radius: 50%;
+  position: relative;
+}
+
+/* The filled centre is the slide's own progress, so the dots are the carousel
+ * rather than a readout of it. */
+.dot::after {
+  content: "";
+  position: absolute;
+  inset: 24%;
+  border-radius: 50%;
+  background: var(--c-gold);
+  opacity: var(--in, 0);
+  transform: scale(calc(0.4 + 0.6 * var(--in, 0)));
+}
+
+/* ── Shared ornament — the eyebrow and its rule ───────────────────────────── */
+
+.eyebrow {
+  margin: 0;
+  color: var(--c-gold);
+  font-family: var(--font-sans);
+  font-size: var(--fs-micro);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: var(--tracking-micro);
+  text-transform: uppercase;
+  text-shadow: var(--text-lift-micro);
+}
+
+/* Centred in the statement, start-aligned on the rail: the ornament fades from
+ * the middle out in one and from the leading edge in the other. */
+.ornament {
+  position: relative;
+  block-size: var(--hairline);
+  inline-size: var(--s6-rule);
+  margin-block: calc(var(--s2-gap) * 1.15) calc(var(--s2-gap) * 1.5);
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    var(--c-gold-line) 22%,
+    var(--c-gold-line-strong) 50%,
+    var(--c-gold-line) 78%,
+    transparent 100%
+  );
+}
+
+.rail .ornament {
+  background: linear-gradient(
+    to right,
+    var(--c-gold-line-strong) 0%,
+    var(--c-gold-line-strong) 55%,
+    var(--c-gold-line) 82%,
+    transparent 100%
+  );
+}
+
+[dir="rtl"] .rail .ornament {
+  background: linear-gradient(
+    to left,
+    var(--c-gold-line-strong) 0%,
+    var(--c-gold-line-strong) 55%,
+    var(--c-gold-line) 82%,
+    transparent 100%
+  );
+}
+
+.ornamentNode {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  inline-size: var(--node-size);
+  block-size: var(--node-size);
+  border: var(--hairline) solid var(--c-gold);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+/* ── The statement's type ─────────────────────────────────────────────────── */
+
+.headline {
+  margin: 0;
+  color: var(--c-cream);
+  font-family: var(--font-display);
+  font-size: var(--fs-s6-display);
+  font-weight: 400;
+  line-height: 1.03;
+  letter-spacing: var(--tracking-display);
+  text-align: center;
+  text-wrap: balance;
+  text-shadow: var(--text-lift);
+  /* The same resolve every other headline on the site makes. */
+  filter: blur(calc((1 - var(--head)) * 12px));
+}
+
+[dir="rtl"] .headline {
+  line-height: 1.35;
+}
+
+.subline {
+  margin: 0;
+  margin-block-start: calc(var(--s2-gap) * 1.9);
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-s6-sub);
+  font-weight: 300;
+  line-height: 1.5;
+  text-align: center;
+  text-wrap: pretty;
+  text-shadow: var(--text-lift);
+}
+
+/* -----------------------------------------------------------------------------
+ * Compact frames — the device gives up its column and sits above the words.
+ * -------------------------------------------------------------------------- */
+
+@media (max-width: 1023px) {
+  /*
+   * The bar is a row of the stage on compact frames, not an overlay, and it is
+   * two rows tall there — taller than `--header-h`. A section that stays
+   * absolutely placed over the whole stage reserves the wrong band and runs
+   * straight under it. This joins the column instead, exactly as the hero and
+   * the panels do, and the two states inside it then inset against the space
+   * the bar leaves rather than against the frame.
+   */
+  .miss {
+    position: relative;
+    inset: auto;
+    grid-row: 2;
+    grid-column: 1;
+    min-block-size: 0;
+  }
+
+  .told,
+  .traits {
+    grid-template-rows: minmax(0, 1fr) clamp(1.5rem, 4vh, 3rem);
+  }
+
+  .statement {
+    grid-row: 1;
+  }
+
+  .traits {
+    grid-template-columns: var(--gutter) minmax(0, 1fr) var(--gutter);
+    grid-template-rows: auto minmax(0, 1fr) clamp(1.5rem, 4vh, 3rem);
+    /* No `align-content: center` here. Rows that together outgrow the frame
+     * overflow *both* ends of a centred track, which put the device under the
+     * navigation — the same trap the panels fell into. The tracks already fill
+     * the frame, so the alignment is the row's job, not the grid's. */
+  }
+
+  /* Width taken from a height budget rather than the other way round, so the
+   * device can never be the thing that overflows the column. */
+  .bezel {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: center;
+    inline-size: min(100%, 34rem, calc(36vh * 16 / 10.4));
+  }
+
+  .rail {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
+    margin-block-start: clamp(1.25rem, 3.5vh, 2.5rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .headline {
+    filter: none;
+  }
+}

@@ -11,6 +11,13 @@ import styles from "./Scene.module.css";
  *   strike  the camera pushes in to the draw, held at full tension.
  *   arrow   the release. The arrow flies, the world falls away behind it, and
  *           the frame comes to rest on black.
+ *   miss    a different morning. The arrow is already buried in the tree, and
+ *           the deer it was meant for runs out of frame.
+ *
+ * The last handover is the only one that is not a cut. Every other pair is two
+ * pieces of one continuous render; these two are a black studio frame and a
+ * forest at dawn, with nothing continuous between them, so that one dips
+ * through black — which is also what the scene asks for.
  *
  * The clips were rendered as one continuous shot and cut into pieces, so each
  * plate's closing frame *is* the next plate's opening frame. Handovers are
@@ -45,6 +52,7 @@ const PLATES = [
   { id: "draw", slug: "hunter-draw", lead: false, codecs: ["webm", "mp4"] },
   { id: "strike", slug: "hunter-strike", lead: false, codecs: ["webm", "mp4"] },
   { id: "arrow", slug: "arrow-learns", lead: false, codecs: ["webm", "mp4"] },
+  { id: "miss", slug: "forest-miss", lead: false, codecs: ["webm", "mp4"] },
 ] as const;
 
 const MIME = { webm: "video/webm", mp4: "video/mp4" } as const;

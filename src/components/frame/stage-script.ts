@@ -47,6 +47,11 @@ const BEATS = [
   ["clear", 160],
   ["arrow", 520], // arrow-learns  · 6.7s — the release, and the world goes dark
   ["learn", 520], // the closing text lights up a word at a time
+  // Section 5 leaves, the arrow goes with it, and the frame dips through black
+  // before the next morning fades up. The one handover that is not a cut.
+  ["depart", 320],
+  ["miss", 420], // forest-miss   · 4.4s — the arrow is in the tree, the deer runs
+  ["traits", 660], // the psychology features, one per stretch of scroll
   ["rest", 40], // tail room, so the last reveal is not pinned to the bottom
 ] as const;
 
@@ -63,6 +68,9 @@ const BOW_SET = 2.5 / 5.041667; // the draw settles into the aim
 const AIM_HELD = 4.0 / 7.041667; // camera on the draw, roughly 70% back
 const ARROW_MID = 2.0 / 6.7; // the arrow crisp and dead centre in the air
 const WORLD_GONE = 5.15 / 6.7; // the valley has fallen away behind it
+const ARROW_STRUCK = 0.67 / 4.4; // it buries itself in the tree
+const DEER_BOLTS = 1.3 / 4.4; // the stag turns and runs
+const DEER_CLEARS = 3.95 / 4.4; // the last of it leaves the frame
 
 /**
  * One entry per scrubbed plate: which beat scrubs it, which panel it carries,
@@ -105,6 +113,7 @@ const SCENES = [
     cues: [AIM_HELD, AIM_HELD + 0.02],
   },
   { plate: "arrow", beat: "arrow", panel: null, exit: null, cues: null },
+  { plate: "miss", beat: "miss", panel: null, exit: null, cues: null },
 ] as const;
 
 /**
@@ -122,8 +131,8 @@ const SCENES = [
  * displacement". Exactly one plate is composited at any moment now, and at the
  * instant of the cut the two frames are identical, so nothing moves.
  */
-const PLATES = ["dawn", "turn", "prey", "draw", "strike", "arrow"] as const;
-const PLATE_BEAT = [null, "turn", "prey", "draw", "strike", "arrow"] as const;
+const PLATES = ["dawn", "turn", "prey", "draw", "strike", "arrow", "miss"] as const;
+const PLATE_BEAT = [null, "turn", "prey", "draw", "strike", "arrow", "miss"] as const;
 
 /** The hero leaves late in the first plate, once the head has come back round. */
 const HERO_EXIT = [0.55, 0.92];
@@ -158,6 +167,34 @@ const LEARN_LEAD = 0.62;
  * exactly once, at a constant rate, and scrolling back erases it.
  */
 const GLOW_LEAD = 0.94;
+
+/**
+ * The departure, as windows inside the `depart` beat.
+ *
+ * The text goes first, then the arrow follows it off, then a moment of nothing,
+ * then the next morning fades up. Sequenced rather than cross-faded: the two
+ * plates never share the frame, so the one-plate rule holds even here — what
+ * happens between them is the stage's own black, which is what a dip to black
+ * is.
+ */
+const DEPART_TEXT = [0, 0.3];
+const DEPART_PLATE = [0.24, 0.56];
+const ARRIVE_PLATE = [0.62, 1];
+
+/**
+ * Section 6's reveals, as fractions of the `forest-miss` plate.
+ *
+ * The headline lands on the impact — the frame the arrow buries itself in the
+ * tree — and the block lifts as the stag turns and runs, so the text moves with
+ * the animal rather than sitting still while it goes.
+ */
+const MISS_TITLE_SPAN = 0.16;
+const MISS_LIFT = 0.34;
+
+/** How much of the `traits` beat one feature holds the frame for. */
+const TRAIT_HOLD = 0.26;
+/** And how much of it the plate takes to settle to black behind them. */
+const TRAITS_DIM = 0.22;
 
 /**
  * The opening plate is never started until it can run without stalling.
@@ -196,6 +233,12 @@ export const stageScript = `
   var ARROW_AT = ${ARROW_MID}, ARROW_SPAN = ${ARROW_TITLE_SPAN};
   var BODY_AT = ${WORLD_GONE}, BODY_SPAN = ${ARROW_BODY_SPAN};
   var LEARN_FADE = ${LEARN_FADE}, LEARN_LEAD = ${LEARN_LEAD}, GLOW_LEAD = ${GLOW_LEAD};
+  var DEPART_TEXT = ${JSON.stringify(DEPART_TEXT)};
+  var DEPART_PLATE = ${JSON.stringify(DEPART_PLATE)};
+  var ARRIVE_PLATE = ${JSON.stringify(ARRIVE_PLATE)};
+  var MISS_STRUCK = ${ARROW_STRUCK}, MISS_SPAN = ${MISS_TITLE_SPAN};
+  var MISS_BOLTS = ${DEER_BOLTS}, MISS_LIFT = ${MISS_LIFT}, MISS_CLEARS = ${DEER_CLEARS};
+  var TRAIT_HOLD = ${TRAIT_HOLD}, TRAITS_DIM = ${TRAITS_DIM};
 
   var reduced = window.matchMedia
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -362,6 +405,7 @@ export const stageScript = `
     for (i = 0; i < PLATES.length; i++) {
       plateEls.push(document.querySelector('[data-plate-id="' + PLATES[i] + '"]'));
     }
+    var ARROW_PLATE = PLATES.indexOf('arrow'), MISS_PLATE = PLATES.indexOf('miss');
 
     var scenes = [];
     for (var s = 0; s < SCENES.length; s++) {
@@ -388,10 +432,12 @@ export const stageScript = `
     var arrow = document.querySelector('[data-arrow]');
     var words = arrow ? +arrow.getAttribute('data-words') || 0 : 0;
 
-    function paintArrow(ap, lp) {
+    function paintArrow(ap, lp, dp) {
       if (!arrow) return;
 
-      if (ap > 0) arrow.setAttribute('data-active', '');
+      // dp is the departure window: the text leaves before its plate does.
+      var gone = ease(span(dp, DEPART_TEXT[0], DEPART_TEXT[1]));
+      if (ap > 0 && gone < 1) arrow.setAttribute('data-active', '');
       else arrow.removeAttribute('data-active');
 
       arrow.style.setProperty('--head', ease(span(ap, ARROW_AT, ARROW_AT + ARROW_SPAN)));
@@ -400,6 +446,43 @@ export const stageScript = `
       // Linear, and it completes with the beat — this is the fraction of the
       // perimeter the ring has been drawn to, not an opacity.
       arrow.style.setProperty('--glow', clamp01(lp / GLOW_LEAD));
+      arrow.style.setProperty('--exit', gone);
+    }
+
+    // ── section 6 ──────────────────────────────────────────────────────────
+    var miss = document.querySelector('[data-miss]');
+    var traitEls = miss ? miss.querySelectorAll('[data-trait]') : [];
+    var dotEls = miss ? miss.querySelectorAll('[data-dot]') : [];
+
+    function paintMiss(mp, tp) {
+      if (!miss) return;
+
+      if (mp > 0) miss.setAttribute('data-active', '');
+      else miss.removeAttribute('data-active');
+
+      // The headline lands on the impact, and the block lifts as the stag runs,
+      // so the words travel with the animal instead of watching it go.
+      miss.style.setProperty('--head', ease(span(mp, MISS_STRUCK, MISS_STRUCK + MISS_SPAN)));
+      miss.style.setProperty('--lift', ease(span(mp, MISS_BOLTS, MISS_BOLTS + MISS_LIFT)));
+      // Once the frame is empty the statement gives way to the features.
+      miss.style.setProperty('--told', ease(span(mp, MISS_CLEARS, 1)));
+
+      // One feature per stretch of the beat: each slides in, holds, slides out,
+      // and the whole thing reverses if the wheel does.
+      var n = traitEls.length;
+      if (!n) return;
+      var reach = tp * n;
+      for (var t = 0; t < n; t++) {
+        var local = reach - t;
+        var on = clamp01(local / TRAIT_HOLD);
+        var off = clamp01((local - (1 - TRAIT_HOLD)) / TRAIT_HOLD);
+        var into = ease(on), away = t === n - 1 ? 0 : ease(off);
+        traitEls[t].style.setProperty('--in', into);
+        traitEls[t].style.setProperty('--out', away);
+        // The dots are the carousel, not a readout of it.
+        if (dotEls[t]) dotEls[t].style.setProperty('--in', into * (1 - away));
+      }
+      miss.style.setProperty('--traits', tp > 0 ? 1 : 0);
     }
 
     function apply() {
@@ -426,10 +509,37 @@ export const stageScript = `
         opening.pause();
         try { opening.currentTime = opening.duration; } catch (e) {}
       }
+      var opacity = [];
+      for (i = 0; i < plateEls.length; i++) opacity.push(i === top ? 1 : 0);
+
+      // The one handover that is not a cut. The closing plate is a black studio
+      // frame and the plate after it is a forest at dawn, so there is nothing
+      // continuous to cut on. It dips through black instead: the arrow fades
+      // down, the frame is empty for a moment, then the morning fades up. The
+      // two are never on screen together, so the one-plate rule still holds.
+      var db = edge.depart, dw = db[1] - db[0];
+      var out = span(p, db[0] + DEPART_PLATE[0] * dw, db[0] + DEPART_PLATE[1] * dw);
+      var into = span(p, db[0] + ARRIVE_PLATE[0] * dw, db[0] + ARRIVE_PLATE[1] * dw);
+      if (shown && p > db[0] && p < db[1]) {
+        opacity[ARROW_PLATE] = 1 - out;
+        opacity[MISS_PLATE] = into;
+      }
+
+      // The features are read against black, as the comp draws them. The plate
+      // has already come to rest by then — the stag is gone and nothing in the
+      // frame moves — so this is the scene ending rather than a scrim over
+      // footage: the picture is never dimmed while there is anything happening
+      // in it.
+      if (shown && p > edge.traits[0]) {
+        opacity[MISS_PLATE] = 1 - ease(clamp01(
+          span(p, edge.traits[0], edge.traits[1]) / TRAITS_DIM
+        ));
+      }
+
       for (i = 0; i < plateEls.length; i++) {
         if (!plateEls[i]) continue;
-        plateEls[i].style.setProperty('--o', i === top ? 1 : 0);
-        if (i === top) plateEls[i].setAttribute('data-plate-on', '');
+        plateEls[i].style.setProperty('--o', opacity[i]);
+        if (opacity[i] > 0.001) plateEls[i].setAttribute('data-plate-on', '');
         else plateEls[i].removeAttribute('data-plate-on');
       }
 
@@ -472,7 +582,12 @@ export const stageScript = `
 
       paintArrow(
         shown ? span(p, edge.arrow[0], edge.arrow[1]) : 0,
-        shown ? span(p, edge.learn[0], edge.learn[1]) : 0
+        shown ? span(p, edge.learn[0], edge.learn[1]) : 0,
+        shown ? span(p, edge.depart[0], edge.depart[1]) : 0
+      );
+      paintMiss(
+        shown ? span(p, edge.miss[0], edge.miss[1]) : 0,
+        shown ? span(p, edge.traits[0], edge.traits[1]) : 0
       );
 
       var hb = edge.turn, hw = hb[1] - hb[0];

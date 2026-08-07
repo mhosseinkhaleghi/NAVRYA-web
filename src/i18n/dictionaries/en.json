@@ -72,6 +72,38 @@
     "headline": "Every Arrow Learns",
     "body": "Your AI learns how you hunt. It sees the market through your eyes, remembers every lesson, and makes every next shot more precise."
   },
+  "miss": {
+    "eyebrow": "Section 6",
+    "headline": "The Miss Tells the Story.",
+    "subline": "Know the reason before you take the next shot.",
+    "traitsLabel": "Psychology",
+    "traits": [
+      {
+        "index": "01",
+        "title": "Emotional Tracking",
+        "body": [
+          "Discover how fear, greed, confidence,",
+          "and hesitation influence your trades."
+        ]
+      },
+      {
+        "index": "02",
+        "title": "Discipline Score",
+        "body": [
+          "See how closely you followed your own",
+          "rules, trade after trade."
+        ]
+      },
+      {
+        "index": "03",
+        "title": "Pattern Recall",
+        "body": [
+          "Recognise the mistakes you repeat,",
+          "before you repeat them again."
+        ]
+      }
+    ]
+  },
   "a11y": {
     "primaryNav": "Primary navigation"
   }
