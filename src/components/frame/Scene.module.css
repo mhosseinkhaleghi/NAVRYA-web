@@ -14,19 +14,27 @@
   pointer-events: none;
 }
 
-/* One plate on screen at a time. Because each plate's closing frame matches the
- * next one's opening frame, the swap lands on identical pixels and needs no
- * crossfade to hide it. */
+/*
+ * The plates are stacked, and handovers are a short cross-dissolve driven by
+ * scroll — `--o` is the 0–1 opacity the controller writes onto each one.
+ *
+ * A hard cut would be the obvious choice, since each plate's closing frame is
+ * framed identically to the next one's opening frame. Measured, though, they
+ * are not identical: the two renders draw the hunter's silhouette slightly
+ * differently, and at a cut that reads as the figure twitching. The plates are
+ * pixel-aligned — a translation search found the best match at exactly (0,0) —
+ * so there is nothing to correct geometrically. A dissolve of about 15vh of
+ * scroll is what actually hides it.
+ */
 .plate {
   position: absolute;
   inset: 0;
-  visibility: hidden;
+  opacity: var(--o, 0);
 }
 
-.scene[data-plate="dawn"] [data-plate-id="dawn"],
-.scene[data-plate="turn"] [data-plate-id="turn"],
-.scene[data-plate="prey"] [data-plate-id="prey"] {
-  visibility: visible;
+/* Fully covered or not yet arrived: keep it off the compositor entirely. */
+.plate:not([data-plate-on]) {
+  visibility: hidden;
 }
 
 /* The opening frame, behind the video. It stands in until the plate has

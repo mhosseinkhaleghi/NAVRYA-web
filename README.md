@@ -1,6 +1,6 @@
 # Navrya — web
 
-A premium cinematic marketing site. **Current scope: sections 1 and 2.**
+A premium cinematic marketing site. **Current scope: sections 1–4.**
 
 ```bash
 npm install
@@ -31,27 +31,41 @@ sequence proportionally.
 
 ## The sequence
 
-One continuous shot in three plates, driven end to end by scroll **position** —
+One continuous shot in five plates, driven end to end by scroll **position** —
 so it runs backwards exactly as readily as forwards. Nothing latches, nothing
-fires once. `components/frame/stage-script.ts` maps scroll onto four beats:
+fires once. `components/frame/stage-script.ts` maps scroll onto the beats:
 
 | beat | scroll | what happens |
 | ---- | ------ | ------------ |
 | — | on load | `hunter-dawn` plays itself. At **4.33s** the hunter turns to face the viewer and the interface rises into frame. Until then the timeline is locked shut. |
 | `turn` | 140vh | `hunter-turn` scrubs: he turns back to the valley. |
-| `exit` | 90vh | The hero block leaves the frame upward, out of focus — while `hunter-turn` keeps scrubbing. It runs across both beats (`TURN_SPAN`), because holding it still meant the picture froze for 90vh and then surged back to life, which reads as a jump even though the plates' frames match exactly. Nothing in frame should stop moving while the wheel is still turning. |
-| `prey` | 380vh | `valley-prey` scrubs. The deer clears the frame edge at **0.40s** and the section-2 headline lands on it. At **3.60s** the deer drops its head to graze and the rest of the panel assembles around the headline. |
-| `rest` | 40vh | Tail room, so the last reveal is not pinned to the very bottom. |
+| `exit1` | 90vh | The hero block leaves, over the held closing frame. |
+| `prey` | 380vh | `valley-prey` scrubs. The deer clears the frame edge at **0.40s** and section 2's headline lands on it; at **3.60s** it drops its head to graze and the rest of the panel assembles. |
+| `exit2` | 90vh | Section 2 leaves. |
+| `draw` | 340vh | `hunter-draw` scrubs. The draw settles into the aim at **2.50s** and section 3 arrives. |
+| `exit3` | 90vh | Section 3 leaves. |
+| `strike` | 440vh | `hunter-strike` scrubs. The camera reaches the draw at **4.00s**, about 70% back, and section 4 arrives. |
+| `rest` | 50vh | Tail room, so the last reveal is not pinned to the very bottom. |
 
-Each plate's closing frame matches the next one's opening frame, so the
-handovers land on identical pixels and need no crossfade to hide them. The last
-plate holds its final frame — the deer grazing — because that is where the
-composition comes to rest.
+The shape repeats: a plate scrubs, its panel arrives on a cue taken from the
+footage, the plate **holds its closing frame** while the panel scrolls back out,
+then the next plate takes over. Sections 2, 3 and 4 are one component rendered
+three times — `components/panel/PanelSection` — differing only in copy and icon.
 
-The two cue points are stored as *fractions* of the prey plate rather than
-seconds, so the same numbers still drive the same reveals when there is no
-video at all: under reduced motion nothing downloads, the stills carry the
-sequence, and scroll still moves the story forward.
+Cue points are stored as *fractions* of each plate rather than seconds, so the
+same numbers still land when there is no video at all: under reduced motion
+nothing downloads, the stills carry the sequence, and scroll still moves the
+story forward.
+
+### Handovers are dissolves, not cuts
+
+Each plate is framed identically to the next, so a cut looks like the obvious
+choice. Measured, it is not: the renders draw the hunter's silhouette slightly
+differently between clips, and at a cut that reads as the figure twitching. The
+plates are pixel-aligned — a translation search over ±6px found the best match
+at exactly (0,0) — so there is nothing to correct geometrically. A
+cross-dissolve of ~15vh of scroll (`PLATE_FADE`) is what actually hides it, and
+it is driven by scroll position like everything else, so it reverses too.
 
 ## The plates
 
@@ -109,8 +123,8 @@ another is resolving is dropped by the browser — which keeps the picture as
 close to the wheel as the decoder allows.
 
 To retime anything: `INTRO_REVEAL_AT` for the opening beat, `BEATS` for how
-much scroll each beat gets, `DEER_ENTERS` / `DEER_GRAZES` for the section-2
-cues. The reveal styling itself lives in the `Intro` / `Reveal` sections of the
+much scroll each beat gets, and the cue constants (`DEER_ENTERS`,
+`DEER_GRAZES`, `BOW_SET`, `AIM_HELD`) for where each panel lands. The reveal styling itself lives in the `Intro` / `Reveal` sections of the
 component stylesheets.
 
 ## Layout
@@ -120,13 +134,13 @@ src/
   app/[locale]/          route shell — sets <html lang dir> per locale
   components/
     frame/Stage          the fixed frame + the scroll track behind it
-    frame/Scene          the three plates — played raw, no overlay
+    frame/Scene          the five plates — played raw, no overlay
     frame/stage-script   the opening beat and the scroll timeline
     site/SiteHeader      wordmark, nav, language menu, Login
     site/LanguageMenu    <details>-based, works without JavaScript
     hero/Hero            section 1 — headline, rule, sub-headline, cue
-    scenario/            section 2 — the scenario panel
-    icons/               globe, chevron, compass
+    panel/PanelSection   sections 2-4 — one component, three sets of copy
+    icons/               globe, chevron, and one per panel
   i18n/
     config.ts            locale list, text direction, short labels
     dictionaries/*.json  one file per language
@@ -156,8 +170,9 @@ node scripts/build-preview.mjs        # → preview/navrya-hero.html (gitignored
 ```
 
 It pulls each locale's rendered body, inlines the CSS, every font subset, the
-stills and the plates as data URIs, and drops Next's hydration payload. Only
-the 720p WebM of each plate travels: every byte is a byte the viewer waits on,
+stills and the plates as data URIs, and drops Next's hydration payload. Only a
+540p WebM proxy of each plate travels — five plates at 720p would put the file
+past 15MB: every byte is a byte the viewer waits on,
 and CSS still drives the crop and the whole timeline, so nothing about the
 behaviour is approximated — only the resolution. The
 site's own inline scripts are carried over, so the intro sequence and the

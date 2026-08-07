@@ -18,21 +18,56 @@
     ],
     "scroll": "Scroll"
   },
-  "scenario": {
-    "eyebrow": "Section 2",
-    "headline": "Every Hunt Begins With a Scenario.",
-    "subline": [
-      "Hunters don’t improvise. They prepare for",
-      "every possible move before the hunt begins."
-    ],
-    "featuresLabel": "Features",
-    "features": [
-      {
-        "index": "01",
-        "label": "Build trading scenarios"
-      }
-    ]
-  },
+  "panels": [
+    {
+      "eyebrow": "Section 2",
+      "headline": "Every Hunt Begins With a Scenario.",
+      "subline": [
+        "Hunters don’t improvise. They prepare for",
+        "every possible move before the hunt begins."
+      ],
+      "featuresLabel": "Features",
+      "icon": "compass",
+      "features": [
+        {
+          "index": "01",
+          "label": "Build trading scenarios"
+        }
+      ]
+    },
+    {
+      "eyebrow": "Section 3",
+      "headline": "Know Your Hunting Hours",
+      "subline": [
+        "Track each trading session and discover",
+        "when your strategy performs at its best."
+      ],
+      "featuresLabel": "Features",
+      "icon": "session",
+      "features": [
+        {
+          "index": "02",
+          "label": "Track Every Trading Session"
+        }
+      ]
+    },
+    {
+      "eyebrow": "Section 4",
+      "headline": "Decide Before You Strike.",
+      "subline": [
+        "Set your rules before the market moves,",
+        "so when the moment comes, you already know what to do."
+      ],
+      "featuresLabel": "Features",
+      "icon": "timer",
+      "features": [
+        {
+          "index": "03",
+          "label": "Prepare your reaction before the market moves"
+        }
+      ]
+    }
+  ],
   "a11y": {
     "primaryNav": "Primary navigation"
   }

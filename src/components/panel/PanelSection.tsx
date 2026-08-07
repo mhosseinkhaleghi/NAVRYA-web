@@ -1,24 +1,34 @@
-import { CompassIcon } from "@/components/icons/CompassIcon";
+import { PANEL_ICONS, type PanelIconName } from "@/components/icons/PanelIcons";
 import type { Dictionary } from "@/i18n/dictionaries";
 
-import styles from "./ScenarioSection.module.css";
+import styles from "./PanelSection.module.css";
+
+export type Panel = Dictionary["panels"][number];
 
 /**
- * Section 2 — the scenario panel.
+ * A content panel — sections 2, 3 and 4 are the same composition with different
+ * copy, so they are one component rendered three times.
  *
- * It arrives in two beats, both driven by scroll position rather than time:
- * the headline lands as the deer walks into frame, and everything else
- * assembles around it once the deer settles to graze. `data-reveal-group` marks
+ * Each arrives on cues taken from its own plate: `data-reveal-group` marks
  * which beat an element belongs to and `--r` is the 0–1 progress the controller
- * writes onto it, so the whole reveal runs backwards just as readily as
- * forwards.
+ * writes onto it, so the whole reveal runs backwards as readily as forwards.
+ * The headline is its own group because in section 2 it lands early, on the
+ * deer's entrance, with everything else following once the deer settles.
  */
-export function ScenarioSection({ dictionary }: { dictionary: Dictionary }) {
-  const { eyebrow, headline, subline, featuresLabel, features } = dictionary.scenario;
-  const { scroll } = dictionary.hero;
+export function PanelSection({
+  id,
+  panel,
+  scrollLabel,
+}: {
+  id: string;
+  panel: Panel;
+  scrollLabel: string;
+}) {
+  const { eyebrow, headline, subline, featuresLabel, features, icon } = panel;
+  const Icon = PANEL_ICONS[icon as PanelIconName] ?? PANEL_ICONS.compass;
 
   return (
-    <section className={styles.scenario} data-scenario="" aria-hidden="true">
+    <section className={styles.panel} data-panel={id} aria-hidden="true">
       <div className={styles.content}>
         <p className={styles.eyebrow} data-reveal-group="rest" data-reveal-step="0">
           {eyebrow}
@@ -33,7 +43,6 @@ export function ScenarioSection({ dictionary }: { dictionary: Dictionary }) {
           <span className={styles.ruleNode} />
         </div>
 
-        {/* The one thing that lands on the deer's entrance. */}
         <h2 className={styles.headline} data-reveal-group="title">
           {headline}
         </h2>
@@ -69,17 +78,17 @@ export function ScenarioSection({ dictionary }: { dictionary: Dictionary }) {
             >
               <span className={styles.featureIndex}>{feature.index}</span>
               <span className={styles.featureDivider} />
-              <CompassIcon className={styles.featureIcon} />
+              <Icon className={styles.featureIcon} />
               <span className={styles.featureLabel}>{feature.label}</span>
             </li>
           ))}
         </ul>
       </div>
 
-      {/* The comp gives this section its own cue: the same mouse as the hero's,
+      {/* The comp gives each panel its own cue: the same mouse as the hero's,
        * carried on down to a node — a thread to whatever comes next. */}
       <div className={styles.cue} data-reveal-group="rest" data-reveal-step="6">
-        <span className={styles.cueLabel}>{scroll}</span>
+        <span className={styles.cueLabel}>{scrollLabel}</span>
         <span className={styles.mouse}>
           <span className={styles.wheel} />
         </span>

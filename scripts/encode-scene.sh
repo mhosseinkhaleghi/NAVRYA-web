@@ -60,6 +60,19 @@ enc() { # width  height  h264-crf  vp9-crf  label
 enc 1920 1080 "$H_1080" "$V_1080" 1080
 enc 1280 720  "$H_720"  "$V_720"  720
 
+# A 540p WebM proxy, for the self-contained preview only. That build inlines
+# every plate as a data URI, so the whole sequence has to fit in one file the
+# viewer downloads before anything renders — the shipping renditions would put
+# it past 15MB. Production never serves this.
+ffmpeg -v error -y -i "$SRC" -an -vf "scale=960:540:flags=lanczos" \
+  -c:v libvpx-vp9 -crf $(( V_720 + 4 )) -b:v 0 -row-mt 1 -cpu-used 4 \
+  -g "$GOP" -keyint_min "$GOP" -pix_fmt yuv420p "$OUT/$SLUG-540.webm"
+for edge in first last; do
+  [ "$edge" = first ] && n=0 || n=$((FRAMES - 1))
+  ffmpeg -v error -y -i "$SRC" -vf "select=eq(n\,$n),scale=960:540:flags=lanczos" \
+    -frames:v 1 -q:v 6 "$OUT/$SLUG-$edge-540.jpg"
+done
+
 ffmpeg -v error -y -i "$SRC" -vf "select=eq(n\,0),scale=1920:1080:flags=lanczos" \
   -frames:v 1 -q:v 5 "$OUT/$SLUG-first.jpg"
 ffmpeg -v error -y -i "$SRC" -vf "select=eq(n\,$((FRAMES - 1))),scale=1920:1080:flags=lanczos" \

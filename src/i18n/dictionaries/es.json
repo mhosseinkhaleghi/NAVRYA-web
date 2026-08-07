@@ -18,21 +18,56 @@
     ],
     "scroll": "Desliza"
   },
-  "scenario": {
-    "eyebrow": "Sección 2",
-    "headline": "Toda Cacería Empieza con un Escenario.",
-    "subline": [
-      "Los cazadores no improvisan. Se preparan para",
-      "cada movimiento posible antes de que empiece la cacería."
-    ],
-    "featuresLabel": "Funciones",
-    "features": [
-      {
-        "index": "01",
-        "label": "Crea escenarios de trading"
-      }
-    ]
-  },
+  "panels": [
+    {
+      "eyebrow": "Sección 2",
+      "headline": "Toda Cacería Empieza con un Escenario.",
+      "subline": [
+        "Los cazadores no improvisan. Se preparan para",
+        "cada movimiento posible antes de que empiece la cacería."
+      ],
+      "featuresLabel": "Funciones",
+      "icon": "compass",
+      "features": [
+        {
+          "index": "01",
+          "label": "Crea escenarios de trading"
+        }
+      ]
+    },
+    {
+      "eyebrow": "Sección 3",
+      "headline": "Conoce Tus Horas de Caza",
+      "subline": [
+        "Sigue cada sesión de trading y descubre",
+        "cuándo tu estrategia rinde mejor."
+      ],
+      "featuresLabel": "Funciones",
+      "icon": "session",
+      "features": [
+        {
+          "index": "02",
+          "label": "Sigue cada sesión de trading"
+        }
+      ]
+    },
+    {
+      "eyebrow": "Sección 4",
+      "headline": "Decide Antes de Disparar.",
+      "subline": [
+        "Fija tus reglas antes de que el mercado se mueva,",
+        "para que cuando llegue el momento ya sepas qué hacer."
+      ],
+      "featuresLabel": "Funciones",
+      "icon": "timer",
+      "features": [
+        {
+          "index": "03",
+          "label": "Prepara tu reacción antes de que el mercado se mueva"
+        }
+      ]
+    }
+  ],
   "a11y": {
     "primaryNav": "Navegación principal"
   }

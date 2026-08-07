@@ -18,21 +18,56 @@
     ],
     "scroll": "Kaydır"
   },
-  "scenario": {
-    "eyebrow": "Bölüm 2",
-    "headline": "Her Av Bir Senaryoyla Başlar.",
-    "subline": [
-      "Avcılar doğaçlama yapmaz. Av başlamadan önce",
-      "olası her hamleye hazırlanırlar."
-    ],
-    "featuresLabel": "Özellikler",
-    "features": [
-      {
-        "index": "01",
-        "label": "Alım satım senaryoları kurun"
-      }
-    ]
-  },
+  "panels": [
+    {
+      "eyebrow": "Bölüm 2",
+      "headline": "Her Av Bir Senaryoyla Başlar.",
+      "subline": [
+        "Avcılar doğaçlama yapmaz. Av başlamadan önce",
+        "olası her hamleye hazırlanırlar."
+      ],
+      "featuresLabel": "Özellikler",
+      "icon": "compass",
+      "features": [
+        {
+          "index": "01",
+          "label": "Alım satım senaryoları kurun"
+        }
+      ]
+    },
+    {
+      "eyebrow": "Bölüm 3",
+      "headline": "Av Saatlerini Bilin",
+      "subline": [
+        "Her işlem seansını izleyin ve stratejinizin",
+        "en iyi ne zaman çalıştığını keşfedin."
+      ],
+      "featuresLabel": "Özellikler",
+      "icon": "session",
+      "features": [
+        {
+          "index": "02",
+          "label": "Her işlem seansını izleyin"
+        }
+      ]
+    },
+    {
+      "eyebrow": "Bölüm 4",
+      "headline": "Vurmadan Önce Karar Ver.",
+      "subline": [
+        "Kurallarını piyasa hareket etmeden önce belirle,",
+        "böylece an geldiğinde ne yapacağını çoktan bilirsin."
+      ],
+      "featuresLabel": "Özellikler",
+      "icon": "timer",
+      "features": [
+        {
+          "index": "03",
+          "label": "Piyasa hareket etmeden tepkini hazırla"
+        }
+      ]
+    }
+  ],
   "a11y": {
     "primaryNav": "Ana gezinme"
   }

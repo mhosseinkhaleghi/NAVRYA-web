@@ -25,11 +25,11 @@ const BASE = process.argv[2] ?? "http://localhost:4173";
 const OUT = process.argv[3] ?? join(ROOT, "preview", "navrya-hero.html");
 
 const LOCALES = [
-  { code: "en", label: "EN" },
-  { code: "tr", label: "TR" },
-  { code: "fa", label: "FA" },
-  { code: "ar", label: "AR" },
-  { code: "es", label: "ES" },
+  { code: "en", dir: "ltr" },
+  { code: "tr", dir: "ltr" },
+  { code: "fa", dir: "rtl" },
+  { code: "ar", dir: "rtl" },
+  { code: "es", dir: "ltr" },
 ];
 
 const text = async (url) => {
@@ -122,7 +122,10 @@ async function inlineScene(scene, seen) {
     const keep = sources.find((s) => /-720\.webm"/.test(s));
     if (!keep) continue;
 
-    const src = /src="([^"]+)"/.exec(keep)[1];
+    // The 540p proxy, not the shipping rendition. Five plates at 720p would
+    // put the single file past 15MB, and every byte here is a byte the viewer
+    // waits on before anything renders.
+    const src = /src="([^"]+)"/.exec(keep)[1].replace("-720.webm", "-540.webm");
     seen.add(src);
     const inlined =
       `<source src="${await dataUri(src)}" type="video/webm" ` +
@@ -133,9 +136,10 @@ async function inlineScene(scene, seen) {
     scene = scene.replace(video, next);
   }
 
-  // The stills arrive as custom properties on inline style attributes.
+  // The stills arrive as custom properties on inline style attributes, and
+  // take the matching 540p proxy so a handover never pops in sharpness.
   for (const ref of new Set(scene.match(/url\(&quot;\/scene\/[^&]+&quot;\)/g) ?? [])) {
-    const file = /(\/scene\/[^&]+)/.exec(ref)[1];
+    const file = /(\/scene\/[^&]+)/.exec(ref)[1].replace(/\.jpg$/, "-540.jpg");
     seen.add(file);
     scene = scene.replaceAll(ref, `url(&quot;${await dataUri(file)}&quot;)`);
   }
@@ -150,6 +154,21 @@ const HARNESS_CSS = `
 #nv-scene{position:fixed;inset:0;z-index:0}
 #nv-scene>div{position:absolute;inset:0}
 .nv-locale>div{background-color:transparent}
+`;
+
+/**
+ * Runs before the plates parse. Without it the scene renders left-to-right and
+ * then snaps mirrored the moment the harness sets `dir`, which looks exactly
+ * like the footage jumping sideways mid-play.
+ */
+const HARNESS_DIR = `
+(function(){
+  var DIRS=${JSON.stringify(Object.fromEntries(LOCALES.map((l) => [l.code, l.dir])))};
+  var code=location.hash.slice(1);
+  if(!DIRS[code]) code='en';
+  document.documentElement.lang=code;
+  document.documentElement.dir=DIRS[code];
+})();
 `;
 
 const HARNESS_JS = `
@@ -168,9 +187,6 @@ const HARNESS_JS = `
     if (panes[i].dataset.loc===start) panes[i].hidden=false;
     else panes[i].remove();
   }
-  var scene=document.getElementById('nv-scene');
-  var live=document.querySelector('.nv-locale');
-  if (scene && live) scene.dir=live.dir;
 
   // In production a language link is a real navigation: the page reloads and
   // the whole sequence replays from the first frame. Reload here too, rather
@@ -223,7 +239,7 @@ async function main() {
     panes.push(pane(code, dir, taken.stripped));
   }
 
-  const sceneLayer = scene ? `<div id="nv-scene" dir="ltr">${scene}</div>\n` : "";
+  const sceneLayer = scene ? `<div id="nv-scene">${scene}</div>\n` : "";
 
   // Document order matters here. The controller runs first so it marks the
   // document held-back before anything paints; then the plates, whose data URIs
@@ -232,6 +248,7 @@ async function main() {
   // goes last, because it prunes panes that must already exist.
   const page = `<title>Navrya — Hero Section</title>
 <style>${inlined.css}${HARNESS_CSS}</style>
+<script>${HARNESS_DIR}</script>
 ${siteScripts.join("\n")}
 ${sceneLayer}${panes.join("\n")}
 <script>${HARNESS_JS}</script>`;

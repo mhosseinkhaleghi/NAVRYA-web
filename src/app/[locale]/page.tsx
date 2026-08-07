@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Hero } from "@/components/hero/Hero";
 import { Scene } from "@/components/frame/Scene";
 import { Stage } from "@/components/frame/Stage";
-import { ScenarioSection } from "@/components/scenario/ScenarioSection";
+import { PanelSection } from "@/components/panel/PanelSection";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
@@ -23,7 +23,14 @@ export default async function HomePage({
       <Scene />
       <SiteHeader locale={locale} dictionary={dictionary} active="home" />
       <Hero dictionary={dictionary} />
-      <ScenarioSection dictionary={dictionary} />
+      {dictionary.panels.map((panel, index) => (
+        <PanelSection
+          key={panel.eyebrow}
+          id={`p${index + 1}`}
+          panel={panel}
+          scrollLabel={dictionary.hero.scroll}
+        />
+      ))}
     </Stage>
   );
 }

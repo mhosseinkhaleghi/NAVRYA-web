@@ -6,7 +6,7 @@
  * further in than the hero's, which is what keeps it clear of the deer.
  * -------------------------------------------------------------------------- */
 
-.scenario {
+.panel {
   position: absolute;
   inset: 0;
   z-index: 2;
@@ -14,17 +14,46 @@
   align-content: center;
   justify-items: start;
   padding-inline: max(var(--gutter), var(--s2-inline-start)) var(--gutter);
-  /* The block centres against the frame, but the cue is pinned to the bottom of
-   * it — so the centring gives the cue its room back, or the two collide on any
-   * frame shorter than the comp's. */
-  padding-block: env(safe-area-inset-top, 0px)
-    calc(clamp(3rem, 5.5vw, 6rem) + env(safe-area-inset-bottom, 0px));
+  /* The block centres against the frame, but the bar sits over the top of it
+   * and the cue is pinned to the bottom, so the centring gives both their room
+   * back. Panels differ in height — a feature label that wraps to two lines
+   * makes one of them noticeably taller — and without this the tallest one
+   * grows straight up into the navigation. */
+  padding-block: calc(var(--header-h) + env(safe-area-inset-top, 0px))
+    calc(clamp(5.5rem, 9.5vw, 10rem) + env(safe-area-inset-bottom, 0px));
   pointer-events: none;
 }
 
-/* Nothing here exists until the deer walks in. */
-.scenario:not([data-active]) {
+/* A panel does not exist before its plate begins, or after it has scrolled
+ * back out. */
+.panel:not([data-active]) {
   visibility: hidden;
+}
+
+/* -----------------------------------------------------------------------------
+ * Exit.
+ *
+ * The panel leaves upward over the plate's held closing frame, then the next
+ * plate dissolves in. `--exit` is written by the controller from scroll
+ * position, so it comes straight back down if the wheel does.
+ * -------------------------------------------------------------------------- */
+
+.panel {
+  --exit: 0;
+}
+
+.content {
+  opacity: calc(1 - var(--exit));
+  transform: translateY(calc(var(--exit) * -22vh));
+}
+
+/* The cue carries both its own reveal and the panel's exit, so the two
+ * compose into one transform rather than overwriting each other. */
+.panel .cue[data-reveal-group] {
+  opacity: calc(var(--r, 1) * (1 - var(--exit)));
+  transform: translateY(
+    calc((1 - var(--r, 1)) * 1.5rem + var(--exit) * -8vh)
+  );
 }
 
 .content {
@@ -40,7 +69,7 @@
  * forwards. No transitions and no keyframes: the scroll *is* the clock.
  * -------------------------------------------------------------------------- */
 
-.scenario [data-reveal-group] {
+.panel [data-reveal-group] {
   opacity: var(--r, 1);
   transform: translateY(calc((1 - var(--r, 1)) * 1.5rem));
   will-change: opacity, transform;
@@ -179,8 +208,7 @@
   margin-block-start: calc(var(--s2-gap) * 0.9);
   padding: 0;
   list-style: none;
-  inline-size: var(--s2-card-w);
-  max-inline-size: 100%;
+  inline-size: 100%;
 }
 
 /*
@@ -201,6 +229,13 @@
   align-items: center;
   gap: clamp(0.9rem, 1.8vw, 2rem);
   padding: clamp(0.9rem, 1.9vw, 2.1rem) clamp(1rem, 1.9vw, 2.2rem);
+
+  /* The comps draw a slightly different card per section, because the label
+   * decides the width. Sizing to content with a floor reproduces all three
+   * without hard-coding any of them. */
+  inline-size: fit-content;
+  min-inline-size: var(--s2-card-w);
+  max-inline-size: 100%;
 
   background:
     linear-gradient(var(--edge), var(--edge)) var(--cut) 0 /
@@ -412,12 +447,13 @@
  * -------------------------------------------------------------------------- */
 
 @media (max-width: 1023px) {
-  .scenario {
+  .panel {
     position: relative;
     inset: auto;
     grid-row: 2;
     grid-column: 1;
     min-block-size: 0;
+    /* The bar is a row of the grid here, not an overlay, so no reserve. */
     padding-block: 0
       calc(
         var(--scroll-reserve) + clamp(1.5rem, 3vw, 3.25rem) +
