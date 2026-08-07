@@ -68,6 +68,10 @@
       ]
     }
   ],
+  "closing": {
+    "headline": "Her Ok Öğrenir",
+    "body": "Yapay zekân nasıl avlandığını öğrenir. Piyasayı senin gözlerinden görür, her dersi hatırlar ve sonraki her atışı daha isabetli kılar."
+  },
   "a11y": {
     "primaryNav": "Ana gezinme"
   }

@@ -43,9 +43,17 @@ body::-webkit-scrollbar {
   display: none;
 }
 
-/* The timeline is held shut until the opening beat has played out, so the
- * first scroll always starts from the composition at rest. */
-html[data-intro="armed"] {
+/*
+ * The timeline is held shut until the opening plate reaches its *last* frame,
+ * which is the frame the second plate opens on.
+ *
+ * This is a beat longer than the interface reveal at 4.33s, and deliberately
+ * so. Unlocking with the reveal let the viewer scroll away from the middle of
+ * the opening shot, and the second plate would take over from a frame most of
+ * a second further on — the sequence visibly skipped. Holding to the end means
+ * the first scroll always continues the shot rather than cutting into it.
+ */
+html[data-timeline="held"] {
   overflow-y: hidden;
 }
 

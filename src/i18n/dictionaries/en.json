@@ -68,6 +68,10 @@
       ]
     }
   ],
+  "closing": {
+    "headline": "Every Arrow Learns",
+    "body": "Your AI learns how you hunt. It sees the market through your eyes, remembers every lesson, and makes every next shot more precise."
+  },
   "a11y": {
     "primaryNav": "Primary navigation"
   }

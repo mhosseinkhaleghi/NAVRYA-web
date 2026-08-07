@@ -26,7 +26,7 @@
   /* How much document the timeline is spread over, in vh. This single number
    * sets the pace of the whole sequence — the controller works in scroll
    * *position*, so stretching it slows every beat proportionally. */
-  --timeline-vh: 1530;
+  --timeline-vh: 2560;
   --gutter: clamp(1.25rem, 2.87vw, 3.25rem);
   --header-h: clamp(4rem, 6.04vw, 6.75rem);
   --nav-gap: clamp(0.5rem, 1.26vw, 1.5rem);
@@ -65,6 +65,14 @@
   --s2-rule-headline: clamp(6rem, 15.1vw, 17rem);
   --s2-card-w: clamp(17rem, 33.4vw, 38rem);
   --s2-gap: clamp(0.6rem, 1.15vw, 1.35rem);
+
+  /* ── Section 5 — the closing scene ──────────────────────────────────────── */
+  /* Centred rather than railed, and set between the hero's scale and the
+   * panels': it is one statement across the middle of the frame, not a block
+   * of copy on a rail. */
+  --fs-s5-display: clamp(2.1rem, 5.86vw, 8.25rem);
+  --fs-s5-body: clamp(0.9375rem, 1.32vw, 1.6rem);
+  --s5-measure: clamp(20rem, 46.6vw, 52rem);
 
   /* ── Scroll indicator ───────────────────────────────────────────────────── */
   --scroll-bottom: clamp(1.5rem, 3.8vw, 4.5rem);
@@ -113,6 +121,7 @@
    * cannot sit at the Latin caption size and stay legible. */
   --fs-micro: clamp(0.75rem, 0.95vw, 1.1rem);
   --fs-s2-display: clamp(1.8rem, 4.7vw, 6.5rem);
+  --fs-s5-display: clamp(1.9rem, 5.2vw, 7.25rem);
 }
 
 /* -----------------------------------------------------------------------------
@@ -151,11 +160,16 @@
     --s2-rule-eyebrow: clamp(4rem, 20vw, 7rem);
     --s2-rule-headline: clamp(5.5rem, 30vw, 10rem);
     --s2-card-w: 100%;
+
+    --fs-s5-display: clamp(2.1rem, 10vw, 4.5rem);
+    --fs-s5-body: clamp(0.9375rem, 3.9vw, 1.25rem);
+    --s5-measure: 100%;
   }
 
   [dir="rtl"] {
     --fs-display: clamp(2.2rem, 11.4vw, 4.9rem);
     --fs-s2-display: clamp(1.7rem, 7.8vw, 3.5rem);
+    --fs-s5-display: clamp(1.9rem, 8.7vw, 4rem);
     --fs-micro: clamp(0.7rem, 3vw, 0.9rem);
     --tracking-display: 0;
   }
@@ -188,6 +202,8 @@
     --fs-s2-index: clamp(1.2rem, 4.6vh, 2.2rem);
     --fs-s2-feature: clamp(0.875rem, 2.8vh, 1.15rem);
     --s2-gap: clamp(0.35rem, 1.2vh, 0.8rem);
+    --fs-s5-display: clamp(1.5rem, 6.6vh, 3.25rem);
+    --fs-s5-body: clamp(0.8125rem, 2.4vh, 1.05rem);
   }
 }
 

@@ -15,16 +15,20 @@
 }
 
 /*
- * The plates are stacked, and handovers are a short cross-dissolve driven by
- * scroll — `--o` is the 0–1 opacity the controller writes onto each one.
+ * The plates are stacked and handovers are cuts — `--o` is the 0–1 opacity the
+ * controller writes onto each one, and it only ever writes 0 or 1.
  *
- * A hard cut would be the obvious choice, since each plate's closing frame is
- * framed identically to the next one's opening frame. Measured, though, they
- * are not identical: the two renders draw the hunter's silhouette slightly
- * differently, and at a cut that reads as the figure twitching. The plates are
- * pixel-aligned — a translation search found the best match at exactly (0,0) —
- * so there is nothing to correct geometrically. A dissolve of about 15vh of
- * scroll is what actually hides it.
+ * The clips are pieces of one continuous render, so a plate's closing frame and
+ * the next plate's opening frame are the same frame: under 2% of pixels differ
+ * by more than 12/255, and that residue is codec noise along the silhouette
+ * edge. There is nothing for a dissolve to hide.
+ *
+ * There was one here, and it was the cause of the very artefact it was meant to
+ * fix. The outgoing plate rests on its closing frame while the incoming plate
+ * is already running, so at the midpoint of a cross-fade there are two hunters
+ * on screen a few frames apart, at half opacity each. Cutting keeps exactly one
+ * plate on the compositor, and at the instant of the cut the two frames are
+ * identical, so the figure does not move at all.
  */
 .plate {
   position: absolute;
@@ -99,6 +103,21 @@
 
   [data-plate-id="prey"] .still {
     background-position: 52% center;
+  }
+
+  /* The closing plate is a single horizontal object that runs nearly the full
+   * width of frame. Any crop takes the head or the fletching off, and section 5
+   * is composed around the whole of it — headline above, text below — so it
+   * stays contained at every aspect and letterboxes into the page's own black,
+   * which is where the shot ends up anyway. */
+  [data-plate-id="arrow"] .video {
+    object-fit: contain;
+    object-position: center;
+  }
+
+  [data-plate-id="arrow"] .still {
+    background-size: contain;
+    background-position: center;
   }
 }
 

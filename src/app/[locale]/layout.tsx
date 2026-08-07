@@ -48,9 +48,13 @@ export default async function LocaleLayout({
           href="/scene/hunter-dawn-first.jpg"
           fetchPriority="high"
         />
-        {/* The plate itself is next in line, and nothing else competes: every
-         * other plate is preload="none" until the controller asks for it. */}
-        <link rel="preload" as="video" href="/scene/hunter-dawn-1080.webm" type="video/webm" />
+        {/* The plate itself is not preloaded here. A media element fetches with
+         * range requests and will not always reuse a `rel=preload` entry, so
+         * the hint can cost a second full download of the one file the opening
+         * beat is waiting on. `preload="auto"` on the element itself starts the
+         * fetch a few milliseconds later and only once, and nothing competes
+         * with it: every other plate is `preload="none"` until the controller
+         * asks for it. */}
       </head>
       <body>
         {/* Runs before the composition is painted, so the opening beat can

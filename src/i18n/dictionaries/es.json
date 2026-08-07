@@ -68,6 +68,10 @@
       ]
     }
   ],
+  "closing": {
+    "headline": "Cada Flecha Aprende",
+    "body": "Tu IA aprende cómo cazas. Ve el mercado con tus ojos, recuerda cada lección y hace que cada disparo siguiente sea más preciso."
+  },
   "a11y": {
     "primaryNav": "Navegación principal"
   }

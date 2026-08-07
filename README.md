@@ -1,6 +1,6 @@
 # Navrya — web
 
-A premium cinematic marketing site. **Current scope: sections 1–4.**
+A premium cinematic marketing site. **Current scope: sections 1–5.**
 
 ```bash
 npm install
@@ -31,41 +31,67 @@ sequence proportionally.
 
 ## The sequence
 
-One continuous shot in five plates, driven end to end by scroll **position** —
-so it runs backwards exactly as readily as forwards. Nothing latches, nothing
-fires once. `components/frame/stage-script.ts` maps scroll onto the beats:
+One continuous shot in six plates, driven end to end by scroll **position** — so
+it runs backwards exactly as readily as forwards. Nothing latches, nothing fires
+once. `components/frame/stage-script.ts` maps scroll onto the beats:
 
 | beat | scroll | what happens |
 | ---- | ------ | ------------ |
-| — | on load | `hunter-dawn` plays itself. At **4.33s** the hunter turns to face the viewer and the interface rises into frame. Until then the timeline is locked shut. |
-| `turn` | 140vh | `hunter-turn` scrubs: he turns back to the valley. |
-| `exit1` | 90vh | The hero block leaves, over the held closing frame. |
+| — | on load | `hunter-dawn` plays. At **4.33s** the hunter turns to face the viewer and the interface rises into frame; the timeline unlocks when the plate reaches its last frame. |
+| `turn` | 210vh | `hunter-turn` scrubs: he turns back to the valley. The hero block leaves over it. |
 | `prey` | 380vh | `valley-prey` scrubs. The deer clears the frame edge at **0.40s** and section 2's headline lands on it; at **3.60s** it drops its head to graze and the rest of the panel assembles. |
-| `exit2` | 90vh | Section 2 leaves. |
-| `draw` | 340vh | `hunter-draw` scrubs. The draw settles into the aim at **2.50s** and section 3 arrives. |
-| `exit3` | 90vh | Section 3 leaves. |
-| `strike` | 440vh | `hunter-strike` scrubs. The camera reaches the draw at **4.00s**, about 70% back, and section 4 arrives. |
-| `rest` | 50vh | Tail room, so the last reveal is not pinned to the very bottom. |
+| `draw` | 380vh | `hunter-draw` scrubs. The draw settles into the aim at **2.50s** and section 3 arrives. Section 2 leaves over it. |
+| `strike` | 520vh | `hunter-strike` scrubs. The camera reaches the draw at **4.00s**, about 70% back, and section 4 arrives. Section 3 leaves over it. |
+| `arrow` | 470vh | `arrow-learns` **plays**. Section 4 leaves over the release; at **2.00s** the arrow is dead centre and section 5's headline arrives above it; from **5.10s** the valley falls away and the paragraph fades up with it. |
+| `learn` | 560vh | The paragraph lights up a word at a time, and the edge light comes up with it. |
+| `rest` | 40vh | Tail room, so the last reveal is not pinned to the very bottom. |
 
-The shape repeats: a plate scrubs, its panel arrives on a cue taken from the
-footage, the plate **holds its closing frame** while the panel scrolls back out,
-then the next plate takes over. Sections 2, 3 and 4 are one component rendered
-three times — `components/panel/PanelSection` — differing only in copy and icon.
+The shape repeats: a plate runs, its panel arrives on a cue taken from the
+footage, and the panel leaves again **over the next plate**, which is already
+moving. There are no held frames anywhere in the chain — a still image followed
+by sudden motion reads as a jump however well the frames match. Sections 2, 3
+and 4 are one component rendered three times —
+`components/panel/PanelSection` — differing only in copy and icon.
 
-Cue points are stored as *fractions* of each plate rather than seconds, so the
-same numbers still land when there is no video at all: under reduced motion
-nothing downloads, the stills carry the sequence, and scroll still moves the
-story forward.
+Cue points for the scrubbed plates are stored as *fractions* of each plate
+rather than seconds, so the same numbers still land when there is no video at
+all: under reduced motion nothing downloads, the stills carry the sequence, and
+scroll still moves the story forward.
 
-### Handovers are dissolves, not cuts
+### The closing plate plays
 
-Each plate is framed identically to the next, so a cut looks like the obvious
-choice. Measured, it is not: the renders draw the hunter's silhouette slightly
-differently between clips, and at a cut that reads as the figure twitching. The
-plates are pixel-aligned — a translation search over ±6px found the best match
-at exactly (0,0) — so there is nothing to correct geometrically. A
-cross-dissolve of ~15vh of scroll (`PLATE_FADE`) is what actually hides it, and
-it is driven by scroll position like everything else, so it reverses too.
+`arrow-learns` is the one plate scroll does not scrub. An arrow that waits on
+the wheel is not a loosed arrow, so scroll decides only whether that plate is on
+screen: crossing into the beat looses it and it flies in its own time, and
+scrolling back out of the beat rewinds it and hands the frame back to
+`hunter-strike`, so it is loosed again on the way down. Section 5's two
+entrances are cued off the footage's clock rather than scroll position for the
+same reason.
+
+There is one concession. A viewer who scrolls faster than the arrow flies would
+otherwise arrive at the black frame while the arrow was still mid-air, so scroll
+position acts as a forward-only floor on the playhead: scroll ahead of it and it
+catches up, leave it alone and it simply plays.
+
+### Handovers are cuts
+
+The clips are pieces of one continuous render, cut into pieces, so a plate's
+closing frame *is* the next plate's opening frame — measured across all five
+handovers, between 0.4% and 1.8% of pixels differ by more than 12/255, and that
+residue is codec noise along the silhouette edge rather than anything that
+moves.
+
+There was a cross-dissolve here, and it caused the very artefact it was meant to
+fix. The outgoing plate rests on its closing frame while the incoming plate is
+already running, so at the midpoint of a fade there are literally two hunters on
+screen a few frames apart, at half opacity each. Exactly one plate is composited
+at any moment now — the controller writes only 0 or 1 to `--o`, never anything
+between — and at the instant of the cut the two frames are identical.
+
+The same reasoning governs the encode. A plate that is trimmed in a separate
+pass carries a second generation of quantisation noise, and that noise is
+visible as a shimmer at the handover into it, so `encode-scene.sh` takes the
+trim length as an argument and does it in the delivery encode.
 
 ## The plates
 

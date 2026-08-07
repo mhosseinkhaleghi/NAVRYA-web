@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { ArrowSection } from "@/components/arrow/ArrowSection";
 import { Hero } from "@/components/hero/Hero";
 import { Scene } from "@/components/frame/Scene";
 import { Stage } from "@/components/frame/Stage";
@@ -31,6 +32,7 @@ export default async function HomePage({
           scrollLabel={dictionary.hero.scroll}
         />
       ))}
+      <ArrowSection closing={dictionary.closing} />
     </Stage>
   );
 }

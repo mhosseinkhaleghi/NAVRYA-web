@@ -1,0 +1,215 @@
+/* -----------------------------------------------------------------------------
+ * Section 5 — the closing scene.
+ *
+ * Unlike the panels this one is centred rather than railed, because the subject
+ * it is composed around is centred: the arrow lies across the middle of frame,
+ * the headline sits above it and the paragraph below.
+ * -------------------------------------------------------------------------- */
+
+.arrow {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+
+  /* Written by the controller. `--head` and `--body` come off the plate's own
+   * clock, `--lit` and `--glow` off scroll position. */
+  --head: 0;
+  --body: 0;
+  --lit: 0;
+  --glow: 0;
+}
+
+.arrow:not([data-active]) {
+  visibility: hidden;
+}
+
+/* -----------------------------------------------------------------------------
+ * The reserved band.
+ *
+ * The plate is letterboxed to 16:9, so its rendered height is `min(frame,
+ * 56.25vw)` — known exactly, at any viewport. The arrow spans about 15% of that
+ * height and is centred a little above the middle of the plate, so a band of
+ * 22% pulled up by 2.2% clears the fletching and the head at every aspect from
+ * ultrawide down to portrait, with no media query anywhere.
+ * -------------------------------------------------------------------------- */
+
+.frame {
+  --plate-h: min(var(--frame-h), 56.25vw);
+  --band: calc(var(--plate-h) * 0.22);
+
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-rows: 1fr var(--band) 1fr;
+  justify-items: center;
+  padding-inline: var(--gutter);
+  /* Half of this shifts the band's centre up onto the arrow's own axis. */
+  padding-block-end: calc(var(--plate-h) * 0.044);
+}
+
+/* ── Headline ─────────────────────────────────────────────────────────────── */
+
+.headline {
+  grid-row: 1;
+  align-self: end;
+  margin: 0;
+  margin-block-end: clamp(0.75rem, 2.4vh, 2.5rem);
+  max-inline-size: 22ch;
+  color: var(--c-cream);
+  font-family: var(--font-display);
+  font-size: var(--fs-s5-display);
+  font-weight: 400;
+  line-height: 1.04;
+  letter-spacing: var(--tracking-display);
+  text-align: center;
+  text-wrap: balance;
+  text-shadow: var(--text-lift);
+
+  /* The same resolve the hero headline makes, on the plate's clock instead of
+   * a keyframe — so it runs backwards if the viewer scrolls back off the beat. */
+  opacity: var(--head);
+  transform: translateY(calc((1 - var(--head)) * 0.34em));
+  filter: blur(calc((1 - var(--head)) * 12px));
+  will-change: opacity, transform, filter;
+}
+
+[dir="rtl"] .headline {
+  line-height: 1.35;
+}
+
+/* ── The paragraph ────────────────────────────────────────────────────────── */
+
+.body {
+  grid-row: 3;
+  align-self: start;
+  margin: 0;
+  margin-block-start: clamp(0.9rem, 3vh, 3rem);
+  max-inline-size: var(--s5-measure);
+  font-family: var(--font-sans);
+  font-size: var(--fs-s5-body);
+  font-weight: 300;
+  line-height: 1.75;
+  text-align: center;
+  text-wrap: pretty;
+
+  opacity: var(--body);
+  will-change: opacity;
+}
+
+/*
+ * One word, lighting itself.
+ *
+ * `--lit` is a single number the controller advances across the whole
+ * paragraph; `--i` is the word's own position in it, set once at render. The
+ * difference, divided by how many words should be mid-transition at a time, is
+ * this word's own 0–1 progress — so the sentence brightens left to right (right
+ * to left in Arabic and Persian, which the writing mode handles for free) with
+ * no per-element work at all.
+ */
+.word {
+  --w: clamp(0, calc((var(--lit) - var(--i)) / 2.6), 1);
+
+  color: rgb(255 255 255 / calc(0.17 + 0.83 * var(--w)));
+  text-shadow: 0 0 calc(var(--w) * 0.7em) rgb(255 255 255 / calc(var(--w) * 0.13));
+}
+
+/* -----------------------------------------------------------------------------
+ * The edge light.
+ *
+ * A single conic gradient, larger than the frame and slowly turning, masked so
+ * that only a band around the perimeter is painted — the middle stays perfectly
+ * clear, which is what keeps it an ambient light around the scene rather than a
+ * tint over it. `screen` means it can only ever add light to the plate, never
+ * take any away.
+ *
+ * No blur filter: the mask's own falloff is a 45% soft ramp and the gradient's
+ * hues interpolate continuously, so the softness costs nothing per frame.
+ * -------------------------------------------------------------------------- */
+
+.glow {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: calc(var(--glow) * 0.72);
+  mix-blend-mode: screen;
+  /* The clear middle has to stay genuinely clear — the arrow and both blocks of
+   * type live in it — and the perimeter has to actually read as lit. So the
+   * ramp starts outside the type and reaches full before the edge, rather than
+   * spreading the whole way across and washing the scene. */
+  -webkit-mask-image: radial-gradient(118% 118% at 50% 50%, transparent 42%, #000 90%);
+  mask-image: radial-gradient(118% 118% at 50% 50%, transparent 42%, #000 90%);
+  will-change: opacity;
+}
+
+.glow::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  inline-size: 150vmax;
+  block-size: 150vmax;
+  margin: -75vmax;
+  background: conic-gradient(
+    from 0deg,
+    #3b6dff,
+    #8b5cf6,
+    #e0489f,
+    #f0913a,
+    #f5d67b,
+    #35d6c4,
+    #2ea8f5,
+    #3b6dff
+  );
+  animation: nv-glow-turn 22s linear infinite;
+}
+
+@keyframes nv-glow-turn {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* -----------------------------------------------------------------------------
+ * Compact frames.
+ *
+ * The composition is unchanged — it is already centred and already keyed to the
+ * plate rather than the viewport — but the paragraph gives up its measure and
+ * the band is worth a little more room, because a phone renders the plate as a
+ * short strip and the two text blocks have the rest of the frame to spread into.
+ * -------------------------------------------------------------------------- */
+
+@media (max-width: 767px) {
+  .frame {
+    --band: calc(var(--plate-h) * 0.3);
+  }
+
+  .body {
+    max-inline-size: 100%;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+ * Reduced motion.
+ *
+ * No plate downloads, so there is no clock to cue from — the stills carry the
+ * scene and the words simply arrive with it. The edge light stops turning; it
+ * still comes up with scroll, because that is the viewer's own doing.
+ * -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .headline {
+    filter: none;
+    transform: none;
+  }
+
+  .glow::before {
+    animation: none;
+  }
+}

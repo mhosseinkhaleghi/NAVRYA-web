@@ -2,7 +2,7 @@
 #
 # Turns a raw scene plate into the renditions the site ships.
 #
-#   scripts/encode-scene.sh <source.mp4> <slug> [mode]
+#   scripts/encode-scene.sh <source.mp4> <slug> [mode] [seconds]
 #
 #   mode = play   (default) the plate is played, not scrubbed. Long GOP, and a
 #                 WebM alongside the MP4 because VP9 wins on this content.
@@ -11,6 +11,15 @@
 #                 that decides whether scrubbing feels attached to the wheel or
 #                 laggy behind it. MP4 only: all-intra VP9 comes out *larger*
 #                 than H.264 here, and H.264 plays everywhere.
+#
+#   seconds       optional: trim the plate to this length. Several of the
+#                 sources end on a run of identical frames, and shipping them
+#                 is pure weight — the timeline holds the last frame for as
+#                 long as the beat needs anyway. Trimming here rather than in a
+#                 separate pass matters: an intermediate file is a second
+#                 generation of lossy encoding, and the extra quantisation
+#                 noise shows up as a shimmer at the handover into this plate,
+#                 where the frame is meant to be identical to the one before it.
 #
 # Writes into public/scene/:
 #   <slug>-1080.mp4  ·  <slug>-720.mp4   (+ .webm in play mode)
@@ -26,22 +35,33 @@
 
 set -euo pipefail
 
-SRC=${1:?usage: encode-scene.sh <source> <slug> [play|scrub]}
-SLUG=${2:?usage: encode-scene.sh <source> <slug> [play|scrub]}
+SRC=${1:?usage: encode-scene.sh <source> <slug> [play|scrub] [seconds]}
+SLUG=${2:?usage: encode-scene.sh <source> <slug> [play|scrub] [seconds]}
 MODE=${3:-play}
+TRIM=${4:-}
 
 OUT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/public/scene"
 mkdir -p "$OUT"
 
 case "$MODE" in
-  play)  GOP=48; H_1080=23; H_720=25; V_1080=34; V_720=37 ;;
+  play)  GOP=48; H_1080=23; H_720=25; V_1080=32; V_720=35 ;;
   scrub) GOP=6;  H_1080=23; H_720=25; V_1080=32; V_720=34 ;;
   *) echo "unknown mode: $MODE (want play or scrub)" >&2; exit 1 ;;
 esac
 
+# Applied to every encode below, so the trim and the delivery encode are the
+# same generation.
+CUT=()
+[ -n "$TRIM" ] && CUT=(-t "$TRIM")
+
 DUR=$(ffprobe -v error -select_streams v:0 -show_entries format=duration -of csv=p=0 "$SRC")
+FPS=$(ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate -of csv=p=0 "$SRC")
 FRAMES=$(ffprobe -v error -select_streams v:0 -count_frames \
   -show_entries stream=nb_read_frames -of csv=p=0 "$SRC")
+if [ -n "$TRIM" ]; then
+  DUR=$TRIM
+  FRAMES=$(awk -v t="$TRIM" -v f="$FPS" 'BEGIN { split(f, a, "/"); printf "%d", t * a[1] / a[2] }')
+fi
 echo "$SLUG · ${DUR}s · ${FRAMES} frames · mode=$MODE (gop=$GOP)"
 
 # Both codecs, always. VP9 is the smaller file when the GOP is long, H.264 wins
@@ -49,10 +69,10 @@ echo "$SLUG · ${DUR}s · ${FRAMES} frames · mode=$MODE (gop=$GOP)"
 # pair costs repository size, not bandwidth, and it is what lets a Firefox or a
 # Safari each get a plate they can decode.
 enc() { # width  height  h264-crf  vp9-crf  label
-  ffmpeg -v error -y -i "$SRC" -an -vf "scale=$1:$2:flags=lanczos" \
+  ffmpeg -v error -y -i "$SRC" "${CUT[@]}" -an -vf "scale=$1:$2:flags=lanczos" \
     -c:v libx264 -preset slow -crf "$3" -g "$GOP" -keyint_min "$GOP" \
     -profile:v high -pix_fmt yuv420p -movflags +faststart "$OUT/$SLUG-$5.mp4"
-  ffmpeg -v error -y -i "$SRC" -an -vf "scale=$1:$2:flags=lanczos" \
+  ffmpeg -v error -y -i "$SRC" "${CUT[@]}" -an -vf "scale=$1:$2:flags=lanczos" \
     -c:v libvpx-vp9 -crf "$4" -b:v 0 -row-mt 1 -cpu-used 3 -g "$GOP" -keyint_min "$GOP" \
     -pix_fmt yuv420p "$OUT/$SLUG-$5.webm"
 }
@@ -65,7 +85,7 @@ enc 1280 720  "$H_720"  "$V_720"  720
 # viewer downloads before anything renders. Resolution carries perceived
 # sharpness further than bitrate does, so the proxy keeps 720p and spends the
 # saving on compression instead of pixels.
-ffmpeg -v error -y -i "$SRC" -an -vf "scale=1280:720:flags=lanczos" \
+ffmpeg -v error -y -i "$SRC" "${CUT[@]}" -an -vf "scale=1280:720:flags=lanczos" \
   -c:v libvpx-vp9 -crf 40 -b:v 0 -row-mt 1 -cpu-used 4 \
   -g "$GOP" -keyint_min "$GOP" -pix_fmt yuv420p "$OUT/$SLUG-proxy.webm"
 for edge in first last; do
