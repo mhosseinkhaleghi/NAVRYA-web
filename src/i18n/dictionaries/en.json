@@ -18,6 +18,21 @@
     ],
     "scroll": "Scroll"
   },
+  "scenario": {
+    "eyebrow": "Section 2",
+    "headline": "Every Hunt Begins With a Scenario.",
+    "subline": [
+      "Hunters don’t improvise. They prepare for",
+      "every possible move before the hunt begins."
+    ],
+    "featuresLabel": "Features",
+    "features": [
+      {
+        "index": "01",
+        "label": "Build trading scenarios"
+      }
+    ]
+  },
   "a11y": {
     "primaryNav": "Primary navigation"
   }

@@ -190,7 +190,8 @@
   .header {
     position: relative;
     inset: auto;
-    flex: 0 0 auto;
+    grid-row: 1;
+    grid-column: 1;
     block-size: auto;
     display: grid;
     grid-template-areas:

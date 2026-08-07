@@ -15,12 +15,18 @@
   --c-gold-soft: rgb(216 166 75 / 0.74);
   --c-gold-line: rgb(216 166 75 / 0.38);
   --c-gold-line-faint: rgb(216 166 75 / 0.16);
+  /* Section 2 sits over the sunrise, where a 0.38 hairline disappears. */
+  --c-gold-line-strong: rgb(216 166 75 / 0.62);
   --c-cream: #ede4d2; /* hero headline + wordmark */
   --c-text: #e8e6e0; /* hero sub-headline */
   --c-nav: rgb(237 234 227 / 0.88);
 
   /* ── Frame ──────────────────────────────────────────────────────────────── */
   --frame-h: 100dvh;
+  /* How much document the timeline is spread over, in vh. This single number
+   * sets the pace of the whole sequence — the controller works in scroll
+   * *position*, so stretching it slows every beat proportionally. */
+  --timeline-vh: 640;
   --gutter: clamp(1.25rem, 2.87vw, 3.25rem);
   --header-h: clamp(4rem, 6.04vw, 6.75rem);
   --nav-gap: clamp(0.5rem, 1.26vw, 1.5rem);
@@ -47,6 +53,19 @@
   --hero-gap-headline-rule: clamp(1rem, 2.2vw, 2.6rem);
   --hero-gap-rule-sub: clamp(1.1rem, 2.3vw, 2.75rem);
 
+  /* ── Section 2 — the scenario panel ─────────────────────────────────────── */
+  /* Its own rail: the comp sets this block's leading edge at 758 / 1672, further
+   * in than the hero's, so it clears the deer's path across the meadow. */
+  --s2-inline-start: 45.3%;
+  --fs-s2-display: clamp(2rem, 5.38vw, 7.5rem);
+  --fs-s2-sub: clamp(0.875rem, 1.14vw, 1.35rem);
+  --fs-s2-index: clamp(1.6rem, 3.17vw, 4rem);
+  --fs-s2-feature: clamp(1rem, 1.55vw, 1.85rem);
+  --s2-rule-eyebrow: clamp(4.5rem, 9.7vw, 11rem);
+  --s2-rule-headline: clamp(6rem, 15.1vw, 17rem);
+  --s2-card-w: clamp(17rem, 33.4vw, 38rem);
+  --s2-gap: clamp(0.6rem, 1.15vw, 1.35rem);
+
   /* ── Scroll indicator ───────────────────────────────────────────────────── */
   --scroll-bottom: clamp(1.5rem, 3.8vw, 4.5rem);
   --mouse-w: clamp(1.375rem, 2.21vw, 2.5rem);
@@ -66,6 +85,12 @@
   --text-lift:
     0 0.04em 0.6em rgb(0 0 0 / 0.55),
     0 0.01em 0.08em rgb(0 0 0 / 0.4);
+
+  /* Tracked micro-labels are the smallest thing on screen and land on the
+   * brightest part of the plate, so they need more of a lift than body type. */
+  --text-lift-micro:
+    0 0.05em 0.55em rgb(0 0 0 / 0.85),
+    0 0.02em 0.15em rgb(0 0 0 / 0.6);
 
   --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
   /* Long, decelerating settle — the entrance easing. */
@@ -87,6 +112,7 @@
   /* Arabic script carries its meaning in fine strokes, so the micro label
    * cannot sit at the Latin caption size and stay legible. */
   --fs-micro: clamp(0.75rem, 0.95vw, 1.1rem);
+  --fs-s2-display: clamp(1.8rem, 4.7vw, 6.5rem);
 }
 
 /* -----------------------------------------------------------------------------
@@ -116,10 +142,20 @@
     --scroll-bottom: clamp(1.5rem, 5vw, 2.5rem);
     --mouse-w: clamp(1.4rem, 6.6vw, 1.9rem);
     --tracking-display: -0.01em;
+
+    --s2-inline-start: 0%;
+    --fs-s2-display: clamp(1.9rem, 9vw, 4rem);
+    --fs-s2-sub: clamp(0.875rem, 3.6vw, 1.15rem);
+    --fs-s2-index: clamp(1.5rem, 7vw, 2.5rem);
+    --fs-s2-feature: clamp(0.9375rem, 4vw, 1.25rem);
+    --s2-rule-eyebrow: clamp(4rem, 20vw, 7rem);
+    --s2-rule-headline: clamp(5.5rem, 30vw, 10rem);
+    --s2-card-w: 100%;
   }
 
   [dir="rtl"] {
     --fs-display: clamp(2.2rem, 11.4vw, 4.9rem);
+    --fs-s2-display: clamp(1.7rem, 7.8vw, 3.5rem);
     --fs-micro: clamp(0.7rem, 3vw, 0.9rem);
     --tracking-display: 0;
   }
@@ -132,6 +168,8 @@
     --gutter: clamp(2rem, 4.5vw, 3rem);
     --hero-inline-start: 9%;
     --hero-rule-w: clamp(8rem, 22vw, 14rem);
+    --s2-inline-start: 9%;
+    --s2-card-w: clamp(20rem, 62vw, 30rem);
   }
 }
 
@@ -145,12 +183,18 @@
     --hero-gap-rule-sub: clamp(0.6rem, 2.8vh, 1.6rem);
     --scroll-bottom: clamp(0.75rem, 3vh, 1.5rem);
     --mouse-w: clamp(1.1rem, 4.6vh, 1.6rem);
+    --fs-s2-display: clamp(1.4rem, 6vh, 3rem);
+    --fs-s2-sub: clamp(0.75rem, 2.4vh, 1rem);
+    --fs-s2-index: clamp(1.2rem, 4.6vh, 2.2rem);
+    --fs-s2-feature: clamp(0.875rem, 2.8vh, 1.15rem);
+    --s2-gap: clamp(0.35rem, 1.2vh, 0.8rem);
   }
 }
 
-/* Ultrawides: stop the fluid inset from pushing the block off to the edge. */
+/* Ultrawides: stop the fluid insets from pushing the blocks off to the edge. */
 @media (min-width: 2200px) {
   :root {
     --hero-inline-start: 32%;
+    --s2-inline-start: 40%;
   }
 }

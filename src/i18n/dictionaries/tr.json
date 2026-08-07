@@ -18,6 +18,21 @@
     ],
     "scroll": "Kaydır"
   },
+  "scenario": {
+    "eyebrow": "Bölüm 2",
+    "headline": "Her Av Bir Senaryoyla Başlar.",
+    "subline": [
+      "Avcılar doğaçlama yapmaz. Av başlamadan önce",
+      "olası her hamleye hazırlanırlar."
+    ],
+    "featuresLabel": "Özellikler",
+    "features": [
+      {
+        "index": "01",
+        "label": "Alım satım senaryoları kurun"
+      }
+    ]
+  },
   "a11y": {
     "primaryNav": "Ana gezinme"
   }

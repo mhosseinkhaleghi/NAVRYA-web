@@ -115,7 +115,7 @@
   line-height: 1;
   letter-spacing: var(--tracking-micro);
   text-transform: uppercase;
-  text-shadow: var(--text-lift);
+  text-shadow: var(--text-lift-micro);
   /* Tracking adds a trailing gap after the last glyph; pull it back so the
    * label stays optically centred on the frame axis. */
   margin-inline-end: calc(-1 * var(--tracking-micro));
@@ -183,7 +183,8 @@
   .hero {
     position: relative;
     inset: auto;
-    flex: 1 1 auto;
+    grid-row: 2;
+    grid-column: 1;
     min-block-size: 0;
     padding-block: 0 calc(var(--scroll-reserve) + env(safe-area-inset-bottom, 0px));
   }
@@ -259,8 +260,10 @@
   animation-delay: 0.9s;
 }
 
+/* `backwards`, not `both`: a filled-forwards animation would keep overriding
+ * the cue's opacity and transform, and the exit beat needs them back. */
 :global([data-intro="shown"]) .scroll {
-  animation: hero-lift 1s var(--ease-cine) 1.15s both;
+  animation: hero-lift 1s var(--ease-cine) 1.15s backwards;
 }
 
 /* The headline resolves rather than slides: out of focus and low, into focus
@@ -355,4 +358,35 @@
   :global([data-intro="shown"]) .subline {
     animation: hero-lift 1s var(--ease-cine) 0.66s both;
   }
+}
+
+/* -----------------------------------------------------------------------------
+ * Exit.
+ *
+ * On the second beat the hero block leaves the frame upward while the plate
+ * stays put. `--exit` is a 0–1 progress the controller writes from scroll
+ * position, so the block comes straight back down if the wheel does.
+ * -------------------------------------------------------------------------- */
+
+.content,
+.scroll {
+  --exit: 0;
+  opacity: calc(1 - var(--exit));
+  will-change: opacity, transform;
+}
+
+.content {
+  transform: translateY(calc(var(--exit) * -26vh));
+  filter: blur(calc(var(--exit) * 10px));
+}
+
+/* The cue leaves first and travels least — it is the smallest thing on screen
+ * and would read as debris if it flew the same distance as the headline. */
+.scroll {
+  transform: translateY(calc(var(--exit) * -8vh));
+}
+
+/* Once the block is gone it must stop intercepting anything. */
+.hero[data-gone] {
+  visibility: hidden;
 }

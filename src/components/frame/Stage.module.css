@@ -3,16 +3,35 @@
 .stage {
   position: fixed;
   inset: 0;
+  z-index: 1;
   overflow: hidden;
   isolation: isolate;
   background-color: var(--c-bg);
-  /* On wide frames the header overlays and the scene centres against the whole
-   * viewport, as the comp does. On compact frames the header joins the column
-   * so the scene can never be pushed under it, whatever the bar's height. */
-  display: flex;
-  flex-direction: column;
   /* Fallback for browsers without dvh; the fixed inset already handles the
    * mobile URL-bar case, this just keeps the box explicit. */
   height: 100vh;
   height: var(--frame-h);
+  /* On wide frames the header overlays and the scenes centre against the whole
+   * viewport, as the comps do. On compact frames the header joins the grid as
+   * its own row, so no scene can be pushed under it whatever the bar's height —
+   * and both scenes share the row below it, stacked rather than sequential. */
+  display: grid;
+  grid-template-rows: auto 1fr;
+  grid-template-columns: 100%;
+}
+
+/*
+ * The timeline's length, expressed as scrollable document.
+ *
+ * Nothing is rendered here — this element exists only to give the document
+ * something to scroll through. Its height is what decides how much wheel travel
+ * each beat of the sequence gets; the controller reads scroll *position* and
+ * maps it onto the beats, so retiming the whole sequence is a change to
+ * `--timeline-vh` and nothing else.
+ */
+.track {
+  position: relative;
+  z-index: 0;
+  block-size: calc(var(--timeline-vh) * 1vh);
+  pointer-events: none;
 }

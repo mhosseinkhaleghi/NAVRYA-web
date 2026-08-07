@@ -101,41 +101,43 @@ async function inlineCssAssets(css) {
   return { css, files };
 }
 
-const SCENE_RE = /<div class="[^"]*__scene"[\s\S]*?<\/video><\/div>/;
+/* The whole backdrop layer: three plates, ending on the last one's video. */
+const SCENE_RE = /<div class="[^"]*__scene"[\s\S]*?<\/video><\/div><\/div>/;
 
 /**
  * The backdrop is identical in all five locales, and a data URI cannot be
- * range-requested — inlining it per pane would multiply the whole video by
- * five. It is lifted out once into a shared layer instead, and the switcher
- * re-points its `dir` so the RTL mirror still follows the active locale.
+ * range-requested — inlining it per pane would multiply three videos by five.
+ * It is lifted out once into a shared layer instead, and the switcher re-points
+ * its `dir` so the RTL mirror still follows the active locale.
+ *
+ * Only the 720p WebM of each plate travels. Every byte in the page is a byte
+ * the viewer waits on before anything renders, and the three 1080p renditions
+ * in both codecs would be four times the weight for a preview. CSS still drives
+ * the responsive crop and the whole timeline, so nothing about the behaviour is
+ * approximated — only the resolution.
  */
 async function inlineScene(scene, seen) {
-  const sources = [...scene.matchAll(/<source\b[^>]*>/g)].map((m) => m[0]);
-  // One rendition per codec — WebM for the browsers that prefer it, MP4 for
-  // the ones without a VP9 decoder — and drop the smaller sizes: CSS still
-  // drives the responsive crop, so the compact composition stays testable.
-  const keep = ["video/webm", "video/mp4"]
-    .map((type) => sources.find((s) => s.includes(`type="${type}"`)))
-    .filter(Boolean);
-  if (!keep.length) return scene;
+  for (const video of scene.match(/<video\b[\s\S]*?<\/video>/g) ?? []) {
+    const sources = video.match(/<source\b[^>]*>/g) ?? [];
+    const keep = sources.find((s) => /-720\.webm"/.test(s));
+    if (!keep) continue;
 
-  const inlined = [];
-  for (const s of keep) {
-    const src = /src="([^"]+)"/.exec(s)[1];
-    const type = /type="([^"]+)"/.exec(s)[1];
+    const src = /src="([^"]+)"/.exec(keep)[1];
     seen.add(src);
-    inlined.push(
-      `<source src="${await dataUri(src)}" type="${type}" ` +
-        `media="(prefers-reduced-motion: no-preference)">`,
-    );
+    const inlined =
+      `<source src="${await dataUri(src)}" type="video/webm" ` +
+      `media="(prefers-reduced-motion: no-preference)">`;
+
+    let next = video;
+    for (const s of sources) next = next.replace(s, s === keep ? inlined : "");
+    scene = scene.replace(video, next);
   }
 
-  for (const s of sources) scene = scene.replace(s, keep[0] === s ? inlined.join("") : "");
-
-  const poster = /poster="([^"]+)"/.exec(scene);
-  if (poster) {
-    seen.add(poster[1]);
-    scene = scene.replace(poster[0], `poster="${await dataUri(poster[1])}"`);
+  // The stills arrive as custom properties on inline style attributes.
+  for (const ref of new Set(scene.match(/url\(&quot;\/scene\/[^&]+&quot;\)/g) ?? [])) {
+    const file = /(\/scene\/[^&]+)/.exec(ref)[1];
+    seen.add(file);
+    scene = scene.replaceAll(ref, `url(&quot;${await dataUri(file)}&quot;)`);
   }
   return scene;
 }

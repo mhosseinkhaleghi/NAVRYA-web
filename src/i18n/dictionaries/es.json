@@ -18,6 +18,21 @@
     ],
     "scroll": "Desliza"
   },
+  "scenario": {
+    "eyebrow": "Sección 2",
+    "headline": "Toda Cacería Empieza con un Escenario.",
+    "subline": [
+      "Los cazadores no improvisan. Se preparan para",
+      "cada movimiento posible antes de que empiece la cacería."
+    ],
+    "featuresLabel": "Funciones",
+    "features": [
+      {
+        "index": "01",
+        "label": "Crea escenarios de trading"
+      }
+    ]
+  },
   "a11y": {
     "primaryNav": "Navegación principal"
   }

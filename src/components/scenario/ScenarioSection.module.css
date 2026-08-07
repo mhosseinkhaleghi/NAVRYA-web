@@ -1,0 +1,427 @@
+/* -----------------------------------------------------------------------------
+ * Section 2 — the scenario panel.
+ *
+ * Same frame, same rules as the hero: absolutely placed, centred against the
+ * whole viewport, start-aligned so RTL mirrors it. It sits on its own rail,
+ * further in than the hero's, which is what keeps it clear of the deer.
+ * -------------------------------------------------------------------------- */
+
+.scenario {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  padding-inline: max(var(--gutter), var(--s2-inline-start)) var(--gutter);
+  /* The block centres against the frame, but the cue is pinned to the bottom of
+   * it — so the centring gives the cue its room back, or the two collide on any
+   * frame shorter than the comp's. */
+  padding-block: env(safe-area-inset-top, 0px)
+    calc(clamp(3rem, 5.5vw, 6rem) + env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+}
+
+/* Nothing here exists until the deer walks in. */
+.scenario:not([data-active]) {
+  visibility: hidden;
+}
+
+.content {
+  inline-size: 100%;
+  max-inline-size: 46rem;
+}
+
+/* -----------------------------------------------------------------------------
+ * Reveal.
+ *
+ * `--r` is a 0–1 progress the controller writes onto each element from scroll
+ * position, so every one of these runs backwards exactly as readily as
+ * forwards. No transitions and no keyframes: the scroll *is* the clock.
+ * -------------------------------------------------------------------------- */
+
+.scenario [data-reveal-group] {
+  opacity: var(--r, 1);
+  transform: translateY(calc((1 - var(--r, 1)) * 1.5rem));
+  will-change: opacity, transform;
+}
+
+.headline[data-reveal-group] {
+  transform: translateY(calc((1 - var(--r, 1)) * 0.32em));
+  filter: blur(calc((1 - var(--r, 1)) * 12px));
+}
+
+/* The rules draw from the text's leading edge rather than fading in flat. */
+.rule[data-reveal-group] {
+  transform: scaleX(var(--r, 1));
+  transform-origin: left center;
+}
+
+[dir="rtl"] .rule[data-reveal-group] {
+  transform-origin: right center;
+}
+
+/* ── Eyebrow ──────────────────────────────────────────────────────────────── */
+
+.eyebrow {
+  margin: 0;
+  color: var(--c-gold);
+  font-family: var(--font-sans);
+  font-size: var(--fs-micro);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: var(--tracking-micro);
+  text-transform: uppercase;
+  text-shadow: var(--text-lift-micro);
+}
+
+/* ── Ornamental rules ─────────────────────────────────────────────────────── */
+
+.rule {
+  position: relative;
+  block-size: var(--hairline);
+  max-inline-size: 100%;
+  background: linear-gradient(
+    to right,
+    var(--c-gold-line-strong) 0%,
+    var(--c-gold-line-strong) 55%,
+    var(--c-gold-line) 82%,
+    transparent 100%
+  );
+}
+
+[dir="rtl"] .rule {
+  background: linear-gradient(
+    to left,
+    var(--c-gold-line-strong) 0%,
+    var(--c-gold-line-strong) 55%,
+    var(--c-gold-line) 82%,
+    transparent 100%
+  );
+}
+
+.rule[data-rule="eyebrow"] {
+  inline-size: var(--s2-rule-eyebrow);
+  margin-block: calc(var(--s2-gap) * 0.85) calc(var(--s2-gap) * 1.6);
+}
+
+.rule[data-rule="headline"] {
+  inline-size: var(--s2-rule-headline);
+  margin-block: calc(var(--s2-gap) * 1.25) calc(var(--s2-gap) * 1.4);
+}
+
+.ruleNode {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  inline-size: var(--node-size);
+  block-size: var(--node-size);
+  border: var(--hairline) solid var(--c-gold);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+/* ── Headline ─────────────────────────────────────────────────────────────── */
+
+.headline {
+  margin: 0;
+  color: var(--c-cream);
+  font-family: var(--font-display);
+  font-size: var(--fs-s2-display);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: var(--tracking-display);
+  text-align: start;
+  text-wrap: balance;
+  text-shadow: var(--text-lift);
+}
+
+[dir="rtl"] .headline {
+  line-height: 1.35;
+}
+
+/* ── Sub-headline ─────────────────────────────────────────────────────────── */
+
+.subline {
+  margin: 0;
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-s2-sub);
+  font-weight: 300;
+  line-height: 1.5;
+  text-align: start;
+  text-shadow: var(--text-lift);
+}
+
+.sublineLine {
+  display: block;
+}
+
+/* ── Features ─────────────────────────────────────────────────────────────── */
+
+.featuresLabel {
+  margin: 0;
+  margin-block-start: calc(var(--s2-gap) * 2.8);
+  color: var(--c-gold);
+  font-family: var(--font-sans);
+  font-size: var(--fs-micro);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: var(--tracking-micro);
+  text-transform: uppercase;
+  text-shadow: var(--text-lift-micro);
+}
+
+.features {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2-gap);
+  margin: 0;
+  margin-block-start: calc(var(--s2-gap) * 0.9);
+  padding: 0;
+  list-style: none;
+  inline-size: var(--s2-card-w);
+  max-inline-size: 100%;
+}
+
+/*
+ * The chamfered card.
+ *
+ * Drawn as eight background layers rather than a border, because the interior
+ * has to stay genuinely transparent — the plate shows through it. Four bars for
+ * the straight edges, inset by the cut at both ends, and four fixed-size
+ * corner tiles each holding a single 45° line. Crisp at any card size, and no
+ * extra elements in the markup.
+ */
+.feature {
+  --cut: clamp(0.5rem, 0.85vw, 1rem);
+  --edge: var(--c-gold-line-strong);
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: clamp(0.9rem, 1.8vw, 2rem);
+  padding: clamp(0.9rem, 1.9vw, 2.1rem) clamp(1rem, 1.9vw, 2.2rem);
+
+  background:
+    linear-gradient(var(--edge), var(--edge)) var(--cut) 0 /
+      calc(100% - var(--cut) * 2) var(--hairline) no-repeat,
+    linear-gradient(var(--edge), var(--edge)) var(--cut) 100% /
+      calc(100% - var(--cut) * 2) var(--hairline) no-repeat,
+    linear-gradient(var(--edge), var(--edge)) 0 var(--cut) /
+      var(--hairline) calc(100% - var(--cut) * 2) no-repeat,
+    linear-gradient(var(--edge), var(--edge)) 100% var(--cut) /
+      var(--hairline) calc(100% - var(--cut) * 2) no-repeat,
+    linear-gradient(
+        135deg,
+        transparent calc(50% - 0.5px),
+        var(--edge) calc(50% - 0.5px),
+        var(--edge) calc(50% + 0.5px),
+        transparent calc(50% + 0.5px)
+      )
+      0 0 / var(--cut) var(--cut) no-repeat,
+    linear-gradient(
+        45deg,
+        transparent calc(50% - 0.5px),
+        var(--edge) calc(50% - 0.5px),
+        var(--edge) calc(50% + 0.5px),
+        transparent calc(50% + 0.5px)
+      )
+      100% 0 / var(--cut) var(--cut) no-repeat,
+    linear-gradient(
+        135deg,
+        transparent calc(50% - 0.5px),
+        var(--edge) calc(50% - 0.5px),
+        var(--edge) calc(50% + 0.5px),
+        transparent calc(50% + 0.5px)
+      )
+      100% 100% / var(--cut) var(--cut) no-repeat,
+    linear-gradient(
+        45deg,
+        transparent calc(50% - 0.5px),
+        var(--edge) calc(50% - 0.5px),
+        var(--edge) calc(50% + 0.5px),
+        transparent calc(50% + 0.5px)
+      )
+      0 100% / var(--cut) var(--cut) no-repeat;
+}
+
+.featureIndex {
+  color: var(--c-gold);
+  font-family: var(--font-display);
+  font-size: var(--fs-s2-index);
+  font-weight: 400;
+  line-height: 1;
+  font-variant-numeric: lining-nums tabular-nums;
+  text-shadow: var(--text-lift);
+}
+
+.featureDivider {
+  inline-size: var(--hairline);
+  block-size: clamp(1.6rem, 2.7vw, 3rem);
+  background: var(--c-gold-line-strong);
+  flex: 0 0 auto;
+}
+
+.featureIcon {
+  inline-size: clamp(1.9rem, 3.11vw, 3.6rem);
+  block-size: clamp(1.9rem, 3.11vw, 3.6rem);
+  color: var(--c-gold);
+  flex: 0 0 auto;
+}
+
+.featureLabel {
+  color: var(--c-cream);
+  font-family: var(--font-display);
+  font-size: var(--fs-s2-feature);
+  font-weight: 400;
+  line-height: 1.25;
+  text-shadow: var(--text-lift);
+}
+
+/* -----------------------------------------------------------------------------
+ * Compact frames — the block gives up its rail and runs the full measure, and
+ * the sub-headline rejoins into one wrapping paragraph, matching the hero.
+ * -------------------------------------------------------------------------- */
+
+@media (max-width: 767px) {
+  .content {
+    max-inline-size: 34rem;
+  }
+
+  .subline {
+    text-wrap: pretty;
+  }
+
+  .sublineLine {
+    display: inline;
+  }
+
+  .sublineLine + .sublineLine::before {
+    content: " ";
+  }
+
+  .feature {
+    gap: clamp(0.7rem, 3.4vw, 1.1rem);
+  }
+}
+
+/* -----------------------------------------------------------------------------
+ * Scroll cue.
+ *
+ * The hero's cue with a tail: a hairline dropping from the mouse to a node,
+ * pointing on past the bottom of the frame.
+ * -------------------------------------------------------------------------- */
+
+.cue {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: calc(
+    clamp(0.75rem, 1.7vw, 1.5rem) + env(safe-area-inset-bottom, 0px)
+  );
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.4rem, 0.84vw, 1rem);
+  pointer-events: none;
+}
+
+.cueLabel {
+  color: var(--c-gold);
+  font-family: var(--font-sans);
+  font-size: var(--fs-micro);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: var(--tracking-micro);
+  text-transform: uppercase;
+  text-shadow: var(--text-lift-micro);
+  /* Tracking adds a trailing gap after the last glyph; pull it back so the
+   * label stays optically centred on the frame axis. */
+  margin-inline-end: calc(-1 * var(--tracking-micro));
+}
+
+[dir="rtl"] .cueLabel {
+  margin-inline-end: 0;
+}
+
+.mouse {
+  position: relative;
+  inline-size: calc(var(--mouse-w) * 0.86);
+  block-size: calc(var(--mouse-h) * 0.86);
+  border: 1.5px solid var(--c-gold);
+  border-radius: 999px;
+}
+
+.wheel {
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  inline-size: 2px;
+  block-size: 18%;
+  border-radius: 2px;
+  background: var(--c-gold);
+  transform: translateX(-50%);
+  animation: cue-drift 2.6s var(--ease-out) infinite;
+}
+
+@keyframes cue-drift {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -45%);
+  }
+  22% {
+    opacity: 1;
+  }
+  62% {
+    opacity: 1;
+    transform: translate(-50%, 120%);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 150%);
+  }
+}
+
+.cueLine {
+  inline-size: var(--hairline);
+  block-size: clamp(1.5rem, 3vw, 3.25rem);
+  background: linear-gradient(
+    to bottom,
+    var(--c-gold-line-strong),
+    var(--c-gold-line)
+  );
+}
+
+.cueNode {
+  inline-size: var(--node-size);
+  block-size: var(--node-size);
+  border: var(--hairline) solid var(--c-gold);
+  transform: rotate(45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wheel {
+    animation: none;
+    opacity: 1;
+    transform: translateX(-50%);
+  }
+}
+
+/* -----------------------------------------------------------------------------
+ * Compact frames — the panel shares the row below the bar with the hero rather
+ * than overlaying it, and reserves room for its own cue.
+ * -------------------------------------------------------------------------- */
+
+@media (max-width: 1023px) {
+  .scenario {
+    position: relative;
+    inset: auto;
+    grid-row: 2;
+    grid-column: 1;
+    min-block-size: 0;
+    padding-block: 0
+      calc(
+        var(--scroll-reserve) + clamp(1.5rem, 3vw, 3.25rem) +
+          env(safe-area-inset-bottom, 0px)
+      );
+  }
+}

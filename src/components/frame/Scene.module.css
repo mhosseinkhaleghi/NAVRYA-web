@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
  * Scene — the cinematic backdrop layer of the frame.
  *
- * The plate is shown raw: no scrim, no tint, no gradient. Whatever grading the
+ * The plates are shown raw: no scrim, no tint, no gradient. Whatever grading the
  * footage carries is exactly what reaches the screen.
  * -------------------------------------------------------------------------- */
 
@@ -14,13 +14,28 @@
   pointer-events: none;
 }
 
-/* The opening frame, behind the video. It stands in until the first frames
- * have decoded, so playback starts without a visible jump — and it is sized
- * and mirrored on exactly the same rules, so the handover is invisible. */
+/* One plate on screen at a time. Because each plate's closing frame matches the
+ * next one's opening frame, the swap lands on identical pixels and needs no
+ * crossfade to hide it. */
+.plate {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+}
+
+.scene[data-plate="dawn"] [data-plate-id="dawn"],
+.scene[data-plate="turn"] [data-plate-id="turn"],
+.scene[data-plate="prey"] [data-plate-id="prey"] {
+  visibility: visible;
+}
+
+/* The opening frame, behind the video. It stands in until the plate has
+ * decoded, so nothing flashes black on the handover — and it is sized and
+ * mirrored on exactly the same rules, so the handover is invisible. */
 .still {
   position: absolute;
   inset: 0;
-  background-image: url("/scene/hunter-dawn-first.jpg");
+  background-image: var(--still-first);
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
@@ -37,9 +52,9 @@
   object-position: center;
 }
 
-/* RTL moves the text block to the right of the frame, so the footage mirrors
- * with it — the figure keeps the closed side and the text keeps the open
- * valley, exactly as the composition intends in either direction. */
+/* RTL moves the text block to the other side of the frame, so the footage
+ * mirrors with it — the figure keeps the closed side and the text keeps the
+ * open valley, exactly as the composition intends in either direction. */
 [dir="rtl"] .video,
 [dir="rtl"] .still {
   transform: scaleX(-1);
@@ -67,18 +82,29 @@
     background-size: cover;
     background-position: 14% center;
   }
+
+  /* The prey plate is about the meadow, not the figure, so its crop sits
+   * further right — far enough to hold the deer's whole path across frame. */
+  [data-plate-id="prey"] .video {
+    object-position: 52% center;
+  }
+
+  [data-plate-id="prey"] .still {
+    background-position: 52% center;
+  }
 }
 
 /* -----------------------------------------------------------------------------
  * Reduced motion.
  *
- * No <source> matches, so the video never downloads and the element stays
- * transparent — the still takes its place permanently. It switches to the
- * closing frame, because that is the composition the page comes to rest on.
+ * No <source> matches, so no plate ever downloads and every video element stays
+ * transparent — the stills carry the sequence instead. Each plate shows the
+ * frame it comes to rest on, so scrolling still moves the story forward, just
+ * in three steps rather than continuously.
  * -------------------------------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
   .still {
-    background-image: url("/scene/hunter-dawn-last.jpg");
+    background-image: var(--still-last);
   }
 }

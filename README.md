@@ -1,6 +1,6 @@
 # Navrya — web
 
-A premium cinematic marketing site. **Current scope: the Hero Section only.**
+A premium cinematic marketing site. **Current scope: sections 1 and 2.**
 
 ```bash
 npm install
@@ -15,74 +15,103 @@ npm start
 
 Navrya is not a scrolling document. The viewport is a **fixed, full-screen
 cinematic frame** that never translates. Everything renders inside
-`components/frame/Stage` (`position: fixed; inset: 0; overflow: hidden`), and
-the document itself is locked in `app/globals.css` — `overflow: hidden` on
-`html`/`body` plus `overscroll-behavior: none` to kill pull-to-refresh and
-rubber-banding.
+`components/frame/Stage` (`position: fixed; inset: 0; overflow: hidden`).
 
-Later steps will feed scroll input into scene changes *inside* this frame. None
-of that is implemented yet: today the frame holds one scene, the hero. The
-groundwork that exists for it is only the frame itself.
+The *document*, however, does scroll — and that scroll is the timeline. Native
+scroll rather than synthesised wheel events, because it comes with momentum,
+trackpads, touch, keyboard and the scrollbar already working, and because a
+position is inherently reversible in a way an event stream is not. The
+scrollbar is hidden and overscroll chaining switched off, so nothing about the
+frame reads as a scrolling page.
 
-## The scene
+Scroll input feeds scene changes *inside* the frame. `Stage` renders a track
+below itself whose only job is to give the document height to scroll through;
+`--timeline-vh` is that height, and stretching it slows every beat of the
+sequence proportionally.
 
-The frame's backdrop is a 5s silent plate (`components/frame/Scene`): the valley
-is empty, the hunter walks in, and at 4.33s he turns to face the viewer. It
-**plays once and holds that closing frame** — no `loop`, because the shot is a
-reveal and the last frame is where the composition comes to rest. A video with
-no `loop` keeps its final frame painted after `ended`, so nothing has to swap in
-behind it.
+## The sequence
 
-The plate is shown **raw**: no scrim, no tint, no gradient. Whatever grading the
-footage carries is what reaches the screen. Type sits directly on it, so the
-`--text-lift` token in `tokens.css` gives the words a soft shadow — that lifts
-them off the brightest frames without touching a pixel of the video. Set it to
-`none` to see the type completely untreated.
+One continuous shot in three plates, driven end to end by scroll **position** —
+so it runs backwards exactly as readily as forwards. Nothing latches, nothing
+fires once. `components/frame/stage-script.ts` maps scroll onto four beats:
+
+| beat | scroll | what happens |
+| ---- | ------ | ------------ |
+| — | on load | `hunter-dawn` plays itself. At **4.33s** the hunter turns to face the viewer and the interface rises into frame. Until then the timeline is locked shut. |
+| `turn` | 140vh | `hunter-turn` scrubs: he turns back to the valley. |
+| `exit` | 90vh | The hero block leaves the frame upward, out of focus. |
+| `prey` | 340vh | `valley-prey` scrubs. The deer clears the frame edge at **0.40s** and the section-2 headline lands on it. At **3.60s** the deer drops its head to graze and the rest of the panel assembles around the headline. |
+| `rest` | 70vh | Tail room, so the last reveal is not pinned to the very bottom. |
+
+Each plate's closing frame matches the next one's opening frame, so the
+handovers land on identical pixels and need no crossfade to hide them. The last
+plate holds its final frame — the deer grazing — because that is where the
+composition comes to rest.
+
+The two cue points are stored as *fractions* of the prey plate rather than
+seconds, so the same numbers still drive the same reveals when there is no
+video at all: under reduced motion nothing downloads, the stills carry the
+sequence, and scroll still moves the story forward.
+
+## The plates
+
+Shown **raw**: no scrim, no tint, no gradient. Whatever grading the footage
+carries is what reaches the screen. Type sits directly on it, so `--text-lift`
+and `--text-lift-micro` in `tokens.css` give the words a soft shadow — that
+lifts them off the brightest frames without touching a pixel of the video. Set
+them to `none` to see the type completely untreated.
 
 `object-fit` is **`contain`** on desktop, so the whole plate stays on screen.
 Where the viewport is wider than 16:9 the page's own near-black shows at the
 edges, which reads as a letterbox rather than a crop. Below a 7:5 aspect the
-plate switches to `cover` with the crop pulled onto the figure — keyed to aspect
-ratio rather than width, because what breaks the composition is a frame taller
-than the footage, and a portrait crop of a 16:9 plate shows only its middle 26%.
+plate switches to `cover` with the crop pulled onto the subject — keyed to
+aspect ratio rather than width, because what breaks the composition is a frame
+taller than the footage, and a portrait crop of a 16:9 plate shows only its
+middle 26%.
 
-`scripts/encode-scene.sh <source.mp4> <slug> [crossfade-seconds]` produces
-everything: audio stripped, 1080p and 720p in both H.264 and VP9, pinned to
-exactly 16:9, plus two stills. The **first** frame stands in until the video
-decodes so playback starts without a jump; the **last** frame is the resting
-image, and the only image a `prefers-reduced-motion` viewer ever sees. The
-crossfade argument is for plates meant to loop and defaults to off — it would
-destroy the closing frame this one depends on.
+```bash
+scripts/encode-scene.sh <source.mp4> <slug> [play|scrub]
+```
 
-The plate's composition is load-bearing: the hunter holds the left and the
-valley opens on the right, which is the rail the hero text sits on. So **RTL
-mirrors the footage** (`transform: scaleX(-1)`) and the figure keeps the closed
-side in both directions. Note `object-position` picks the crop window in
-*source* coordinates, before the mirror flips the painted result — both
-directions select the same window.
+`play` gives a long GOP for a plate that plays itself; `scrub` puts a keyframe
+every 6 frames, which is the single thing deciding whether scrolling feels
+attached to the wheel or laggy behind it. Both modes strip the audio, write
+1080p and 720p in H.264 and VP9 pinned to exactly 16:9, and pull two stills —
+the **first** frame stands in until the video decodes, the **last** is the
+resting image and the only one a `prefers-reduced-motion` viewer sees.
 
-## The intro
+Codec order is per plate: VP9 compresses a long GOP better and H.264 a short
+one, so the played plate leads with WebM and the scrubbed plates lead with MP4.
+The browser only ever downloads one. The scrubbed plates also carry
+`preload="none"` and are loaded by the controller once the intro is over, so
+they never compete for bandwidth with the plate that is actually playing.
 
-Nothing but the backdrop is on screen until the hunter turns. Then the interface
-rises into the frame the video comes to rest on: the headline resolves out of
-focus, the rule draws from the text's leading edge, the sub-headline follows a
-line at a time, and the scroll cue arrives last.
+The composition is load-bearing: the hunter holds one side of the plate and the
+valley opens on the other, which is the rail the text sits on. So **RTL mirrors
+the footage** (`transform: scaleX(-1)`) and the figure keeps the closed side in
+both directions. Note `object-position` picks the crop window in *source*
+coordinates, before the mirror flips the painted result — both directions
+select the same window.
 
-`components/frame/intro-script.ts` drives it, and ships as an **inline script**
-rather than a client component for two reasons. It has to run before first
-paint, or the composition flashes on screen and then vanishes. And with no
-JavaScript at all the `data-intro` attribute is never set, so the CSS hiding
-rules never match and the page is simply visible — the interface can never be
-lost behind a backdrop. The same script adds the two dismissals native
-`<details>` lacks, which is all the language menu needs to work.
+## Why an inline script
 
-The reveal watches the video's own `currentTime`, so it lands on the turn no
-matter how slowly the plate buffers. Three fallbacks make sure the words always
-arrive: `ended`, `error`, a 3.5s check that playback ever started (autoplay
-refused), and a 12s hard cap. `prefers-reduced-motion` skips the hold entirely.
+`stage-script.ts` ships as an inline script rather than a client component for
+two reasons. It has to run before first paint, or the composition flashes on
+screen and then vanishes. And with no JavaScript at all its attributes are
+never set, so the CSS holding rules never match and the page is simply,
+statically visible — the interface can never be lost behind a backdrop.
 
-To retime the reveal, change `INTRO_REVEAL_AT`. The animation itself lives in
-the `Intro` sections of `Hero.module.css` and `SiteHeader.module.css`.
+The reveal watches the opening plate's own `currentTime`, so it lands on the
+turn no matter how slowly the plate buffers, with fallbacks on `ended`,
+`error`, a 3.5s check that playback ever started (autoplay refused) and a 12s
+hard cap. Seeks are queued one at a time per plate — a seek issued while
+another is resolving is dropped by the browser — which keeps the picture as
+close to the wheel as the decoder allows.
+
+To retime anything: `INTRO_REVEAL_AT` for the opening beat, `BEATS` for how
+much scroll each beat gets, `DEER_ENTERS` / `DEER_GRAZES` for the section-2
+cues. The reveal styling itself lives in the `Intro` / `Reveal` sections of the
+component stylesheets.
 
 ## Layout
 
@@ -90,13 +119,14 @@ the `Intro` sections of `Hero.module.css` and `SiteHeader.module.css`.
 src/
   app/[locale]/          route shell — sets <html lang dir> per locale
   components/
-    frame/Stage          the fixed full-screen frame
-    frame/Scene          background plate — played raw, no overlay
-    frame/intro-script   holds the interface back until the hunter turns
+    frame/Stage          the fixed frame + the scroll track behind it
+    frame/Scene          the three plates — played raw, no overlay
+    frame/stage-script   the opening beat and the scroll timeline
     site/SiteHeader      wordmark, nav, language menu, Login
     site/LanguageMenu    <details>-based, works without JavaScript
-    hero/Hero            headline, ornamental rule, sub-headline, scroll cue
-    icons/               globe + chevron
+    hero/Hero            section 1 — headline, rule, sub-headline, cue
+    scenario/            section 2 — the scenario panel
+    icons/               globe, chevron, compass
   i18n/
     config.ts            locale list, text direction, short labels
     dictionaries/*.json  one file per language
@@ -108,10 +138,10 @@ src/
 
 public/
   fonts/brand/           ← drop the brand typeface here
-  scene/                 encoded backdrop renditions + stills
+  scene/                 encoded plate renditions + stills
 
 scripts/
-  encode-scene.sh        raw plate → renditions + stills
+  encode-scene.sh        raw plate → renditions + stills (play|scrub)
   build-preview.mjs      production output → one shareable HTML file
 ```
 
@@ -126,7 +156,10 @@ node scripts/build-preview.mjs        # → preview/navrya-hero.html (gitignored
 ```
 
 It pulls each locale's rendered body, inlines the CSS, every font subset, the
-stills and the backdrop as data URIs, and drops Next's hydration payload. The
+stills and the plates as data URIs, and drops Next's hydration payload. Only
+the 720p WebM of each plate travels: every byte is a byte the viewer waits on,
+and CSS still drives the crop and the whole timeline, so nothing about the
+behaviour is approximated — only the resolution. The
 site's own inline scripts are carried over, so the intro sequence and the
 language menu behave exactly as they do in production rather than being
 approximated.

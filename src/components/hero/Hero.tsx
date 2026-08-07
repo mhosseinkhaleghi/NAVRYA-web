@@ -6,8 +6,8 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
   const { headline, subline, scroll } = dictionary.hero;
 
   return (
-    <section className={styles.hero}>
-      <div className={styles.content}>
+    <section className={styles.hero} data-hero="">
+      <div className={styles.content} data-hero-part="">
         <h1 className={styles.headline}>{headline}</h1>
 
         <div className={styles.rule} aria-hidden="true">
@@ -23,7 +23,7 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
         </p>
       </div>
 
-      <div className={styles.scroll}>
+      <div className={styles.scroll} data-hero-part="">
         <span className={styles.scrollLabel}>{scroll}</span>
         <span className={styles.mouse} aria-hidden="true">
           <span className={styles.wheel} />
