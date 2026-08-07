@@ -1,0 +1,301 @@
+/* -----------------------------------------------------------------------------
+ * Navigation bar — part of the fixed frame, not a sticky overlay.
+ * Every offset is logical (inline-start/end), so `dir="rtl"` mirrors the whole
+ * bar without a single directional override.
+ * -------------------------------------------------------------------------- */
+
+.header {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 2.15vw, 2.5rem);
+  block-size: var(--header-h);
+  padding-inline: var(--gutter);
+  padding-block-start: env(safe-area-inset-top, 0px);
+}
+
+/* Hairline under the bar. It reads strongest at the wordmark and dissolves
+ * across the frame, exactly as in the comp. */
+.rule {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline: 0;
+  block-size: var(--hairline);
+  background: linear-gradient(
+    to right,
+    var(--c-gold-line) 0%,
+    var(--c-gold-line) 8%,
+    var(--c-gold-line-faint) 42%,
+    transparent 78%
+  );
+  pointer-events: none;
+}
+
+[dir="rtl"] .rule {
+  background: linear-gradient(
+    to left,
+    var(--c-gold-line) 0%,
+    var(--c-gold-line) 8%,
+    var(--c-gold-line-faint) 42%,
+    transparent 78%
+  );
+}
+
+/* ── Wordmark ─────────────────────────────────────────────────────────────── */
+
+.brand {
+  position: relative;
+  display: flex;
+  align-items: center;
+  block-size: 100%;
+  flex: 0 0 auto;
+}
+
+.wordmark {
+  display: inline-block;
+  color: var(--c-gold);
+  font-family: var(--font-display);
+  font-size: var(--fs-wordmark);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: var(--tracking-wordmark);
+  /* The wordmark is a brand mark: it stays Latin and LTR in every locale. */
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* The diamond node sits on the hairline, centred under the wordmark. */
+.brandNode {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline-start: 50%;
+  z-index: 1;
+  inline-size: var(--node-size);
+  block-size: var(--node-size);
+  border: var(--hairline) solid var(--c-gold);
+  transform: translate(-50%, 50%) rotate(45deg);
+  pointer-events: none;
+}
+
+[dir="rtl"] .brandNode {
+  transform: translate(50%, 50%) rotate(45deg);
+}
+
+/* ── Primary navigation ───────────────────────────────────────────────────── */
+
+.nav {
+  display: flex;
+  align-items: center;
+  block-size: 100%;
+  margin-inline-start: auto;
+}
+
+.navList {
+  display: flex;
+  align-items: stretch;
+  gap: var(--nav-gap);
+  block-size: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.navItem {
+  display: flex;
+}
+
+.navLink {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding-inline: 0.5em;
+  color: var(--c-nav);
+  font-family: var(--font-sans);
+  font-size: var(--fs-nav);
+  font-weight: 400;
+  letter-spacing: var(--tracking-nav);
+  white-space: nowrap;
+  transition: color 240ms var(--ease-out);
+}
+
+.navLink:hover {
+  color: var(--c-cream);
+}
+
+.navLink[aria-current] {
+  color: var(--c-gold);
+}
+
+/* Active marker, seated on the header hairline. */
+.navLink[aria-current]::after {
+  content: "";
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline: 0;
+  block-size: 2px;
+  background: var(--c-gold);
+}
+
+/* ── Trailing controls ────────────────────────────────────────────────────── */
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.85rem, 2.15vw, 2.25rem);
+  flex: 0 0 auto;
+}
+
+.divider {
+  inline-size: var(--hairline);
+  block-size: clamp(1.5rem, 2.4vw, 2.6rem);
+  background: var(--c-gold-line);
+}
+
+.language {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55em;
+  color: var(--c-nav);
+  font-family: var(--font-sans);
+  font-size: var(--fs-nav);
+  letter-spacing: var(--tracking-nav);
+  transition: color 240ms var(--ease-out);
+}
+
+.language:hover {
+  color: var(--c-cream);
+}
+
+.globe {
+  inline-size: 1.25em;
+  block-size: 1.25em;
+}
+
+.languageCode {
+  /* Locale codes are always Latin, even inside an RTL bar. */
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.chevron {
+  inline-size: 0.85em;
+  block-size: 0.85em;
+  opacity: 0.9;
+}
+
+.login {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.72em 1.85em;
+  border: var(--hairline) solid var(--c-gold);
+  border-radius: 6px;
+  color: var(--c-gold);
+  font-family: var(--font-sans);
+  font-size: var(--fs-nav);
+  letter-spacing: var(--tracking-nav);
+  white-space: nowrap;
+  transition:
+    background-color 260ms var(--ease-out),
+    color 260ms var(--ease-out);
+}
+
+.login:hover {
+  background-color: var(--c-gold);
+  color: var(--c-bg);
+}
+
+/* -----------------------------------------------------------------------------
+ * Compact bar — the five links cannot share a row with the wordmark and the
+ * controls below ~1024px. Rather than hide them behind a menu that the comp
+ * does not have, the bar becomes two rows: identity + controls, then the
+ * navigation centred beneath it on its own hairline.
+ * -------------------------------------------------------------------------- */
+
+@media (max-width: 1023px) {
+  .header {
+    position: relative;
+    inset: auto;
+    flex: 0 0 auto;
+    block-size: auto;
+    display: grid;
+    grid-template-areas:
+      "brand controls"
+      "nav   nav";
+    grid-template-columns: auto 1fr;
+    row-gap: clamp(0.55rem, 1.8vw, 1rem);
+    align-items: center;
+    padding-block: clamp(0.9rem, 2.6vw, 1.4rem) 0;
+  }
+
+  .brand {
+    grid-area: brand;
+    block-size: auto;
+  }
+
+  /* On two rows the node would float mid-bar, so it retires with the row. */
+  .brandNode {
+    display: none;
+  }
+
+  .controls {
+    grid-area: controls;
+    justify-self: end;
+    gap: clamp(0.7rem, 3vw, 1.25rem);
+  }
+
+  .divider {
+    block-size: 1.5rem;
+  }
+
+  .nav {
+    grid-area: nav;
+    margin-inline-start: 0;
+    /* Safety valve: longer locales (Turkish, Arabic) can exceed a 360px row. */
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .navList {
+    justify-content: center;
+    /* Keeps the row centred while it fits, but never clips the leading item
+     * once it overflows into the scroller. */
+    justify-content: safe center;
+    inline-size: 100%;
+    min-inline-size: max-content;
+    padding-block-end: clamp(0.55rem, 1.8vw, 0.9rem);
+  }
+
+  .navLink {
+    padding-inline: 0.25em;
+    padding-block-end: clamp(0.5rem, 1.6vw, 0.85rem);
+    align-items: flex-end;
+  }
+}
+
+/* Landscape phones and split views: the bar gives back vertical room. */
+@media (max-height: 560px) and (max-width: 1023px) {
+  .header {
+    padding-block-start: clamp(0.45rem, 2vh, 0.9rem);
+    row-gap: clamp(0.25rem, 1.4vh, 0.6rem);
+  }
+
+  .navList {
+    padding-block-end: clamp(0.3rem, 1.6vh, 0.7rem);
+  }
+
+  .navLink {
+    padding-block-end: clamp(0.25rem, 1.4vh, 0.6rem);
+  }
+}
+

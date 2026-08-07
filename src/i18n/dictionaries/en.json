@@ -1,0 +1,24 @@
+{
+  "nav": {
+    "home": "Home",
+    "feature": "Feature",
+    "psychology": "Psychology",
+    "pricing": "Pricing",
+    "academy": "Academy"
+  },
+  "actions": {
+    "login": "Login",
+    "language": "Change language"
+  },
+  "hero": {
+    "headline": "Become the Hunter.",
+    "subline": [
+      "The market doesn’t pay those who chase every move.",
+      "It rewards those who wait for the perfect prey."
+    ],
+    "scroll": "Scroll"
+  },
+  "a11y": {
+    "primaryNav": "Primary navigation"
+  }
+}

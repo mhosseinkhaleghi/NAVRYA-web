@@ -1,0 +1,208 @@
+/* -----------------------------------------------------------------------------
+ * Hero — the first scene inside the fixed frame.
+ *
+ * The comp places the text block on a left rail at 36.4% of the frame with the
+ * block optically centred against the *whole* frame (header included), and the
+ * scroll cue centred on the frame's own axis. Both are reproduced literally.
+ * -------------------------------------------------------------------------- */
+
+.hero {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  padding-inline: max(var(--gutter), var(--hero-inline-start)) var(--gutter);
+  padding-block: env(safe-area-inset-top, 0px) env(safe-area-inset-bottom, 0px);
+}
+
+.content {
+  inline-size: 100%;
+}
+
+/* ── Headline ─────────────────────────────────────────────────────────────── */
+
+.headline {
+  margin: 0;
+  color: var(--c-cream);
+  font-family: var(--font-display);
+  font-size: var(--fs-display);
+  font-weight: 400;
+  line-height: var(--lh-display);
+  letter-spacing: var(--tracking-display);
+  text-align: start;
+  text-wrap: balance;
+}
+
+/* ── Ornamental rule ──────────────────────────────────────────────────────── */
+
+.rule {
+  position: relative;
+  inline-size: var(--hero-rule-w);
+  max-inline-size: 100%;
+  block-size: var(--hairline);
+  margin-block: var(--hero-gap-headline-rule) var(--hero-gap-rule-sub);
+  background: linear-gradient(
+    to right,
+    var(--c-gold-line) 0%,
+    var(--c-gold-line) 55%,
+    var(--c-gold-line-faint) 82%,
+    transparent 100%
+  );
+}
+
+[dir="rtl"] .rule {
+  background: linear-gradient(
+    to left,
+    var(--c-gold-line) 0%,
+    var(--c-gold-line) 55%,
+    var(--c-gold-line-faint) 82%,
+    transparent 100%
+  );
+}
+
+.ruleNode {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  inline-size: var(--node-size);
+  block-size: var(--node-size);
+  border: var(--hairline) solid var(--c-gold);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+/* ── Sub-headline ─────────────────────────────────────────────────────────── */
+
+.subline {
+  margin: 0;
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sub);
+  font-weight: 300;
+  line-height: var(--lh-sub);
+  letter-spacing: 0;
+  text-align: start;
+}
+
+/* Each localised line is authored as its own line in the dictionary and keeps
+ * its own row here, matching the two-line break in the comp. */
+.sublineLine {
+  display: block;
+}
+
+/* ── Scroll cue ───────────────────────────────────────────────────────────── */
+
+.scroll {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: calc(var(--scroll-bottom) + env(safe-area-inset-bottom, 0px));
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.4rem, 0.84vw, 1rem);
+  pointer-events: none;
+}
+
+.scrollLabel {
+  color: var(--c-gold-soft);
+  font-family: var(--font-sans);
+  font-size: var(--fs-micro);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: var(--tracking-micro);
+  text-transform: uppercase;
+  /* Tracking adds a trailing gap after the last glyph; pull it back so the
+   * label stays optically centred on the frame axis. */
+  margin-inline-end: calc(-1 * var(--tracking-micro));
+}
+
+[dir="rtl"] .scrollLabel {
+  margin-inline-end: 0;
+}
+
+.mouse {
+  position: relative;
+  inline-size: var(--mouse-w);
+  block-size: var(--mouse-h);
+  border: 1.5px solid var(--c-gold);
+  border-radius: 999px;
+}
+
+.wheel {
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  inline-size: 2px;
+  block-size: 18%;
+  border-radius: 2px;
+  background: var(--c-gold);
+  transform: translateX(-50%);
+  animation: wheel-drift 2.6s var(--ease-out) infinite;
+}
+
+@keyframes wheel-drift {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -45%);
+  }
+  22% {
+    opacity: 1;
+  }
+  62% {
+    opacity: 1;
+    transform: translate(-50%, 120%);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 150%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wheel {
+    animation: none;
+    opacity: 1;
+    transform: translateX(-50%);
+  }
+}
+
+/* -----------------------------------------------------------------------------
+ * Compact viewports — the block gives up its rail and runs the full measure
+ * between the gutters, and the frame reserves room for the two-row header and
+ * the scroll cue instead of centring against the raw viewport.
+ * -------------------------------------------------------------------------- */
+
+@media (max-width: 1023px) {
+  /* The header is in the column now, so the scene takes whatever is left and
+   * centres inside it — no header-height guesswork, at any bar height. */
+  .hero {
+    position: relative;
+    inset: auto;
+    flex: 1 1 auto;
+    min-block-size: 0;
+    padding-block: 0 calc(var(--scroll-reserve) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .content {
+    max-inline-size: 38rem;
+  }
+}
+
+/* Below tablet the measure is too narrow to hold the comp's authored line
+ * break, so the sub-headline rejoins into one paragraph and wraps naturally
+ * instead of breaking mid-thought. */
+@media (max-width: 767px) {
+  .subline {
+    text-wrap: pretty;
+  }
+
+  .sublineLine {
+    display: inline;
+  }
+
+  .sublineLine + .sublineLine::before {
+    content: " ";
+  }
+}

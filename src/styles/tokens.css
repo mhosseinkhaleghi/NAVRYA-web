@@ -1,0 +1,147 @@
+/* -----------------------------------------------------------------------------
+ * Navrya — design tokens
+ *
+ * The fluid values are derived from the reference comp, which was measured at
+ * a 1672px-wide frame. Each `vw` figure is `referencePx / 1672`, so at that
+ * width the build reproduces the comp 1:1, and clamps hold it sane elsewhere.
+ * -------------------------------------------------------------------------- */
+
+:root {
+  color-scheme: dark;
+
+  /* ── Colour ─────────────────────────────────────────────────────────────── */
+  --c-bg: #030303;
+  --c-gold: #d8a64b;
+  --c-gold-soft: rgb(216 166 75 / 0.74);
+  --c-gold-line: rgb(216 166 75 / 0.38);
+  --c-gold-line-faint: rgb(216 166 75 / 0.16);
+  --c-cream: #ede4d2; /* hero headline + wordmark */
+  --c-text: #e8e6e0; /* hero sub-headline */
+  --c-nav: rgb(237 234 227 / 0.88);
+
+  /* ── Frame ──────────────────────────────────────────────────────────────── */
+  --frame-h: 100dvh;
+  --gutter: clamp(1.25rem, 2.87vw, 3.25rem);
+  --header-h: clamp(4rem, 6.04vw, 6.75rem);
+  --nav-gap: clamp(0.5rem, 1.26vw, 1.5rem);
+
+  /* ── Type ───────────────────────────────────────────────────────────────── */
+  --fs-wordmark: clamp(1.65rem, 2.95vw, 3.3rem);
+  --fs-nav: clamp(0.8125rem, 1.1vw, 1.3rem);
+  --fs-display: clamp(2.6rem, 6.4vw, 9.5rem);
+  --fs-sub: clamp(1rem, 2.04vw, 2.6rem);
+  --fs-micro: clamp(0.625rem, 0.837vw, 0.95rem);
+
+  --lh-display: 1.04;
+  --lh-sub: 1.6;
+
+  --tracking-display: -0.015em;
+  --tracking-wordmark: 0.005em;
+  --tracking-nav: 0.01em;
+  --tracking-micro: 0.34em;
+
+  /* ── Hero composition ───────────────────────────────────────────────────── */
+  /* The comp sets the text block's leading edge at 608 / 1672 of the frame. */
+  --hero-inline-start: 36.4%;
+  --hero-rule-w: clamp(9rem, 23.8vw, 27rem);
+  --hero-gap-headline-rule: clamp(1rem, 2.2vw, 2.6rem);
+  --hero-gap-rule-sub: clamp(1.1rem, 2.3vw, 2.75rem);
+
+  /* ── Scroll indicator ───────────────────────────────────────────────────── */
+  --scroll-bottom: clamp(1.5rem, 3.8vw, 4.5rem);
+  --mouse-w: clamp(1.375rem, 2.21vw, 2.5rem);
+  --mouse-h: calc(var(--mouse-w) * 2.08);
+  /* Vertical room the cue occupies, so the scene can centre above it. */
+  --scroll-reserve: calc(
+    var(--scroll-bottom) + var(--mouse-h) + var(--fs-micro) + 1.75rem
+  );
+
+  /* ── Ornaments ──────────────────────────────────────────────────────────── */
+  --node-size: clamp(0.3rem, 0.42vw, 0.5rem);
+  --hairline: 1px;
+
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* Arabic and Persian are set in Amiri / Vazirmatn, which run smaller on the
+ * body and much taller in the extenders than the Latin faces. These keep the
+ * optical size and leading matched to the LTR composition. */
+[dir="rtl"] {
+  --fs-display: clamp(2.35rem, 6.2vw, 8.75rem);
+  --lh-display: 1.35;
+  --lh-sub: 1.85;
+  --tracking-display: 0;
+  --tracking-wordmark: 0;
+  --tracking-nav: 0;
+  /* Letter-spacing breaks the cursive joins in Arabic script. */
+  --tracking-micro: 0;
+  /* Arabic script carries its meaning in fine strokes, so the micro label
+   * cannot sit at the Latin caption size and stay legible. */
+  --fs-micro: clamp(0.75rem, 0.95vw, 1.1rem);
+}
+
+/* -----------------------------------------------------------------------------
+ * Compact viewports.
+ *
+ * Not a shrunk desktop: the hero block gives up its 36% inset and takes the
+ * full measure between the gutters, the type scale re-keys to viewport width
+ * instead of the desktop ratios, and the header splits into two rows. The
+ * hierarchy, alignment and ornament language are unchanged.
+ * -------------------------------------------------------------------------- */
+
+@media (max-width: 1023px) {
+  :root {
+    --gutter: clamp(1.25rem, 6vw, 2.5rem);
+    --fs-wordmark: clamp(1.6rem, 7.2vw, 2.4rem);
+    --fs-nav: clamp(0.75rem, 3vw, 1rem);
+    --nav-gap: clamp(0.6rem, 3.2vw, 1.4rem);
+    --fs-display: clamp(2.5rem, 13vw, 5.5rem);
+    --fs-sub: clamp(0.9375rem, 4.1vw, 1.35rem);
+    --fs-micro: clamp(0.6rem, 2.5vw, 0.75rem);
+
+    --hero-inline-start: 0%;
+    --hero-rule-w: clamp(6rem, 33vw, 12rem);
+    --hero-gap-headline-rule: clamp(1.1rem, 5vw, 2rem);
+    --hero-gap-rule-sub: clamp(1.1rem, 5.2vw, 2.1rem);
+
+    --scroll-bottom: clamp(1.5rem, 5vw, 2.5rem);
+    --mouse-w: clamp(1.4rem, 6.6vw, 1.9rem);
+    --tracking-display: -0.01em;
+  }
+
+  [dir="rtl"] {
+    --fs-display: clamp(2.2rem, 11.4vw, 4.9rem);
+    --fs-micro: clamp(0.7rem, 3vw, 0.9rem);
+    --tracking-display: 0;
+  }
+}
+
+/* Tablet band — wide enough to keep a trace of the desktop rail rather than
+ * dropping the block flat against the gutter. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    --gutter: clamp(2rem, 4.5vw, 3rem);
+    --hero-inline-start: 9%;
+    --hero-rule-w: clamp(8rem, 22vw, 14rem);
+  }
+}
+
+/* Short frames — landscape phones, split screens. Everything tightens so the
+ * headline, rule, sub-headline and scroll cue all stay inside one screen. */
+@media (max-height: 560px) {
+  :root {
+    --fs-display: clamp(1.75rem, 7.5vh, 4rem);
+    --fs-sub: clamp(0.8125rem, 3vh, 1.15rem);
+    --hero-gap-headline-rule: clamp(0.6rem, 2.6vh, 1.5rem);
+    --hero-gap-rule-sub: clamp(0.6rem, 2.8vh, 1.6rem);
+    --scroll-bottom: clamp(0.75rem, 3vh, 1.5rem);
+    --mouse-w: clamp(1.1rem, 4.6vh, 1.6rem);
+  }
+}
+
+/* Ultrawides: stop the fluid inset from pushing the block off to the edge. */
+@media (min-width: 2200px) {
+  :root {
+    --hero-inline-start: 32%;
+  }
+}

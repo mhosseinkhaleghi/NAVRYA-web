@@ -1,0 +1,24 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "feature": "Funciones",
+    "psychology": "Psicología",
+    "pricing": "Precios",
+    "academy": "Academia"
+  },
+  "actions": {
+    "login": "Acceder",
+    "language": "Cambiar idioma"
+  },
+  "hero": {
+    "headline": "Conviértete en el Cazador.",
+    "subline": [
+      "El mercado no paga a quienes persiguen cada movimiento.",
+      "Recompensa a quienes esperan la presa perfecta."
+    ],
+    "scroll": "Desliza"
+  },
+  "a11y": {
+    "primaryNav": "Navegación principal"
+  }
+}

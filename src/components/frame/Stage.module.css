@@ -1,0 +1,18 @@
+/* The single, fixed, full-screen frame every scene renders into.
+ * Nothing outside this element is ever visible, and it never translates. */
+.stage {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background-color: var(--c-bg);
+  /* On wide frames the header overlays and the scene centres against the whole
+   * viewport, as the comp does. On compact frames the header joins the column
+   * so the scene can never be pushed under it, whatever the bar's height. */
+  display: flex;
+  flex-direction: column;
+  /* Fallback for browsers without dvh; the fixed inset already handles the
+   * mobile URL-bar case, this just keeps the box explicit. */
+  height: 100vh;
+  height: var(--frame-h);
+}

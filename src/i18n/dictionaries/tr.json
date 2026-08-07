@@ -1,0 +1,24 @@
+{
+  "nav": {
+    "home": "Ana Sayfa",
+    "feature": "Özellikler",
+    "psychology": "Psikoloji",
+    "pricing": "Fiyatlandırma",
+    "academy": "Akademi"
+  },
+  "actions": {
+    "login": "Giriş",
+    "language": "Dili değiştir"
+  },
+  "hero": {
+    "headline": "Avcı Ol.",
+    "subline": [
+      "Piyasa, her hareketin peşinden koşanlara ödeme yapmaz.",
+      "Kusursuz avı bekleyenleri ödüllendirir."
+    ],
+    "scroll": "Kaydır"
+  },
+  "a11y": {
+    "primaryNav": "Ana gezinme"
+  }
+}
