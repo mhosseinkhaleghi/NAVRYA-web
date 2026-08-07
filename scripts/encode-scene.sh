@@ -35,7 +35,7 @@ mkdir -p "$OUT"
 
 case "$MODE" in
   play)  GOP=48; H_1080=23; H_720=25; V_1080=34; V_720=37 ;;
-  scrub) GOP=6;  H_1080=27; H_720=28; V_1080=36; V_720=38 ;;
+  scrub) GOP=6;  H_1080=23; H_720=25; V_1080=32; V_720=34 ;;
   *) echo "unknown mode: $MODE (want play or scrub)" >&2; exit 1 ;;
 esac
 
@@ -60,17 +60,18 @@ enc() { # width  height  h264-crf  vp9-crf  label
 enc 1920 1080 "$H_1080" "$V_1080" 1080
 enc 1280 720  "$H_720"  "$V_720"  720
 
-# A 540p WebM proxy, for the self-contained preview only. That build inlines
-# every plate as a data URI, so the whole sequence has to fit in one file the
-# viewer downloads before anything renders — the shipping renditions would put
-# it past 15MB. Production never serves this.
-ffmpeg -v error -y -i "$SRC" -an -vf "scale=960:540:flags=lanczos" \
-  -c:v libvpx-vp9 -crf $(( V_720 + 4 )) -b:v 0 -row-mt 1 -cpu-used 4 \
-  -g "$GOP" -keyint_min "$GOP" -pix_fmt yuv420p "$OUT/$SLUG-540.webm"
+# A 720p proxy, for the self-contained preview only. That build inlines every
+# plate as a data URI, so the whole sequence has to fit inside one file the
+# viewer downloads before anything renders. Resolution carries perceived
+# sharpness further than bitrate does, so the proxy keeps 720p and spends the
+# saving on compression instead of pixels.
+ffmpeg -v error -y -i "$SRC" -an -vf "scale=1280:720:flags=lanczos" \
+  -c:v libvpx-vp9 -crf 40 -b:v 0 -row-mt 1 -cpu-used 4 \
+  -g "$GOP" -keyint_min "$GOP" -pix_fmt yuv420p "$OUT/$SLUG-proxy.webm"
 for edge in first last; do
   [ "$edge" = first ] && n=0 || n=$((FRAMES - 1))
-  ffmpeg -v error -y -i "$SRC" -vf "select=eq(n\,$n),scale=960:540:flags=lanczos" \
-    -frames:v 1 -q:v 6 "$OUT/$SLUG-$edge-540.jpg"
+  ffmpeg -v error -y -i "$SRC" -vf "select=eq(n\,$n),scale=1280:720:flags=lanczos" \
+    -frames:v 1 -q:v 5 "$OUT/$SLUG-$edge-proxy.jpg"
 done
 
 ffmpeg -v error -y -i "$SRC" -vf "select=eq(n\,0),scale=1920:1080:flags=lanczos" \

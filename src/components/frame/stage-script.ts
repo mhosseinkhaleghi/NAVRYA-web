@@ -19,22 +19,24 @@
 export const INTRO_REVEAL_AT = 4.33;
 
 /**
- * The timeline, in vh of scroll each beat is given. Must add up to the
+ * The timeline: one beat per plate, in vh of scroll. Must add up to the
  * `--timeline-vh` token, which is what actually creates the scrollable height.
  *
- * The shape repeats: a plate scrubs, its panel arrives on a cue taken from the
- * footage, the plate holds its closing frame while the panel scrolls back out,
- * then the next plate takes over.
+ * There are no holds. Earlier the picture froze on a plate's closing frame
+ * while its panel scrolled out, and every one of those pauses ended in a lurch
+ * as the next plate took over — a still image and then sudden motion reads as a
+ * jump however well the frames match. Now each plate runs straight into the
+ * next and the text leaves *over* the plate that is already moving.
+ *
+ * Scroll is allocated at roughly 70vh per second of footage, so every plate
+ * scrubs at the same rate and the sequence never changes pace at a seam.
  */
 const BEATS = [
-  ["turn", 140], // hunter-turn scrubs — he turns back to the valley
-  ["exit1", 90], // the hero block leaves, over the held frame
-  ["prey", 380], // valley-prey scrubs — the deer walks in and grazes
-  ["exit2", 90], // panel 1 leaves
-  ["draw", 340], // hunter-draw scrubs — he raises the bow and draws
-  ["exit3", 90], // panel 2 leaves
-  ["strike", 440], // hunter-strike scrubs — the camera pushes in to the draw
-  ["rest", 50], // tail room, so the last reveal is not pinned to the bottom
+  ["turn", 210], // hunter-turn  · 3.0s — he turns back to the valley
+  ["prey", 380], // valley-prey  · 5.0s — the deer walks in and grazes
+  ["draw", 380], // hunter-draw  · 5.0s — he raises the bow and draws
+  ["strike", 520], // hunter-strike · 7.0s — the camera pushes in to the draw
+  ["rest", 40], // tail room, so the last reveal is not pinned to the bottom
 ] as const;
 
 /**
@@ -51,7 +53,13 @@ const AIM_HELD = 4.0 / 7.041667; // camera on the draw, roughly 70% back
 
 /**
  * One entry per scrubbed plate: which beat scrubs it, which panel it carries,
- * which beat that panel leaves over, and the two cues its reveal hangs on.
+ * and the two cues that panel's reveal hangs on.
+ *
+ * `exit` is expressed as a window inside the *following* beat, not this one.
+ * That is what removes the pauses: a panel slides out over the next plate,
+ * which is already running, instead of over a frozen frame. There is room for
+ * it — every cue lands in the first half of its plate, so the outgoing text is
+ * long gone before the next one arrives.
  *
  * The first plate carries the hero, which is markup of its own, so it has no
  * panel here. Sections 3 and 4 have a single cue in the footage, so their two
@@ -59,18 +67,28 @@ const AIM_HELD = 4.0 / 7.041667; // camera on the draw, roughly 70% back
  * leads, exactly as it does in section 2.
  */
 const SCENES = [
-  { plate: "turn", beat: "turn", panel: null, exit: "exit1", cues: null },
-  { plate: "prey", beat: "prey", panel: "p1", exit: "exit2", cues: [DEER_ENTERS, DEER_GRAZES] },
-  { plate: "draw", beat: "draw", panel: "p2", exit: "exit3", cues: [BOW_SET, BOW_SET + 0.02] },
+  { plate: "turn", beat: "turn", panel: null, exit: null, cues: null },
+  { plate: "prey", beat: "prey", panel: "p1", exit: [0, 0.2], cues: [DEER_ENTERS, DEER_GRAZES] },
+  { plate: "draw", beat: "draw", panel: "p2", exit: [0, 0.18], cues: [BOW_SET, BOW_SET + 0.02] },
   { plate: "strike", beat: "strike", panel: "p3", exit: null, cues: [AIM_HELD, AIM_HELD + 0.02] },
 ] as const;
 
-/** How much of a plate's own progress each reveal group takes to complete. */
-const TITLE_SPAN = 0.16;
-const REST_SPAN = 0.24;
+/** The hero leaves late in the first plate, once the head has come back round. */
+const HERO_EXIT = [0.55, 0.92];
 
-/** Cross-dissolve length at a plate handover, as a fraction of total scroll. */
-const PLATE_FADE = 0.009;
+/** How much of a plate's own progress each reveal group takes to complete. */
+const TITLE_SPAN = 0.12;
+const REST_SPAN = 0.15;
+
+/**
+ * Cross-dissolve at a handover, as a fraction of the incoming plate's beat.
+ *
+ * The plates are pixel-aligned but the renders draw the hunter's silhouette
+ * slightly differently between clips, so a cut makes the figure twitch. Long
+ * enough to read as a dissolve rather than a glitch, and the incoming plate is
+ * already moving underneath it, which does most of the hiding.
+ */
+const PLATE_FADE = 0.1;
 
 const START_GRACE_MS = 3500;
 const HARD_CAP_MS = 12000;
@@ -82,6 +100,7 @@ export const stageScript = `
   var SCENES = ${JSON.stringify(SCENES)};
   var REVEAL = ${INTRO_REVEAL_AT};
   var TITLE_SPAN = ${TITLE_SPAN}, REST_SPAN = ${REST_SPAN}, FADE = ${PLATE_FADE};
+  var HERO_EXIT = ${JSON.stringify(HERO_EXIT)};
 
   var reduced = window.matchMedia
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -217,8 +236,9 @@ export const stageScript = `
       // dissolving in over it and drop off the compositor.
       var fades = [];
       for (var s = 0; s < scenes.length; s++) {
-        var start = edge[scenes[s].cfg.beat][0];
-        fades.push(root.dataset.intro === 'shown' ? span(p, start, start + FADE) : 0);
+        var b = edge[scenes[s].cfg.beat];
+        var over = (b[1] - b[0]) * FADE;
+        fades.push(root.dataset.intro === 'shown' ? span(p, b[0], b[0] + over) : 0);
       }
       paintPlate(dawn, 1, fades[0] >= 1);
       for (s = 0; s < scenes.length; s++) {
@@ -237,7 +257,14 @@ export const stageScript = `
 
         if (!sc.panel) continue;
 
-        var out = cfg.exit ? ease(span(p, edge[cfg.exit][0], edge[cfg.exit][1])) : 0;
+        // The exit window lives in the next beat, so the panel leaves over a
+        // plate that is still running rather than over a frozen frame.
+        var out = 0;
+        if (cfg.exit && s + 1 < scenes.length) {
+          var nb = edge[scenes[s + 1].cfg.beat];
+          var w = nb[1] - nb[0];
+          out = ease(span(p, nb[0] + cfg.exit[0] * w, nb[0] + cfg.exit[1] * w));
+        }
         var live = p >= beat[0] && out < 1;
         if (live) sc.panel.setAttribute('data-active', '');
         else sc.panel.removeAttribute('data-active');
@@ -256,7 +283,8 @@ export const stageScript = `
         }
       }
 
-      var heroOut = ease(span(p, edge.exit1[0], edge.exit1[1]));
+      var hb = edge.turn, hw = hb[1] - hb[0];
+      var heroOut = ease(span(p, hb[0] + HERO_EXIT[0] * hw, hb[0] + HERO_EXIT[1] * hw));
       for (var h = 0; h < heroParts.length; h++) {
         heroParts[h].style.setProperty('--exit', heroOut);
       }

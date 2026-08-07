@@ -122,10 +122,10 @@ async function inlineScene(scene, seen) {
     const keep = sources.find((s) => /-720\.webm"/.test(s));
     if (!keep) continue;
 
-    // The 540p proxy, not the shipping rendition. Five plates at 720p would
-    // put the single file past 15MB, and every byte here is a byte the viewer
-    // waits on before anything renders.
-    const src = /src="([^"]+)"/.exec(keep)[1].replace("-720.webm", "-540.webm");
+    // The proxy, not the shipping rendition. Every byte in this file is a byte
+    // the viewer waits on before anything renders, and five plates at shipping
+    // quality would put it past the 16MB ceiling.
+    const src = /src="([^"]+)"/.exec(keep)[1].replace("-720.webm", "-proxy.webm");
     seen.add(src);
     const inlined =
       `<source src="${await dataUri(src)}" type="video/webm" ` +
@@ -137,9 +137,9 @@ async function inlineScene(scene, seen) {
   }
 
   // The stills arrive as custom properties on inline style attributes, and
-  // take the matching 540p proxy so a handover never pops in sharpness.
+  // take the matching proxy so a handover never pops in sharpness.
   for (const ref of new Set(scene.match(/url\(&quot;\/scene\/[^&]+&quot;\)/g) ?? [])) {
-    const file = /(\/scene\/[^&]+)/.exec(ref)[1].replace(/\.jpg$/, "-540.jpg");
+    const file = /(\/scene\/[^&]+)/.exec(ref)[1].replace(/\.jpg$/, "-proxy.jpg");
     seen.add(file);
     scene = scene.replaceAll(ref, `url(&quot;${await dataUri(file)}&quot;)`);
   }
