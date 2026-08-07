@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { Hero } from "@/components/hero/Hero";
+import { Scene } from "@/components/frame/Scene";
 import { Stage } from "@/components/frame/Stage";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { isLocale } from "@/i18n/config";
@@ -18,6 +19,7 @@ export default async function HomePage({
 
   return (
     <Stage>
+      <Scene />
       <SiteHeader locale={locale} dictionary={dictionary} active="home" />
       <Hero dictionary={dictionary} />
     </Stage>

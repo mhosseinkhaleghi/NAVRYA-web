@@ -24,6 +24,42 @@ Later steps will feed scroll input into scene changes *inside* this frame. None
 of that is implemented yet: today the frame holds one scene, the hero. The
 groundwork that exists for it is only the frame itself.
 
+## The scene
+
+The frame's backdrop is a 4s silent loop (`components/frame/Scene`). The plate
+is a narrative reveal — dark valley, the hunter walks in, dawn breaks — which
+means its first and last frames are nothing alike and a plain `loop` would cut
+hard every pass. `scripts/encode-scene.sh` dissolves the head back over the
+tail so the last frame lands on the first and the seam disappears:
+
+```bash
+scripts/encode-scene.sh <source.mp4> <slug> [crossfade-seconds]
+```
+
+It also strips the audio, writes 1080p and 720p in both H.264 and VP9, and
+pulls a poster. The source plate ships at 14 Mbps; the 1080p renditions are
+1.9 MB (MP4) and 1.1 MB (WebM).
+
+Every `<source>` carries `(prefers-reduced-motion: no-preference)`. A viewer
+who asks for less motion therefore matches **no source at all** — the video is
+never fetched and the poster stands in — which keeps the whole scene free of
+client-side JavaScript.
+
+The composition is load-bearing: the hunter holds the left of the plate and the
+valley opens on the right, which is exactly the rail the hero text sits on. Two
+consequences:
+
+- **RTL mirrors the footage** (`transform: scaleX(-1)`), so the figure keeps the
+  closed side and the text keeps the open valley in both directions.
+- **Frames narrower than 7:5 re-crop onto the figure.** A portrait crop of a
+  16:9 plate only shows its middle ~26% and would lose him entirely. Note that
+  `object-position` picks the crop window in *source* coordinates, before the
+  RTL mirror flips the painted result — so both directions use the same window.
+
+The scrim in `Scene.module.css` is the legibility control and the one place to
+tune: light over the figure so the silhouette reads, heavy across the rail so
+cream type holds contrast against the sunrise.
+
 ## Layout
 
 ```
@@ -31,6 +67,7 @@ src/
   app/[locale]/          route shell — sets <html lang dir> per locale
   components/
     frame/Stage          the fixed full-screen frame
+    frame/Scene          background video + scrim
     site/SiteHeader      wordmark, nav, language control, Login
     hero/Hero            headline, ornamental rule, sub-headline, scroll cue
     icons/               globe + chevron
@@ -42,7 +79,32 @@ src/
     fonts.css            generated @font-face declarations
     tokens.css           colour, type scale, spacing, composition
   proxy.ts               bare paths → negotiated locale
+
+public/
+  fonts/brand/           ← drop the brand typeface here
+  scene/                 encoded backdrop renditions + poster
+
+scripts/
+  encode-scene.sh        raw plate → seamless loop + renditions
+  build-preview.mjs      production output → one shareable HTML file
 ```
+
+## Preview build
+
+`scripts/build-preview.mjs` produces a single self-contained HTML file from the
+*real* production output, so a shared preview can never drift from the code:
+
+```bash
+npm run build && npx next start -p 4173
+node scripts/build-preview.mjs        # → preview/navrya-hero.html (gitignored)
+```
+
+It pulls each locale's rendered body, inlines the CSS, every font subset and the
+backdrop as data URIs, and strips the hydration scripts — the hero is pure HTML
+and CSS, so there is nothing to hydrate. All five locales stack in the one file
+behind a small language control. The backdrop is lifted into a single shared
+layer rather than inlined per locale, since a data URI cannot be range-requested
+and five copies would multiply the video by five.
 
 ### Design tokens
 

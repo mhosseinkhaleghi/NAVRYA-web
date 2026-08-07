@@ -62,6 +62,51 @@ async function inlineFonts(css) {
   return { css, count: files.length };
 }
 
+const MIME = { mp4: "video/mp4", webm: "video/webm", jpg: "image/jpeg", png: "image/png", webp: "image/webp" };
+const dataUri = async (path) => {
+  const buf = await readFile(join(ROOT, "public", path));
+  return `data:${MIME[path.split(".").pop()]};base64,${buf.toString("base64")}`;
+};
+
+const SCENE_RE = /<div class="[^"]*__scene"[\s\S]*?__scrim"[^>]*><\/div><\/div>/;
+
+/**
+ * The backdrop is identical in all five locales, and a data URI cannot be
+ * range-requested — inlining it per pane would multiply the whole video by
+ * five. It is lifted out once into a shared layer instead, and the switcher
+ * re-points its `dir` so the RTL mirror still follows the active locale.
+ */
+async function inlineScene(scene, seen) {
+  const sources = [...scene.matchAll(/<source\b[^>]*>/g)].map((m) => m[0]);
+  // One rendition per codec — WebM for the browsers that prefer it, MP4 for
+  // the ones without a VP9 decoder — and drop the smaller sizes: CSS still
+  // drives the responsive crop, so the compact composition stays testable.
+  const keep = ["video/webm", "video/mp4"]
+    .map((type) => sources.find((s) => s.includes(`type="${type}"`)))
+    .filter(Boolean);
+  if (!keep.length) return scene;
+
+  const inlined = [];
+  for (const s of keep) {
+    const src = /src="([^"]+)"/.exec(s)[1];
+    const type = /type="([^"]+)"/.exec(s)[1];
+    seen.add(src);
+    inlined.push(
+      `<source src="${await dataUri(src)}" type="${type}" ` +
+        `media="(prefers-reduced-motion: no-preference)">`,
+    );
+  }
+
+  for (const s of sources) scene = scene.replace(s, keep[0] === s ? inlined.join("") : "");
+
+  const poster = /poster="([^"]+)"/.exec(scene);
+  if (poster) {
+    seen.add(poster[1]);
+    scene = scene.replace(poster[0], `poster="${await dataUri(poster[1])}"`);
+  }
+  return scene;
+}
+
 const HARNESS_CSS = `
 /* Preview control — deliberately mute, and built from Navrya's own tokens so
    it never competes with the composition it is framing. */
@@ -82,6 +127,11 @@ const HARNESS_CSS = `
 .nvp-toggle{display:flex;align-items:center;justify-content:center;padding:8px !important}
 .nvp[data-open="false"] .nvp-langs,.nvp[data-open="false"] .nvp-sep{display:none}
 .nv-locale[hidden]{display:none}
+/* The backdrop is shared across the panes, so it lives behind them and the
+   panes' own frame background steps aside to let it through. */
+#nv-scene{position:fixed;inset:0;z-index:0}
+#nv-scene>div{position:absolute;inset:0}
+.nv-locale>div{background-color:transparent}
 @media (prefers-reduced-motion:reduce){.nvp{transition:none}}
 `;
 
@@ -89,8 +139,12 @@ const HARNESS_JS = `
 (function(){
   var bar=document.querySelector('.nvp');
   var panes=document.querySelectorAll('.nv-locale');
+  var scene=document.getElementById('nv-scene');
   function show(code){
-    panes.forEach(function(p){p.hidden=p.dataset.loc!==code});
+    panes.forEach(function(p){
+      p.hidden=p.dataset.loc!==code;
+      if(!p.hidden&&scene) scene.dir=p.dir;
+    });
     bar.querySelectorAll('[data-set]').forEach(function(b){
       b.setAttribute('aria-pressed',String(b.dataset.set===code));
     });
@@ -103,6 +157,9 @@ const HARNESS_JS = `
   });
   var start=location.hash.slice(1);
   show(${JSON.stringify(LOCALES.map((l) => l.code))}.indexOf(start)>-1?start:'en');
+  // On a narrow frame the expanded row would sit over the scroll cue, so it
+  // starts collapsed and stays out of the composition until it is asked for.
+  if(window.innerWidth<480) bar.dataset.open='false';
 })();
 `;
 
@@ -119,11 +176,20 @@ async function main() {
   const inlined = await inlineFonts(css);
 
   const panes = [];
+  const media = new Set();
+  let scene = "";
   for (const { code } of LOCALES) {
     const html = code === "en" ? first : await text(`${BASE}/${code}`);
     const dir = /<html[^>]*\bdir="(\w+)"/.exec(html)?.[1] ?? "ltr";
-    panes.push(pane(code, dir, extractBody(html)));
+    let body = extractBody(html);
+    const found = SCENE_RE.exec(body);
+    if (found) {
+      if (!scene) scene = await inlineScene(found[0], media);
+      body = body.replace(found[0], "");
+    }
+    panes.push(pane(code, dir, body));
   }
+  const sceneLayer = scene ? `<div id="nv-scene" dir="ltr">${scene}</div>\n` : "";
 
   const controls = LOCALES.map(
     ({ code, label }) =>
@@ -132,7 +198,7 @@ async function main() {
 
   const page = `<title>Navrya — Hero Section</title>
 <style>${inlined.css}${HARNESS_CSS}</style>
-${panes.join("\n")}
+${sceneLayer}${panes.join("\n")}
 <div class="nvp" data-open="true" role="group" aria-label="Preview language">
   <button type="button" class="nvp-toggle" aria-label="Toggle preview controls"><span class="nvp-node"></span></button>
   <span class="nvp-sep"></span>
@@ -143,7 +209,9 @@ ${panes.join("\n")}
   await mkdir(dirname(OUT), { recursive: true });
   await writeFile(OUT, page);
   console.log(
-    `${OUT}\n  ${LOCALES.length} locales · ${inlined.count} fonts inlined · ${(page.length / 1024 / 1024).toFixed(2)} MB`,
+    `${OUT}\n  ${LOCALES.length} locales · ${inlined.count} fonts · ` +
+      `${media.size} media (${[...media].map((m) => m.split("/").pop()).join(", ") || "none"}) · ` +
+      `${(page.length / 1024 / 1024).toFixed(2)} MB`,
   );
 }
 
