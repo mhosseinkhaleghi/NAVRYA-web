@@ -26,13 +26,22 @@ export const INTRO_REVEAL_AT = 4.33;
  *   exit   the hero block leaves the frame
  *   prey   the deer walks in and settles to graze (plate: valley-prey)
  *   rest   tail room, so the last reveal is not pinned to the very bottom
+ *
+ * The turn plate is scrubbed across `turn` *and* `exit` together — see
+ * `TURN_SPAN`. Holding it still while the text left meant the picture froze for
+ * 90vh and then surged back to life when the next plate took over, which reads
+ * as a jump even though the two plates' frames match exactly. Nothing in the
+ * frame should ever stop moving while the wheel is still turning.
  */
 const BEATS = [
   ["turn", 140],
   ["exit", 90],
-  ["prey", 340],
-  ["rest", 70],
+  ["prey", 380],
+  ["rest", 40],
 ] as const;
+
+/** Beats the turn plate scrubs across, start to finish. */
+const TURN_SPAN = ["turn", "exit"] as const;
 
 /**
  * Cue points inside the prey plate, as a fraction of its duration.
@@ -47,7 +56,7 @@ const DEER_GRAZES = 3.6 / 5.041667;
 
 /** Reveal windows, in prey-plate progress. */
 const TITLE_WINDOW = [DEER_ENTERS, DEER_ENTERS + 0.16];
-const REST_WINDOW = [DEER_GRAZES, DEER_GRAZES + 0.21];
+const REST_WINDOW = [DEER_GRAZES, DEER_GRAZES + 0.24];
 
 const START_GRACE_MS = 3500;
 const HARD_CAP_MS = 12000;
@@ -58,6 +67,7 @@ export const stageScript = `
   var BEATS = ${JSON.stringify(BEATS)};
   var REVEAL = ${INTRO_REVEAL_AT};
   var TITLE = ${JSON.stringify(TITLE_WINDOW)};
+  var TURN_SPAN = ${JSON.stringify(TURN_SPAN)};
   var REST = ${JSON.stringify(REST_WINDOW)};
 
   var reduced = window.matchMedia
@@ -183,7 +193,9 @@ export const stageScript = `
       var max = document.documentElement.scrollHeight - window.innerHeight;
       var p = max > 0 ? clamp01(window.scrollY / max) : 0;
 
-      var turnP = span(p, edge.turn[0], edge.turn[1]);
+      // One continuous run across both beats, so the plate keeps moving while
+      // the hero text leaves rather than sitting frozen behind it.
+      var turnP = span(p, edge[TURN_SPAN[0]][0], edge[TURN_SPAN[1]][1]);
       var exitP = ease(span(p, edge.exit[0], edge.exit[1]));
       var preyP = span(p, edge.prey[0], edge.prey[1]);
       var inPrey = p >= edge.prey[0];

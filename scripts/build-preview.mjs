@@ -144,6 +144,7 @@ async function inlineScene(scene, seen) {
 
 const HARNESS_CSS = `
 .nv-locale[hidden]{display:none}
+.nv-locale{contain:none}
 /* The backdrop is shared across the panes, so it lives behind them and the
    panes' own frame background steps aside to let it through. */
 #nv-scene{position:fixed;inset:0;z-index:0}
@@ -154,37 +155,43 @@ const HARNESS_CSS = `
 const HARNESS_JS = `
 (function(){
   var CODES=${JSON.stringify(LOCALES.map((l) => l.code))};
+  var start=location.hash.slice(1);
+  if(CODES.indexOf(start)<0) start='en';
+
+  // Runs synchronously, straight after the panes and before any
+  // DOMContentLoaded handler — including the site controller's. Everything but
+  // the chosen locale is removed outright rather than hidden, so the
+  // controller's document-wide queries bind to the locale actually on screen.
+  // Hiding them was not enough: querySelector still found the first pane.
   var panes=document.querySelectorAll('.nv-locale');
-  var scene=document.getElementById('nv-scene');
-
-  function show(code){
-    panes.forEach(function(p){
-      p.hidden=p.dataset.loc!==code;
-      if(!p.hidden&&scene) scene.dir=p.dir;
-    });
-    if(location.hash.slice(1)!==code) history.replaceState(null,'','#'+code);
+  for (var i=0;i<panes.length;i++){
+    if (panes[i].dataset.loc===start) panes[i].hidden=false;
+    else panes[i].remove();
   }
+  var scene=document.getElementById('nv-scene');
+  var live=document.querySelector('.nv-locale');
+  if (scene && live) scene.dir=live.dir;
 
-  // The site's real language menu is the switcher. Its links go to /fa, /ar and
-  // so on, which cannot resolve inside a single file, so they change pane here.
+  // In production a language link is a real navigation: the page reloads and
+  // the whole sequence replays from the first frame. Reload here too, rather
+  // than swapping text in place, so the preview shows that and not a shortcut.
   document.addEventListener('click',function(e){
     var link=e.target.closest&&e.target.closest('a[href]');
     if(!link) return;
     var match=/^\\/([a-z]{2})$/.exec(link.getAttribute('href')||'');
     if(!match||CODES.indexOf(match[1])<0) return;
     e.preventDefault();
-    var menu=link.closest('details[data-language-menu]');
-    if(menu) menu.open=false;
-    show(match[1]);
+    if(match[1]===start){ location.reload(); return; }
+    location.hash=match[1];
+    location.reload();
   });
-
-  var start=location.hash.slice(1);
-  show(CODES.indexOf(start)>-1?start:'en');
 })();
 `;
 
+// Every pane ships hidden. The harness un-hides exactly one, synchronously,
+// before the controller ever looks at the DOM.
 const pane = (loc, dir, body) =>
-  `<div class="nv-locale" data-loc="${loc}" lang="${loc}" dir="${dir}"${loc === "en" ? "" : " hidden"}>\n${body}\n</div>`;
+  `<div class="nv-locale" data-loc="${loc}" lang="${loc}" dir="${dir}" hidden>\n${body}\n</div>`;
 
 async function main() {
   const first = await text(`${BASE}/en`);
@@ -218,13 +225,15 @@ async function main() {
 
   const sceneLayer = scene ? `<div id="nv-scene" dir="ltr">${scene}</div>\n` : "";
 
-  // The site's scripts go *before* the panes: the intro marks the document
-  // held-back before the composition is parsed, so nothing flashes on screen.
-  // The harness goes after, because it needs the panes to exist.
+  // Document order matters here. The controller runs first so it marks the
+  // document held-back before anything paints; then the plates, whose data URIs
+  // are megabytes of base64 the parser has to chew through — putting them ahead
+  // of the controller delayed the opening beat by about a second. The harness
+  // goes last, because it prunes panes that must already exist.
   const page = `<title>Navrya — Hero Section</title>
 <style>${inlined.css}${HARNESS_CSS}</style>
-${sceneLayer}${siteScripts.join("\n")}
-${panes.join("\n")}
+${siteScripts.join("\n")}
+${sceneLayer}${panes.join("\n")}
 <script>${HARNESS_JS}</script>`;
 
   await mkdir(dirname(OUT), { recursive: true });

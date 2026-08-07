@@ -39,9 +39,9 @@ fires once. `components/frame/stage-script.ts` maps scroll onto four beats:
 | ---- | ------ | ------------ |
 | — | on load | `hunter-dawn` plays itself. At **4.33s** the hunter turns to face the viewer and the interface rises into frame. Until then the timeline is locked shut. |
 | `turn` | 140vh | `hunter-turn` scrubs: he turns back to the valley. |
-| `exit` | 90vh | The hero block leaves the frame upward, out of focus. |
-| `prey` | 340vh | `valley-prey` scrubs. The deer clears the frame edge at **0.40s** and the section-2 headline lands on it. At **3.60s** the deer drops its head to graze and the rest of the panel assembles around the headline. |
-| `rest` | 70vh | Tail room, so the last reveal is not pinned to the very bottom. |
+| `exit` | 90vh | The hero block leaves the frame upward, out of focus — while `hunter-turn` keeps scrubbing. It runs across both beats (`TURN_SPAN`), because holding it still meant the picture froze for 90vh and then surged back to life, which reads as a jump even though the plates' frames match exactly. Nothing in frame should stop moving while the wheel is still turning. |
+| `prey` | 380vh | `valley-prey` scrubs. The deer clears the frame edge at **0.40s** and the section-2 headline lands on it. At **3.60s** the deer drops its head to graze and the rest of the panel assembles around the headline. |
+| `rest` | 40vh | Tail room, so the last reveal is not pinned to the very bottom. |
 
 Each plate's closing frame matches the next one's opening frame, so the
 handovers land on identical pixels and need no crossfade to hide them. The last
@@ -164,9 +164,18 @@ site's own inline scripts are carried over, so the intro sequence and the
 language menu behave exactly as they do in production rather than being
 approximated.
 
-All five locales stack in the one file, and the site's real language menu drives
-the switch: its links point at routes that cannot resolve inside a single file,
-so the harness intercepts them and swaps panes. The backdrop is lifted into one
+All five locales stack in the one file, but only one is ever *in* the DOM: the
+harness prunes the rest synchronously, before any `DOMContentLoaded` handler
+runs, so the controller's document-wide queries bind to the locale actually on
+screen. Hiding them was not enough — `querySelector` still found the first one,
+which left every language but English with a panel that never opened.
+
+Picking a language reloads the page against a hash rather than swapping text in
+place, because in production a language link *is* a real navigation and the
+whole sequence replays from the first frame. The preview shows that, not a
+shortcut. The controller also comes before the plates in document order: their
+data URIs are megabytes of base64 for the parser to chew through, and putting
+them first delayed the opening beat by about a second. The backdrop is lifted into one
 shared layer rather than inlined per locale — a data URI cannot be
 range-requested, and five copies would multiply the video by five.
 
