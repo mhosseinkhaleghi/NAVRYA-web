@@ -5,12 +5,29 @@
 #   scripts/encode-scene.sh <source.mp4> <slug> [mode] [seconds]
 #
 #   mode = play   (default) the plate is played, not scrubbed. Long GOP, and a
-#                 WebM alongside the MP4 because VP9 wins on this content.
-#   mode = scrub  the plate is driven by scroll position. Keyframes every 6
-#                 frames so a seek never has far to decode — the single thing
-#                 that decides whether scrubbing feels attached to the wheel or
-#                 laggy behind it. MP4 only: all-intra VP9 comes out *larger*
-#                 than H.264 here, and H.264 plays everywhere.
+#                 WebM alongside the MP4 because VP9 wins on this content. This
+#                 is the plate the opening waits on, so its weight is the first
+#                 thing a visitor pays for and it is tuned lighter than the rest.
+#   mode = scrub  the plate is driven by scroll position, so it needs keyframes
+#                 often enough that a seek never has far to decode.
+#
+#                 A keyframe every 12 frames rather than every 6: worst case the
+#                 decoder walks 11 frames, which is a few milliseconds and
+#                 nowhere near a dropped frame, and it costs 35% of the file.
+#                 Measured on the heaviest plate, at 1080p:
+#
+#                   crf 23 · gop  6   5.33 MB   (what this used to ship)
+#                   crf 23 · gop 12   3.47 MB
+#                   crf 20 · gop 12   4.97 MB   ← better picture, fewer bytes
+#                   crf 18 · gop 12   6.36 MB
+#
+#                 So the saving is spent on quality instead of bandwidth and the
+#                 plates come out sharper *and* slightly smaller than before.
+#
+#                 AV1 was measured here too and is not worth it: at gop 6 SVT-AV1
+#                 came out at 5.63 MB against H.264's 5.33 and VP9's 4.98. A GOP
+#                 this short is nearly all intra, which is exactly where AV1's
+#                 advantage disappears.
 #
 #   seconds       optional: trim the plate to this length. Several of the
 #                 sources end on a run of identical frames, and shipping them
@@ -45,7 +62,7 @@ mkdir -p "$OUT"
 
 case "$MODE" in
   play)  GOP=48; H_1080=23; H_720=25; V_1080=32; V_720=35 ;;
-  scrub) GOP=6;  H_1080=23; H_720=25; V_1080=32; V_720=34 ;;
+  scrub) GOP=12; H_1080=20; H_720=23; V_1080=28; V_720=31 ;;
   *) echo "unknown mode: $MODE (want play or scrub)" >&2; exit 1 ;;
 esac
 

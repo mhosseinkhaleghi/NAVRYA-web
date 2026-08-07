@@ -12,8 +12,8 @@
   z-index: 2;
   pointer-events: none;
 
-  /* Written by the controller. `--head` and `--body` come off the plate's own
-   * clock, `--lit` and `--glow` off scroll position. */
+  /* All four written by the controller, all four pure functions of scroll.
+   * `--glow` is the fraction of the ring that has been drawn, not an opacity. */
   --head: 0;
   --body: 0;
   --lit: 0;
@@ -30,17 +30,16 @@
  * The plate is letterboxed to 16:9, so its rendered height is `min(frame,
  * 56.25vw)` — known exactly, at any viewport. The arrow spans about 15% of that
  * height and is centred a little above the middle of the plate, so a band of
- * 22% pulled up by 2.2% clears the fletching and the head at every aspect from
- * ultrawide down to portrait, with no media query anywhere.
+ * 19% pulled up by 2.2% clears the fletching and the head, with no media query.
  * -------------------------------------------------------------------------- */
 
 .frame {
   --plate-h: min(var(--frame-h), 56.25vw);
-  --band: calc(var(--plate-h) * 0.22);
+  --band: calc(var(--plate-h) * 0.19);
 
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 3;
   display: grid;
   grid-template-rows: 1fr var(--band) 1fr;
   justify-items: center;
@@ -49,13 +48,24 @@
   padding-block-end: calc(var(--plate-h) * 0.044);
 }
 
+/* Portrait frames crop the plate to fill rather than letterbox it, so the
+ * rendered height is the whole frame — see the note in `Scene.module.css`. */
+@media (max-aspect-ratio: 1 / 1) {
+  .frame {
+    --plate-h: var(--frame-h);
+    --band: calc(var(--plate-h) * 0.14);
+  }
+}
+
 /* ── Headline ─────────────────────────────────────────────────────────────── */
 
 .headline {
   grid-row: 1;
   align-self: end;
   margin: 0;
-  margin-block-end: clamp(0.75rem, 2.4vh, 2.5rem);
+  /* Close to the arrow: the two are one composition, and a wide gap reads as
+   * two unrelated things that happen to share a frame. */
+  margin-block-end: clamp(0.35rem, 1.1vh, 1.1rem);
   max-inline-size: 22ch;
   color: var(--c-cream);
   font-family: var(--font-display);
@@ -67,8 +77,8 @@
   text-wrap: balance;
   text-shadow: var(--text-lift);
 
-  /* The same resolve the hero headline makes, on the plate's clock instead of
-   * a keyframe — so it runs backwards if the viewer scrolls back off the beat. */
+  /* The same resolve the hero headline makes, on scroll instead of a keyframe —
+   * so it runs backwards if the viewer scrolls back off the beat. */
   opacity: var(--head);
   transform: translateY(calc((1 - var(--head)) * 0.34em));
   filter: blur(calc((1 - var(--head)) * 12px));
@@ -85,12 +95,12 @@
   grid-row: 3;
   align-self: start;
   margin: 0;
-  margin-block-start: clamp(0.9rem, 3vh, 3rem);
+  margin-block-start: clamp(0.9rem, 2.6vh, 2.6rem);
   max-inline-size: var(--s5-measure);
   font-family: var(--font-sans);
   font-size: var(--fs-s5-body);
   font-weight: 300;
-  line-height: 1.75;
+  line-height: 1.68;
   text-align: center;
   text-wrap: pretty;
 
@@ -109,43 +119,92 @@
  * no per-element work at all.
  */
 .word {
-  --w: clamp(0, calc((var(--lit) - var(--i)) / 2.6), 1);
+  --w: clamp(0, calc((var(--lit) - var(--i)) / 2), 1);
 
-  color: rgb(255 255 255 / calc(0.17 + 0.83 * var(--w)));
-  text-shadow: 0 0 calc(var(--w) * 0.7em) rgb(255 255 255 / calc(var(--w) * 0.13));
+  color: rgb(255 255 255 / calc(0.2 + 0.8 * var(--w)));
+  text-shadow: 0 0 calc(var(--w) * 0.7em) rgb(255 255 255 / calc(var(--w) * 0.16));
 }
 
 /* -----------------------------------------------------------------------------
  * The edge light.
  *
- * A single conic gradient, larger than the frame and slowly turning, masked so
- * that only a band around the perimeter is painted — the middle stays perfectly
- * clear, which is what keeps it an ambient light around the scene rather than a
- * tint over it. `screen` means it can only ever add light to the plate, never
- * take any away.
+ * Two layers doing different jobs. The ring is a line — a real stroke around
+ * the perimeter, drawn progressively as the viewer scrolls, so the effect has
+ * a shape and a direction rather than simply getting brighter. The halo behind
+ * it is atmosphere: a slowly turning conic gradient, masked to the edges, that
+ * gives the line something to sit in.
  *
- * No blur filter: the mask's own falloff is a 45% soft ramp and the gradient's
- * hues interpolate continuously, so the softness costs nothing per frame.
+ * `screen` on the halo means it can only ever add light to the plate.
  * -------------------------------------------------------------------------- */
 
-.glow {
+.ring {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  inline-size: 100%;
+  block-size: 100%;
+  pointer-events: none;
+  /* The stroke straddles the rectangle's edge and the outer half is clipped by
+   * the viewport box, which is what puts the line flush against the frame. */
+  overflow: hidden;
+}
+
+.ringLine,
+.ringBloom {
+  fill: none;
+  stroke: url(#nv-ring-hues);
+  /* The square viewBox is stretched to the frame's aspect, which would stretch
+   * the stroke with it. This keeps the weight even on all four sides. */
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: butt;
+
+  /*
+   * One dash as long as the drawn part, then a gap longer than any viewport, so
+   * the pattern never repeats and the line is a single contiguous arc growing
+   * from the start point.
+   *
+   * The length has to be written in screen pixels, not path units:
+   * `non-scaling-stroke` resolves the whole stroke — width, dashes and offset —
+   * in the host coordinate space, so `pathLength` does not reach it and the
+   * ring came out as a few dozen little segments scattered round the frame.
+   * The path traces the frame exactly, so its screen perimeter is simply twice
+   * the width plus twice the height, which CSS can state directly.
+   */
+  --nv-perimeter: calc(2 * (100vw + var(--frame-h)));
+  stroke-dasharray: calc(var(--glow) * var(--nv-perimeter)) 100000px;
+}
+
+/* The path traces the frame exactly and the stroke is centred on it, so the
+ * frame clips its outer half — which is what makes the light sit *on* the edge.
+ * Both widths are doubled to account for that: half of each is off screen. */
+.ringLine {
+  stroke-width: clamp(6px, 0.72vw, 12px);
+}
+
+/* The same stroke, far wider and blurred, so the line reads as light rather
+ * than as a border. It carries the colour; the crisp line carries the edge. */
+.ringBloom {
+  stroke-width: clamp(30px, 4.4vw, 76px);
+  opacity: 0.85;
+  filter: blur(clamp(12px, 1.5vw, 28px));
+}
+
+.halo {
   position: absolute;
   inset: 0;
   z-index: 1;
   overflow: hidden;
   pointer-events: none;
-  opacity: calc(var(--glow) * 0.72);
+  /* Comes up quickly and then holds, so the ring is drawn into a lit frame
+   * rather than onto a black one. */
+  opacity: calc(min(1, var(--glow) * 2.4) * 0.46);
   mix-blend-mode: screen;
-  /* The clear middle has to stay genuinely clear — the arrow and both blocks of
-   * type live in it — and the perimeter has to actually read as lit. So the
-   * ramp starts outside the type and reaches full before the edge, rather than
-   * spreading the whole way across and washing the scene. */
-  -webkit-mask-image: radial-gradient(118% 118% at 50% 50%, transparent 42%, #000 90%);
-  mask-image: radial-gradient(118% 118% at 50% 50%, transparent 42%, #000 90%);
+  -webkit-mask-image: radial-gradient(118% 118% at 50% 50%, transparent 42%, #000 92%);
+  mask-image: radial-gradient(118% 118% at 50% 50%, transparent 42%, #000 92%);
   will-change: opacity;
 }
 
-.glow::before {
+.halo::before {
   content: "";
   position: absolute;
   top: 50%;
@@ -164,10 +223,10 @@
     #2ea8f5,
     #3b6dff
   );
-  animation: nv-glow-turn 22s linear infinite;
+  animation: nv-halo-turn 22s linear infinite;
 }
 
-@keyframes nv-glow-turn {
+@keyframes nv-halo-turn {
   from {
     transform: rotate(0deg);
   }
@@ -180,16 +239,10 @@
  * Compact frames.
  *
  * The composition is unchanged — it is already centred and already keyed to the
- * plate rather than the viewport — but the paragraph gives up its measure and
- * the band is worth a little more room, because a phone renders the plate as a
- * short strip and the two text blocks have the rest of the frame to spread into.
+ * plate rather than the viewport — but the paragraph gives up its measure.
  * -------------------------------------------------------------------------- */
 
 @media (max-width: 767px) {
-  .frame {
-    --band: calc(var(--plate-h) * 0.3);
-  }
-
   .body {
     max-inline-size: 100%;
   }
@@ -198,9 +251,8 @@
 /* -----------------------------------------------------------------------------
  * Reduced motion.
  *
- * No plate downloads, so there is no clock to cue from — the stills carry the
- * scene and the words simply arrive with it. The edge light stops turning; it
- * still comes up with scroll, because that is the viewer's own doing.
+ * The reveals are all scroll-driven, so they stay: the viewer is doing them.
+ * Only the halo's own rotation stops.
  * -------------------------------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
@@ -209,7 +261,7 @@
     transform: none;
   }
 
-  .glow::before {
+  .halo::before {
     animation: none;
   }
 }

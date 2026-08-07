@@ -73,18 +73,37 @@
 }
 
 /* -----------------------------------------------------------------------------
- * Frames narrower than the plate.
+ * Portrait frames.
  *
- * Keyed to aspect ratio, not width: a frame taller than the 16:9 footage would
- * letterbox it down to a thin strip. Below ~1.4 the plate fills instead, with
- * the crop pulled onto the figure — he is what the shot is about, and a
- * portrait crop of a 16:9 plate shows only its middle ~26%.
+ * THE ONE RULE IN THIS FILE: every plate is placed identically, at every
+ * viewport, with no per-plate exception of any kind.
+ *
+ * The plates are pieces of one shot and hand over on frames that are the same
+ * picture, so the *only* way a figure can appear to move at a handover is if the
+ * two plates are not framed the same way on screen. There were two exceptions
+ * here — the prey plate cropped further right to hold the deer, and the closing
+ * plate contained rather than cropped — and each was a visible jump of the whole
+ * image. Measured at a 1.31 viewport, 59.5% of pixels moved at `turn → prey` and
+ * 59.9% at `prey → draw`, against 1.8% at 16:9 where neither exception applied.
+ * One frame of real motion is 39%, so the handover moved more than the footage
+ * did. Any exception added here reintroduces exactly that.
+ *
+ * The threshold is portrait rather than 7/5 for the same reason: `contain` can
+ * never mismatch, so it should cover every frame it reasonably can. A tall
+ * desktop window letterboxes into the page's own near-black, which is the
+ * intended composition — the whole plate on screen. Only a genuinely portrait
+ * frame, where `contain` would leave a thin strip, fills instead.
+ *
+ * At 14% the crop holds the hunter, who is the one element continuous across
+ * all six plates. A portrait window of a 16:9 plate is about a quarter of its
+ * width, so the deer and the arrowhead do fall outside it — that is the cost of
+ * the rule, and it is much smaller than the cost of breaking it.
  *
  * `object-position` picks the crop window in source coordinates, before the RTL
  * mirror flips the painted result, so both directions select the same window.
  * -------------------------------------------------------------------------- */
 
-@media (max-aspect-ratio: 7 / 5) {
+@media (max-aspect-ratio: 1 / 1) {
   .video {
     object-fit: cover;
     object-position: 14% center;
@@ -93,31 +112,6 @@
   .still {
     background-size: cover;
     background-position: 14% center;
-  }
-
-  /* The prey plate is about the meadow, not the figure, so its crop sits
-   * further right — far enough to hold the deer's whole path across frame. */
-  [data-plate-id="prey"] .video {
-    object-position: 52% center;
-  }
-
-  [data-plate-id="prey"] .still {
-    background-position: 52% center;
-  }
-
-  /* The closing plate is a single horizontal object that runs nearly the full
-   * width of frame. Any crop takes the head or the fletching off, and section 5
-   * is composed around the whole of it — headline above, text below — so it
-   * stays contained at every aspect and letterboxes into the page's own black,
-   * which is where the shot ends up anyway. */
-  [data-plate-id="arrow"] .video {
-    object-fit: contain;
-    object-position: center;
-  }
-
-  [data-plate-id="arrow"] .still {
-    background-size: contain;
-    background-position: center;
   }
 }
 

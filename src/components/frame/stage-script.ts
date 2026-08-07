@@ -41,8 +41,12 @@ const BEATS = [
   ["prey", 380], // valley-prey   · 5.0s — the deer walks in and grazes
   ["draw", 380], // hunter-draw   · 5.0s — he raises the bow and draws
   ["strike", 520], // hunter-strike · 7.0s — the camera pushes in to the draw
-  ["arrow", 470], // arrow-learns  · 6.7s — the release, and the world goes dark
-  ["learn", 560], // the closing text lights up a word at a time
+  // Section 4 leaves here, over the plate's closing frame and nothing else.
+  // The release is the loudest moment in the sequence and the text must be off
+  // the screen before it, not sliding out across it.
+  ["clear", 160],
+  ["arrow", 520], // arrow-learns  · 6.7s — the release, and the world goes dark
+  ["learn", 520], // the closing text lights up a word at a time
   ["rest", 40], // tail room, so the last reveal is not pinned to the bottom
 ] as const;
 
@@ -57,6 +61,8 @@ const DEER_ENTERS = 0.4 / 5.041667; // clears the right edge of frame
 const DEER_GRAZES = 3.6 / 5.041667; // drops its head to feed
 const BOW_SET = 2.5 / 5.041667; // the draw settles into the aim
 const AIM_HELD = 4.0 / 7.041667; // camera on the draw, roughly 70% back
+const ARROW_MID = 2.0 / 6.7; // the arrow crisp and dead centre in the air
+const WORLD_GONE = 5.15 / 6.7; // the valley has fallen away behind it
 
 /**
  * One entry per scrubbed plate: which beat scrubs it, which panel it carries,
@@ -93,9 +99,12 @@ const SCENES = [
     plate: "strike",
     beat: "strike",
     panel: "p3",
-    exit: ["arrow", 0, 0.16],
+    // Its own beat, and finished well inside it: the closing plate must open on
+    // an empty frame.
+    exit: ["clear", 0, 0.72],
     cues: [AIM_HELD, AIM_HELD + 0.02],
   },
+  { plate: "arrow", beat: "arrow", panel: null, exit: null, cues: null },
 ] as const;
 
 /**
@@ -124,31 +133,31 @@ const TITLE_SPAN = 0.12;
 const REST_SPAN = 0.15;
 
 /**
- * Section 5 is cued off the closing plate's own clock, not off scroll.
+ * Section 5's two entrances, as fractions of the closing plate.
  *
- * The arrow is crisp and dead centre at two seconds, and that is when the
- * headline arrives above it. The valley behind it starts falling away at 5.1s
- * and the frame is black by 6.4s, and the paragraph fades up with it — so the
- * words arrive as the picture makes room for them.
+ * The release, the arrow's flight and the fall to black are all scrubbed, like
+ * every other plate — the wheel is the clock here too. The headline lands when
+ * the arrow is crisp and centred, and the paragraph fades up as the valley
+ * disappears behind it, so the words arrive into the space the picture leaves.
  */
-const ARROW_TITLE_AT = 2.0;
-const ARROW_TITLE_SPAN = 0.75;
-const ARROW_BODY_AT = 5.1;
-const ARROW_BODY_SPAN = 1.3;
-/** Stands in for the plate's duration when there is no video to read it from. */
-const ARROW_DURATION = 6.7;
+const ARROW_TITLE_SPAN = 0.11;
+const ARROW_BODY_SPAN = 0.18;
 
 /**
  * The closing paragraph lights up a word at a time. `LEARN_FADE` is how many
  * words are mid-transition at once — one at a time reads as a ticker, and the
  * whole line at once is not a reveal at all. `LEARN_LEAD` finishes the last
- * word slightly before the beat ends, so the sentence is whole for a moment
- * before the page runs out.
+ * word two thirds of the way through the beat, so the sentence stands whole
+ * for a while rather than completing on the last pixel of scroll.
  */
-const LEARN_FADE = 2.6;
-const LEARN_LEAD = 0.9;
-/** The edge light comes up over the first stretch of the beat, then holds. */
-const GLOW_IN = 0.42;
+const LEARN_FADE = 2;
+const LEARN_LEAD = 0.62;
+/**
+ * The edge light is linear and finishes with the beat: `--glow` is the fraction
+ * of the perimeter that has been drawn, so scrolling the beat draws the ring
+ * exactly once, at a constant rate, and scrolling back erases it.
+ */
+const GLOW_LEAD = 0.94;
 
 /**
  * The opening plate is never started until it can run without stalling.
@@ -184,10 +193,9 @@ export const stageScript = `
   var REVEAL = ${INTRO_REVEAL_AT};
   var TITLE_SPAN = ${TITLE_SPAN}, REST_SPAN = ${REST_SPAN};
   var HERO_EXIT = ${JSON.stringify(HERO_EXIT)};
-  var ARROW_AT = ${ARROW_TITLE_AT}, ARROW_SPAN = ${ARROW_TITLE_SPAN};
-  var BODY_AT = ${ARROW_BODY_AT}, BODY_SPAN = ${ARROW_BODY_SPAN};
-  var ARROW_DUR = ${ARROW_DURATION};
-  var LEARN_FADE = ${LEARN_FADE}, LEARN_LEAD = ${LEARN_LEAD}, GLOW_IN = ${GLOW_IN};
+  var ARROW_AT = ${ARROW_MID}, ARROW_SPAN = ${ARROW_TITLE_SPAN};
+  var BODY_AT = ${WORLD_GONE}, BODY_SPAN = ${ARROW_BODY_SPAN};
+  var LEARN_FADE = ${LEARN_FADE}, LEARN_LEAD = ${LEARN_LEAD}, GLOW_LEAD = ${GLOW_LEAD};
 
   var reduced = window.matchMedia
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -205,11 +213,30 @@ export const stageScript = `
   function span(p, a, b) { return b === a ? (p >= b ? 1 : 0) : clamp01((p - a) / (b - a)); }
   function ease(t) { return 1 - Math.pow(1 - t, 3); }
 
-  // ── the opening beat ─────────────────────────────────────────────────────
-  // Always start from the top: a restored scroll position would drop the
-  // viewer into the middle of a sequence that had not played yet.
+  // ── always from the first frame ──────────────────────────────────────────
+  // A refresh, a language change and a back-button return must all begin where
+  // the sequence begins. Three separate things can put the viewer somewhere
+  // else, and all three have to be answered:
+  //
+  //   · scroll restoration — the browser puts back the offset it remembered.
+  //     Switched off, and the position reset here, before first paint.
+  //   · the document growing — the track is not in the DOM yet at this point,
+  //     so the reset above lands on a short page. Repeated once the layout
+  //     exists, and again on the load event, when nothing can move it.
+  //   · the back/forward cache — a restored page keeps its scroll offset *and*
+  //     every video's playhead, so the sequence resumes mid-shot with the
+  //     opening already over. There is nothing to rewind into; the page is
+  //     reloaded outright, which is also what makes a language change replay
+  //     from the top after the viewer navigates back to it.
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-  window.scrollTo(0, 0);
+  function toTop() { window.scrollTo(0, 0); }
+  toTop();
+  ready(toTop);
+  window.addEventListener('load', toTop);
+  window.addEventListener('pageshow', function (e) {
+    if (e.persisted) location.reload();
+    else toTop();
+  });
 
   // Two separate gates. \`intro\` raises the interface, on the frame the hunter
   // turns. \`timeline\` unlocks the scroll, and waits for the plate to reach its
@@ -355,75 +382,24 @@ export const stageScript = `
     }
 
     // ── section 5 ──────────────────────────────────────────────────────────
+    // Every value here is a pure function of scroll position, exactly like the
+    // rest of the sequence: the release, the flight, the fall to black, the two
+    // entrances, the paragraph lighting up and the ring drawing itself.
     var arrow = document.querySelector('[data-arrow]');
-    var arrowVideo = document.querySelector('[data-scene-video="arrow"]');
     var words = arrow ? +arrow.getAttribute('data-words') || 0 : 0;
-    var flying = false, lastArrowP = 0;
-
-    // The plate plays rather than scrubs, so scroll events stop arriving the
-    // moment the viewer lets go of the wheel — and both of this section's
-    // entrances are cued off the footage, not off scroll. This keeps painting
-    // while the shot runs.
-    var tick = null;
-    function ticking(on) {
-      if (on && tick === null) tick = requestAnimationFrame(function loop() {
-        paintCues();
-        tick = requestAnimationFrame(loop);
-      });
-      if (!on && tick !== null) { cancelAnimationFrame(tick); tick = null; }
-    }
-
-    // With no plate to read a clock off — reduced motion, or a codec the
-    // browser cannot decode — scroll position stands in for it, so the section
-    // still assembles in the right order.
-    function paintCues() {
-      if (!arrow) return;
-      var t = 0;
-      if (flying) {
-        t = arrowVideo && arrowVideo.duration
-          ? arrowVideo.currentTime
-          : lastArrowP * ARROW_DUR;
-      }
-      arrow.style.setProperty('--head', ease(clamp01((t - ARROW_AT) / ARROW_SPAN)));
-      arrow.style.setProperty('--body', ease(clamp01((t - BODY_AT) / BODY_SPAN)));
-    }
 
     function paintArrow(ap, lp) {
-      lastArrowP = ap;
       if (!arrow) return;
 
       if (ap > 0) arrow.setAttribute('data-active', '');
       else arrow.removeAttribute('data-active');
 
-      if (arrowVideo) {
-        if (ap > 0) {
-          if (!flying) {
-            flying = true;
-            var play = arrowVideo.play();
-            if (play && play.catch) play.catch(function () {});
-          }
-          // Forward-only floor. Left alone the shot plays in its own time,
-          // which is the whole point of it; a viewer who scrolls faster than
-          // the arrow flies pulls it along rather than arriving ahead of it.
-          var playable = (arrowVideo.duration || 0) - 0.03;
-          if (playable > 0 && arrowVideo.currentTime < ap * playable - 0.09) {
-            try { arrowVideo.currentTime = ap * playable; } catch (e) {}
-          }
-        } else if (flying) {
-          // Scrolled back off the plate: rewind, so it is loosed again on the
-          // way down rather than picking up where it left off.
-          flying = false;
-          arrowVideo.pause();
-          try { arrowVideo.currentTime = 0; } catch (e) {}
-        }
-        ticking(flying && !arrowVideo.paused && !arrowVideo.ended);
-      } else {
-        flying = ap > 0;
-      }
-
-      paintCues();
+      arrow.style.setProperty('--head', ease(span(ap, ARROW_AT, ARROW_AT + ARROW_SPAN)));
+      arrow.style.setProperty('--body', ease(span(ap, BODY_AT, BODY_AT + BODY_SPAN)));
       arrow.style.setProperty('--lit', clamp01(lp / LEARN_LEAD) * (words + LEARN_FADE));
-      arrow.style.setProperty('--glow', ease(clamp01(lp / GLOW_IN)));
+      // Linear, and it completes with the beat — this is the fraction of the
+      // perimeter the ring has been drawn to, not an opacity.
+      arrow.style.setProperty('--glow', clamp01(lp / GLOW_LEAD));
     }
 
     function apply() {
@@ -465,7 +441,7 @@ export const stageScript = `
 
         // One beat of lookahead: the next plate starts fetching as this one
         // begins, which is a whole beat of scrolling before it is needed.
-        if (plateP > 0) load(s + 1 < scenes.length ? scenes[s + 1].cfg.plate : 'arrow');
+        if (plateP > 0 && s + 1 < scenes.length) load(scenes[s + 1].cfg.plate);
 
         if (!sc.panel) continue;
 

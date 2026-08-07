@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import { ChevronDownIcon } from "@/components/icons/ChevronDownIcon";
 import { GlobeIcon } from "@/components/icons/GlobeIcon";
 import {
@@ -27,9 +25,23 @@ export function LanguageMenu({
         <ChevronDownIcon className={styles.chevron} />
       </summary>
 
+      {/*
+       * Plain anchors, deliberately — not next/link.
+       *
+       * A client-side navigation swaps the markup without reloading the
+       * document, so the stage controller, which is an inline script, never
+       * runs again. The <html> attributes it owns get dropped by the re-render,
+       * the incoming locale's plates are brand new elements nobody has started,
+       * and the previous page's controller is left holding references to a DOM
+       * that no longer exists — the sequence simply stops.
+       *
+       * Changing language is a change of document here, and the whole film
+       * plays again from its first frame. That is the behaviour, so this has to
+       * be a real navigation.
+       */}
       <div className={styles.panel}>
         {locales.map((option) => (
-          <Link
+          <a
             key={option}
             href={`/${option}`}
             hrefLang={option}
@@ -41,7 +53,7 @@ export function LanguageMenu({
               {localeName[option]}
             </span>
             <span className={styles.optionCode}>{localeShortLabel[option]}</span>
-          </Link>
+          </a>
         ))}
       </div>
     </details>

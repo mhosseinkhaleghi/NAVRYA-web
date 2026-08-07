@@ -10,17 +10,21 @@ import styles from "./Scene.module.css";
  *   draw    he raises the bow and draws.
  *   strike  the camera pushes in to the draw, held at full tension.
  *   arrow   the release. The arrow flies, the world falls away behind it, and
- *           the frame comes to rest on black. Plays rather than scrubs.
+ *           the frame comes to rest on black.
  *
  * The clips were rendered as one continuous shot and cut into pieces, so each
  * plate's closing frame *is* the next plate's opening frame. Handovers are
  * therefore cuts, and exactly one plate is composited at a time — see the note
  * on `PLATES` in `stage-script.ts`.
  *
- * Codec order is per plate, not global. A long GOP compresses better in VP9 and
- * a short one better in H.264, so the two played plates lead with WebM and the
- * scrubbed plates lead with MP4 — a browser that can decode both always takes
- * the smaller file, and one that cannot falls through to the other.
+ * Only the first plate plays; every other one is scrubbed by scroll position.
+ *
+ * Every plate leads with WebM. That used to be true only of the played plate —
+ * H.264 beat VP9 on the scrubbed ones while they carried a keyframe every 6
+ * frames, because a GOP that short is nearly all intra. At the 12-frame GOP they
+ * ship with now VP9 is smaller on all of them, by 30-35%. MP4 stays behind it as
+ * the fallback: a browser that can decode both takes the smaller file, and one
+ * that cannot falls through.
  *
  * Nothing carries `autoplay`. The controller starts the opening plate once
  * enough of it has buffered to run the beat without stalling: autoplay begins
@@ -36,10 +40,10 @@ import styles from "./Scene.module.css";
 
 const PLATES = [
   { id: "dawn", slug: "hunter-dawn", lead: true, codecs: ["webm", "mp4"] },
-  { id: "turn", slug: "hunter-turn", lead: false, codecs: ["mp4", "webm"] },
-  { id: "prey", slug: "valley-prey", lead: false, codecs: ["mp4", "webm"] },
-  { id: "draw", slug: "hunter-draw", lead: false, codecs: ["mp4", "webm"] },
-  { id: "strike", slug: "hunter-strike", lead: false, codecs: ["mp4", "webm"] },
+  { id: "turn", slug: "hunter-turn", lead: false, codecs: ["webm", "mp4"] },
+  { id: "prey", slug: "valley-prey", lead: false, codecs: ["webm", "mp4"] },
+  { id: "draw", slug: "hunter-draw", lead: false, codecs: ["webm", "mp4"] },
+  { id: "strike", slug: "hunter-strike", lead: false, codecs: ["webm", "mp4"] },
   { id: "arrow", slug: "arrow-learns", lead: false, codecs: ["webm", "mp4"] },
 ] as const;
 
