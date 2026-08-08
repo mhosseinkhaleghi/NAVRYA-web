@@ -45,7 +45,7 @@
   /* How much document the timeline is spread over, in vh. This single number
    * sets the pace of the whole sequence — the controller works in scroll
    * *position*, so stretching it slows every beat proportionally. */
-  --timeline-vh: 4130;
+  --timeline-vh: 3870;
   --gutter: clamp(1.25rem, 2.87vw, 3.25rem);
   --header-h: clamp(4rem, min(6.04vw, 10.74vh), 6.75rem);
   --nav-gap: clamp(0.5rem, 1.26vw, 1.5rem);
@@ -102,6 +102,7 @@
   --s6-measure: clamp(20rem, 58vw, 62rem);
   --s6-rule: clamp(7rem, 14.2vw, 16rem);
   --s6-notch: clamp(6rem, 12.5vw, 14rem);
+  --s6-star: clamp(0.6rem, 0.86vw, 1.05rem);
 
   /* ── Scroll indicator ───────────────────────────────────────────────────── */
   --scroll-bottom: clamp(1.5rem, min(3.8vw, 6.76vh), 4.5rem);
@@ -144,6 +145,15 @@
   --text-lift-micro:
     0 0.05em 0.55em rgb(0 0 0 / 0.85),
     0 0.02em 0.15em rgb(0 0 0 / 0.6);
+
+  /* Section 6's features sit on the tree trunk — the busiest, highest-contrast
+   * area in the whole sequence — and the plate stays visible behind them, so
+   * they need more separation than type over a meadow does. Still a shadow on
+   * the words, not a layer over the picture. */
+  --text-lift-heavy:
+    0 0 0.9em rgb(0 0 0 / 0.92),
+    0 0.05em 0.4em rgb(0 0 0 / 0.8),
+    0 0.02em 0.1em rgb(0 0 0 / 0.55);
 
   --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
   /* Long, decelerating settle — the entrance easing. */

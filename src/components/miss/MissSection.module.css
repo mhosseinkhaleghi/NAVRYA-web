@@ -216,6 +216,10 @@
   margin: 0;
   margin-block-start: calc(var(--s2-gap) * 1.1);
   color: var(--c-cream);
+  /* This block lands on the tree trunk, which is the busiest, highest-contrast
+   * part of any plate in the sequence — and the picture stays, so the type has
+   * to hold its own against it rather than against a scrim. */
+  text-shadow: var(--text-lift-heavy);
   font-family: var(--font-display);
   font-size: var(--fs-s6-trait);
   font-weight: 400;
@@ -238,7 +242,7 @@
   font-weight: 300;
   line-height: 1.55;
   text-align: start;
-  text-shadow: var(--text-lift);
+  text-shadow: var(--text-lift-heavy);
 }
 
 .traitLine {
@@ -326,14 +330,14 @@
   );
 }
 
-.ornamentNode {
+.ornamentStar {
   position: absolute;
   left: 50%;
   top: 50%;
-  inline-size: var(--node-size);
-  block-size: var(--node-size);
-  border: var(--hairline) solid var(--c-gold);
-  transform: translate(-50%, -50%) rotate(45deg);
+  inline-size: var(--s6-star);
+  block-size: var(--s6-star);
+  fill: var(--c-gold);
+  transform: translate(-50%, -50%);
 }
 
 /* ── The statement's type ─────────────────────────────────────────────────── */
@@ -347,10 +351,13 @@
   line-height: 1.03;
   letter-spacing: var(--tracking-display);
   text-align: center;
-  text-wrap: balance;
   text-shadow: var(--text-lift);
   /* The same resolve every other headline on the site makes. */
   filter: blur(calc((1 - var(--head)) * 12px));
+}
+
+.headlineLine {
+  display: block;
 }
 
 [dir="rtl"] .headline {

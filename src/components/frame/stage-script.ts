@@ -46,10 +46,13 @@ const BEATS = [
   // the screen before it, not sliding out across it.
   ["clear", 160],
   ["arrow", 520], // arrow-learns  · 6.7s — the release, and the world goes dark
-  ["learn", 520], // the closing text lights up a word at a time
+  // The last word going white is the end of the section, not the middle of it —
+  // both the paragraph and the ring finish within a hair of the beat's end, so
+  // there is no stretch of scroll left over once the sentence is complete.
+  ["learn", 340],
   // Section 5 leaves, the arrow goes with it, and the frame dips through black
   // before the next morning fades up. The one handover that is not a cut.
-  ["depart", 320],
+  ["depart", 240],
   ["miss", 420], // forest-miss   · 4.4s — the arrow is in the tree, the deer runs
   ["traits", 660], // the psychology features, one per stretch of scroll
   ["rest", 40], // tail room, so the last reveal is not pinned to the bottom
@@ -156,17 +159,17 @@ const ARROW_BODY_SPAN = 0.18;
  * The closing paragraph lights up a word at a time. `LEARN_FADE` is how many
  * words are mid-transition at once — one at a time reads as a ticker, and the
  * whole line at once is not a reveal at all. `LEARN_LEAD` finishes the last
- * word two thirds of the way through the beat, so the sentence stands whole
- * for a while rather than completing on the last pixel of scroll.
+ * word as the beat itself ends: the sentence completing *is* the end of the
+ * section, so there is nothing left to scroll through once it is whole.
  */
 const LEARN_FADE = 2;
-const LEARN_LEAD = 0.62;
+const LEARN_LEAD = 0.92;
 /**
  * The edge light is linear and finishes with the beat: `--glow` is the fraction
  * of the perimeter that has been drawn, so scrolling the beat draws the ring
  * exactly once, at a constant rate, and scrolling back erases it.
  */
-const GLOW_LEAD = 0.94;
+const GLOW_LEAD = 0.92;
 
 /**
  * The departure, as windows inside the `depart` beat.
@@ -193,8 +196,6 @@ const MISS_LIFT = 0.34;
 
 /** How much of the `traits` beat one feature holds the frame for. */
 const TRAIT_HOLD = 0.26;
-/** And how much of it the plate takes to settle to black behind them. */
-const TRAITS_DIM = 0.22;
 
 /**
  * The opening plate is never started until it can run without stalling.
@@ -238,7 +239,7 @@ export const stageScript = `
   var ARRIVE_PLATE = ${JSON.stringify(ARRIVE_PLATE)};
   var MISS_STRUCK = ${ARROW_STRUCK}, MISS_SPAN = ${MISS_TITLE_SPAN};
   var MISS_BOLTS = ${DEER_BOLTS}, MISS_LIFT = ${MISS_LIFT}, MISS_CLEARS = ${DEER_CLEARS};
-  var TRAIT_HOLD = ${TRAIT_HOLD}, TRAITS_DIM = ${TRAITS_DIM};
+  var TRAIT_HOLD = ${TRAIT_HOLD};
 
   var reduced = window.matchMedia
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -523,17 +524,6 @@ export const stageScript = `
       if (shown && p > db[0] && p < db[1]) {
         opacity[ARROW_PLATE] = 1 - out;
         opacity[MISS_PLATE] = into;
-      }
-
-      // The features are read against black, as the comp draws them. The plate
-      // has already come to rest by then — the stag is gone and nothing in the
-      // frame moves — so this is the scene ending rather than a scrim over
-      // footage: the picture is never dimmed while there is anything happening
-      // in it.
-      if (shown && p > edge.traits[0]) {
-        opacity[MISS_PLATE] = 1 - ease(clamp01(
-          span(p, edge.traits[0], edge.traits[1]) / TRAITS_DIM
-        ));
       }
 
       for (i = 0; i < plateEls.length; i++) {

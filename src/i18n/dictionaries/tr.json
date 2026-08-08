@@ -74,7 +74,10 @@
   },
   "miss": {
     "eyebrow": "Bölüm 6",
-    "headline": "Iskalayış Hikâyeyi Anlatır.",
+    "headline": [
+      "Iskalayış",
+      "Hikâyeyi Anlatır."
+    ],
     "subline": "Sonraki atışı yapmadan önce nedenini bil.",
     "traitsLabel": "Psikoloji",
     "traits": [

@@ -74,7 +74,10 @@
   },
   "miss": {
     "eyebrow": "Sección 6",
-    "headline": "El Fallo Cuenta la Historia.",
+    "headline": [
+      "El Fallo",
+      "Cuenta la Historia."
+    ],
     "subline": "Conoce la razón antes de hacer el siguiente disparo.",
     "traitsLabel": "Psicología",
     "traits": [

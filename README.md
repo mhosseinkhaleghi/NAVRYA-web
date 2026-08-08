@@ -44,10 +44,10 @@ once. `components/frame/stage-script.ts` maps scroll onto the beats:
 | `strike` | 520vh | `hunter-strike` scrubs. The camera reaches the draw at **4.00s**, about 70% back, and section 4 arrives. Section 3 leaves over it. |
 | `clear` | 160vh | Section 4 leaves, over the closing frame and nothing else. The release is the loudest moment in the sequence and the text is off the screen before it. |
 | `arrow` | 520vh | `arrow-learns` scrubs: the release, the flight, the fall to black. At **2.00s** the arrow is dead centre and section 5's headline arrives above it; from **5.15s** the valley falls away and the paragraph fades up with it. |
-| `learn` | 520vh | The paragraph lights up a word at a time, and the edge light draws itself round the frame. |
-| `depart` | 320vh | Section 5's words leave, the arrow follows them off, the frame dips through black, and the next morning fades up. |
+| `learn` | 340vh | The paragraph lights up a word at a time and the edge light draws itself round the frame. Both finish as the beat does — the sentence completing *is* the end of the section. |
+| `depart` | 240vh | Section 5's words leave, the arrow follows them off, the frame dips through black, and the next morning fades up. |
 | `miss` | 420vh | `forest-miss` scrubs. The arrow buries itself in the tree at **0.67s** and section 6's statement lands on it; the block lifts as the stag turns and runs at **1.30s**; the frame is empty by **3.95s**. |
-| `traits` | 660vh | The psychology features, one slide per stretch of scroll, over a plate that has come to rest. |
+| `traits` | 660vh | The psychology features, one slide per stretch of scroll, over the plate's own last frame — which stays. |
 | `rest` | 40vh | Tail room, so the last reveal is not pinned to the very bottom. |
 
 The shape repeats: a plate runs, its panel arrives on a cue taken from the
@@ -106,10 +106,11 @@ the same grid cell, so the deck is as tall as the tallest of them and nothing
 reflows as they change. The dots read the same two properties, which makes them
 the carousel rather than a readout of it.
 
-The plate settles to black under them, as the comp draws it. That is the scene
-ending rather than a scrim over footage: the stag is already gone and nothing in
-the frame moves by then, so the picture is never dimmed while there is anything
-happening in it.
+The plate does not fade under them: the features are read against the shot's own
+last frame, held. That puts the busiest, highest-contrast area in the sequence —
+the tree trunk — directly behind a block of type, so this block alone carries
+`--text-lift-heavy`. It is still a shadow on the words, never a layer over the
+picture.
 
 ### Handovers are cuts
 

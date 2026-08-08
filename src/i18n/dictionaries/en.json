@@ -74,7 +74,10 @@
   },
   "miss": {
     "eyebrow": "Section 6",
-    "headline": "The Miss Tells the Story.",
+    "headline": [
+      "The Miss",
+      "Tells the Story."
+    ],
     "subline": "Know the reason before you take the next shot.",
     "traitsLabel": "Psychology",
     "traits": [
