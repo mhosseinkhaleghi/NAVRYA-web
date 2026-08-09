@@ -214,6 +214,56 @@
       }
     ]
   },
+  "archetypes": {
+    "eyebrow": "Section 10",
+    "headline": [
+      "Not Everyone Sees Themselves",
+      "As The Market Hunter"
+    ],
+    "subline": [
+      "Every trader may see a different personality in the market.",
+      "Which one do you see in yourself?"
+    ],
+    "explore": "Explore Your Perspective",
+    "cast": [
+      {
+        "id": "master",
+        "name": "Master",
+        "role": "The Scholar of Patterns.",
+        "lines": [
+          "Sees the unseen.",
+          "Understands the why."
+        ]
+      },
+      {
+        "id": "hunter",
+        "name": "Hunter",
+        "role": "The Tracker.",
+        "lines": [
+          "Follows instinct.",
+          "Finds opportunity."
+        ]
+      },
+      {
+        "id": "engineer",
+        "name": "Engineer",
+        "role": "The Architect.",
+        "lines": [
+          "Builds systems.",
+          "Creates edge."
+        ]
+      },
+      {
+        "id": "commander",
+        "name": "Commander",
+        "role": "The Strategist.",
+        "lines": [
+          "Leads with conviction.",
+          "Controls the battlefield."
+        ]
+      }
+    ]
+  },
   "a11y": {
     "primaryNav": "Primary navigation",
     "sectionNav": "Section navigation"

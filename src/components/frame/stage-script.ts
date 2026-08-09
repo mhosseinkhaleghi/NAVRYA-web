@@ -296,6 +296,7 @@ export const RAIL = [
   { name: "dark", flow: "[data-dark]" },
   { name: "partners", flow: "[data-partners]" },
   { name: "testimonials", flow: "[data-testimonials]" },
+  { name: "archetypes", flow: "[data-archetypes]" },
 ] as const;
 
 /**
@@ -723,6 +724,55 @@ export const stageScript = `
       }, { rootMargin: '100% 0px' }).observe(orb);
     } else if (orb) {
       orb.setAttribute('data-orb-live', '');
+    }
+
+    // ── section 10's accordion ─────────────────────────────────────────────
+    //
+    // All this does is say which panel is open. The widths, the colour coming
+    // back into the open plate, the caption growing — every one of those is a
+    // CSS transition on the panel itself, so there is no timeline here to keep
+    // in step with anything and nothing to tear down.
+    //
+    // The panel that opens on load is marked open in the markup rather than
+    // here, so the section is composed before this runs and stays composed if
+    // it never does.
+    var gallery = document.querySelector('[data-gallery]');
+    if (gallery) {
+      var pads = [];
+      each('[data-cast-panel]', function (el) { pads[+el.getAttribute('data-cast-panel')] = el; }, gallery);
+      // Hover belongs to a mouse. On a touch screen a tap arrives as a pointer
+      // that also enters, and opening on enter would make the first tap open a
+      // panel the finger is only passing over.
+      var fine = window.matchMedia ? window.matchMedia('(hover: hover) and (pointer: fine)') : null;
+
+      var openPanel = function (i) {
+        gallery.setAttribute('data-open', i);
+        for (var p = 0; p < pads.length; p++) {
+          if (p === i) pads[p].setAttribute('data-on', '');
+          else pads[p].removeAttribute('data-on');
+          pads[p].setAttribute('aria-pressed', p === i ? 'true' : 'false');
+        }
+      };
+
+      var bind = function (i, el) {
+        el.addEventListener('pointerenter', function (e) {
+          if (e.pointerType === 'mouse' && (!fine || fine.matches)) openPanel(i);
+        });
+        el.addEventListener('click', function () { openPanel(i); });
+        el.addEventListener('focus', function () { openPanel(i); });
+        el.addEventListener('keydown', function (e) {
+          var k = e.key;
+          var step = k === 'ArrowRight' || k === 'ArrowDown' ? 1
+            : k === 'ArrowLeft' || k === 'ArrowUp' ? -1 : 0;
+          if (!step) return;
+          e.preventDefault();
+          // The row mirrors with the writing direction, so the arrows do too —
+          // otherwise right-arrow walks left in Persian and Arabic.
+          if ((k === 'ArrowRight' || k === 'ArrowLeft') && root.dir === 'rtl') step = -step;
+          pads[(i + step + pads.length) % pads.length].focus();
+        });
+      };
+      for (var pi = 0; pi < pads.length; pi++) bind(pi, pads[pi]);
     }
 
     // ── the section rail ───────────────────────────────────────────────────

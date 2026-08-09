@@ -214,6 +214,56 @@
       }
     ]
   },
+  "archetypes": {
+    "eyebrow": "Bölüm 10",
+    "headline": [
+      "Herkes Kendini",
+      "Piyasa Avcısı Olarak Görmez"
+    ],
+    "subline": [
+      "Her yatırımcı piyasada farklı bir kişilik görebilir.",
+      "Sen kendinde hangisini görüyorsun?"
+    ],
+    "explore": "Kendi Bakışını Keşfet",
+    "cast": [
+      {
+        "id": "master",
+        "name": "Usta",
+        "role": "Örüntülerin Bilgini.",
+        "lines": [
+          "Görünmeyeni görür.",
+          "Nedenini anlar."
+        ]
+      },
+      {
+        "id": "hunter",
+        "name": "Avcı",
+        "role": "İz Süren.",
+        "lines": [
+          "Sezgisini izler.",
+          "Fırsatı bulur."
+        ]
+      },
+      {
+        "id": "engineer",
+        "name": "Mühendis",
+        "role": "Mimar.",
+        "lines": [
+          "Sistem kurar.",
+          "Avantaj yaratır."
+        ]
+      },
+      {
+        "id": "commander",
+        "name": "Komutan",
+        "role": "Stratejist.",
+        "lines": [
+          "Kararlılıkla yönetir.",
+          "Sahayı kontrol eder."
+        ]
+      }
+    ]
+  },
   "a11y": {
     "primaryNav": "Ana gezinme",
     "sectionNav": "Bölüm gezinmesi"

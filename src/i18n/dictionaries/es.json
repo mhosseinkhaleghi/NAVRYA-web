@@ -214,6 +214,56 @@
       }
     ]
   },
+  "archetypes": {
+    "eyebrow": "Sección 10",
+    "headline": [
+      "No Todos Se Ven",
+      "Como El Cazador Del Mercado"
+    ],
+    "subline": [
+      "Cada trader puede ver una personalidad distinta en el mercado.",
+      "¿Cuál ves tú en ti mismo?"
+    ],
+    "explore": "Descubre Tu Perspectiva",
+    "cast": [
+      {
+        "id": "master",
+        "name": "Maestro",
+        "role": "El Erudito de los Patrones.",
+        "lines": [
+          "Ve lo invisible.",
+          "Entiende el porqué."
+        ]
+      },
+      {
+        "id": "hunter",
+        "name": "Cazador",
+        "role": "El Rastreador.",
+        "lines": [
+          "Sigue el instinto.",
+          "Encuentra la oportunidad."
+        ]
+      },
+      {
+        "id": "engineer",
+        "name": "Ingeniero",
+        "role": "El Arquitecto.",
+        "lines": [
+          "Construye sistemas.",
+          "Crea ventaja."
+        ]
+      },
+      {
+        "id": "commander",
+        "name": "Comandante",
+        "role": "El Estratega.",
+        "lines": [
+          "Lidera con convicción.",
+          "Controla el campo."
+        ]
+      }
+    ]
+  },
   "a11y": {
     "primaryNav": "Navegación principal",
     "sectionNav": "Navegación por secciones"

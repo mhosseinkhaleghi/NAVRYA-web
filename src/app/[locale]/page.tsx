@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { ArchetypesSection } from "@/components/archetypes/ArchetypesSection";
 import { ArrowSection } from "@/components/arrow/ArrowSection";
 import { DarkSection } from "@/components/dark/DarkSection";
 import { Hero } from "@/components/hero/Hero";
@@ -37,6 +38,7 @@ export default async function HomePage({
           <DarkSection dark={dictionary.dark} />
           <PartnersSection partners={dictionary.partners} />
           <TestimonialsSection testimonials={dictionary.testimonials} />
+          <ArchetypesSection archetypes={dictionary.archetypes} />
         </>
       }
     >

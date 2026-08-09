@@ -175,6 +175,40 @@
   --s9-drift-b: 91s;
   --s9-drift-c: 63s;
 
+  /* ── Section 10 — the four archetypes ───────────────────────────────────── */
+  --fs-s10-display: clamp(1.75rem, min(4.1vw, 7vh), 5.25rem);
+  --fs-s10-sub: clamp(0.875rem, min(1.16vw, 1.98vh), 1.3rem);
+  --fs-s10-name: clamp(1rem, min(1.5vw, 2.56vh), 1.85rem);
+  --fs-s10-role: clamp(0.8125rem, min(0.98vw, 1.67vh), 1.1rem);
+  --fs-s10-line: clamp(0.75rem, min(0.87vw, 1.49vh), 1rem);
+  --s10-measure: clamp(20rem, 62vw, 68rem);
+  --s10-rule: clamp(12rem, 32vw, 34rem);
+  --s10-compass: clamp(9rem, 13.5vw, 15rem);
+  --s10-pad: clamp(2.5rem, 4vw, 5rem);
+  --s10-stack: clamp(1.5rem, 2.6vw, 2.75rem);
+  --s10-frame-pad: clamp(0.6rem, 1vw, 1.1rem);
+  --s10-radius: clamp(0.6rem, 0.9vw, 1.1rem);
+  --s10-gap: clamp(0.4rem, 0.7vw, 0.85rem);
+  --s10-h: clamp(17rem, 25.5vw, 27rem);
+  /*
+   * How much of the row the open panel takes.
+   *
+   * Four panels at the comp's 52% works out at 3.25 shares against one each:
+   * 0.52 x 3 / (1 - 0.52). Change the panel count and this has to change with
+   * it, which is why the arithmetic is written down.
+   */
+  --s10-grow: 3.25;
+  --s10-swing: 620ms;
+  --s10-sigil: clamp(1.5rem, 2.2vw, 2.5rem);
+  --s10-plate-inset: clamp(0.9rem, 1.4vw, 1.6rem);
+  /* A caption is as wide as the panel it sits on, less its insets — closed,
+   * then open. Both are widths rather than percentages so the type is not
+   * re-laid on every frame of the swing. */
+  --s10-caption: clamp(7.5rem, 10.5vw, 12rem);
+  --s10-caption-open: clamp(12rem, 26vw, 28rem);
+  --s10-foot-rule: clamp(4rem, 10vw, 11rem);
+  --s10-stacked-h: clamp(11rem, 42vw, 15rem);
+
   /* ── Scroll indicator ───────────────────────────────────────────────────── */
   --scroll-bottom: clamp(1.5rem, min(3.8vw, 6.76vh), 4.5rem);
   --mouse-w: clamp(1.25rem, min(1.92vw, 3.41vh), 2.2rem);

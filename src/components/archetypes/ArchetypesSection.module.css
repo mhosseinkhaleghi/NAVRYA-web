@@ -1,0 +1,506 @@
+/* -----------------------------------------------------------------------------
+ * Section 10 — the four archetypes.
+ *
+ * The last section below the film, built like 7, 8 and 9: an ordinary section
+ * of a page, as tall as what is in it, stacked under the one above with only
+ * its padding between them.
+ * -------------------------------------------------------------------------- */
+
+.archetypes {
+  position: relative;
+  display: grid;
+  justify-items: stretch;
+  gap: var(--s10-stack);
+  /* The bar's row is reserved outright at the top. This is the last section on
+   * the page, so the document ends with it and there is no scrolling further:
+   * whatever the bar covers here, it covers for good. The eyebrow sat under it
+   * at every reachable position until this was added. */
+  padding-block-start: calc(
+    var(--header-h) + env(safe-area-inset-top, 0px) + clamp(0.5rem, 1.6vw, 1.9rem)
+  );
+  padding-block-end: var(--s10-pad);
+  padding-inline: var(--rail-lane);
+  background: var(--c-bg);
+  overflow: hidden;
+
+  /* Written by the controller from how far the section has climbed into the
+   * frame, kept at a high-water mark — the same two-step as 7, 8 and 9. */
+  --head: 0; /* the title and its rule */
+  --body: 0; /* the gallery, on the next part of the scroll */
+}
+
+/* ── The head ─────────────────────────────────────────────────────────────── */
+
+/*
+ * Set to the leading edge, not centred. Sections 7 to 9 all address the frame
+ * from the middle; this one asks the viewer a question about themselves, and a
+ * question reads as a question when it is set the way a sentence is.
+ */
+.head {
+  position: relative;
+  display: grid;
+  justify-items: start;
+  inline-size: 100%;
+  max-inline-size: var(--s10-measure);
+  text-align: start;
+
+  opacity: max(var(--head), 0.001);
+  transform: translateY(calc((1 - var(--head)) * 1.6rem));
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.9em;
+  margin: 0;
+  color: var(--c-gold);
+  font-family: var(--font-sans);
+  font-size: var(--fs-micro);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: var(--tracking-micro);
+  text-transform: uppercase;
+}
+
+/* The comp sets the label between two small marks rather than on a rule. */
+.tick {
+  inline-size: var(--node-size);
+  block-size: var(--node-size);
+  background: var(--c-gold);
+  transform: rotate(45deg);
+}
+
+.headline {
+  margin: 0;
+  margin-block-start: calc(var(--s2-gap) * 1.9);
+  color: var(--c-cream);
+  font-family: var(--font-display);
+  font-size: var(--fs-s10-display);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: var(--tracking-display);
+  text-wrap: balance;
+}
+
+[dir="rtl"] .headline {
+  line-height: 1.42;
+}
+
+.headlineLine {
+  display: block;
+}
+
+/* The comp stops the sentence in gold — the one piece of colour in the type. */
+.stop {
+  color: var(--c-gold);
+}
+
+.rule {
+  position: relative;
+  inline-size: var(--s10-rule);
+  block-size: var(--hairline);
+  margin-block-start: calc(var(--s2-gap) * 1.6);
+  background: linear-gradient(
+    to right,
+    var(--c-gold-line-strong) 0%,
+    var(--c-gold-line) 55%,
+    transparent 100%
+  );
+}
+
+[dir="rtl"] .rule {
+  background: linear-gradient(
+    to left,
+    var(--c-gold-line-strong) 0%,
+    var(--c-gold-line) 55%,
+    transparent 100%
+  );
+}
+
+.rule::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: 54%;
+  inset-block-start: 50%;
+  inline-size: var(--node-size);
+  block-size: var(--node-size);
+  background: var(--c-gold);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.subline {
+  display: grid;
+  margin: 0;
+  margin-block-start: calc(var(--s2-gap) * 1.7);
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-s10-sub);
+  font-weight: 300;
+  line-height: 1.75;
+  text-wrap: pretty;
+}
+
+.sublineLine {
+  display: block;
+}
+
+/* ── The compass ──────────────────────────────────────────────────────────── */
+
+/*
+ * Sits in the corner the head leaves empty, and only where there is a corner to
+ * sit in — under 1024 the head fills the frame and this would land on the type.
+ */
+.compass {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-end: calc(var(--s10-compass) * -0.62);
+  inline-size: var(--s10-compass);
+  block-size: var(--s10-compass);
+  fill: none;
+  stroke: var(--c-gold-line-faint);
+  stroke-width: 1;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.compassStar {
+  fill: var(--c-gold-soft);
+  stroke: none;
+  opacity: 0.5;
+}
+
+.compassNode {
+  fill: var(--c-gold-line);
+  stroke: none;
+}
+
+@media (max-width: 1279px) {
+  .compass {
+    display: none;
+  }
+}
+
+/* ── The frame around the gallery ─────────────────────────────────────────── */
+
+.frame {
+  position: relative;
+  padding: var(--s10-frame-pad);
+  border: var(--hairline) solid var(--c-gold-line-faint);
+  border-radius: calc(var(--s10-radius) + var(--s10-frame-pad) * 0.6);
+  background: linear-gradient(
+    to bottom,
+    rgb(216 166 75 / 0.035) 0%,
+    rgb(216 166 75 / 0.008) 100%
+  );
+
+  opacity: max(var(--body), 0.001);
+  transform: translateY(calc((1 - var(--body)) * 1.6rem));
+}
+
+/* The comp hangs a single mark off the leading edge of the frame. */
+.pin {
+  position: absolute;
+  inset-inline-start: calc(var(--node-size) * -1.1);
+  inset-block-start: 50%;
+  inline-size: calc(var(--node-size) * 2.2);
+  block-size: calc(var(--node-size) * 2.2);
+  background: var(--c-gold);
+  transform: translateY(-50%) rotate(45deg);
+  box-shadow: 0 0 14px rgb(216 166 75 / 0.5);
+}
+
+/* ── The accordion ────────────────────────────────────────────────────────── */
+
+.gallery {
+  display: flex;
+  gap: var(--s10-gap);
+  block-size: var(--s10-h);
+}
+
+/*
+ * A panel is a window onto a plate, and the width of the window is the whole
+ * animation. `flex-grow` is the only thing that moves: one panel takes
+ * `--s10-grow` shares of the row and the other three take one each, which at
+ * four panels and a 52% open panel is 3.25 to 1 — the comp's proportion.
+ */
+.panel {
+  position: relative;
+  flex: 1 1 0;
+  min-inline-size: 0;
+  padding: 0;
+  border: var(--hairline) solid transparent;
+  border-radius: var(--s10-radius);
+  background: #07060a;
+  overflow: hidden;
+  cursor: pointer;
+  isolation: isolate;
+  transition:
+    flex-grow var(--s10-swing) var(--ease-out),
+    border-color var(--s10-swing) var(--ease-out);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.panel[data-on] {
+  flex-grow: var(--s10-grow);
+  border-color: var(--c-gold-line);
+}
+
+.panel:focus-visible {
+  outline: var(--hairline) solid var(--c-gold);
+  outline-offset: 3px;
+}
+
+/* ── A panel's plate ──────────────────────────────────────────────────────── */
+
+/*
+ * The picture is a background rather than an `<img>`, and it is sized to cover
+ * with its own focal point, so a panel narrowing to a sliver crops *around the
+ * character* instead of squashing the frame or sliding them out of it.
+ */
+.art {
+  position: absolute;
+  inset: 0;
+  background-position: var(--s10-focus, 50%) center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  filter: saturate(0.82) brightness(0.86);
+  transform: scale(1.04);
+  transition:
+    filter var(--s10-swing) var(--ease-out),
+    transform var(--s10-swing) var(--ease-out);
+}
+
+.panel[data-on] .art {
+  filter: saturate(1) brightness(1);
+  transform: scale(1);
+}
+
+.panel[data-art="master"] .art {
+  --s10-focus: 30%;
+  background-image: url("/cast/master.jpg");
+}
+
+.panel[data-art="hunter"] .art {
+  --s10-focus: 24%;
+  background-image: url("/cast/hunter.jpg");
+}
+
+.panel[data-art="engineer"] .art {
+  --s10-focus: 57%;
+  background-image: url("/cast/engineer.jpg");
+}
+
+.panel[data-art="commander"] .art {
+  --s10-focus: 28%;
+  background-image: url("/cast/commander.jpg");
+}
+
+/* Two jobs: settle the type onto the picture, and hold the closed panels back
+ * so the open one is the brightest thing in the row. */
+.veil {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to top, rgb(3 3 3 / 0.94) 0%, rgb(3 3 3 / 0.44) 44%, transparent 74%),
+    rgb(3 3 3 / 0.2);
+  transition: background var(--s10-swing) var(--ease-out);
+}
+
+.panel[data-on] .veil {
+  background: linear-gradient(
+    to top,
+    rgb(3 3 3 / 0.92) 0%,
+    rgb(3 3 3 / 0.3) 46%,
+    transparent 78%
+  );
+}
+
+/* ── The caption ──────────────────────────────────────────────────────────── */
+
+.plate {
+  position: absolute;
+  inset-inline: var(--s10-plate-inset);
+  inset-block-end: var(--s10-plate-inset);
+  display: grid;
+  justify-items: start;
+  text-align: start;
+  /* The caption is as wide as the panel it is on, and it *transitions* to the
+   * open width rather than jumping — a caption that re-wraps in one frame
+   * halfway through the swing reads as a stutter. Which is also why it is a
+   * width and not a percentage: a percentage of a flexing panel re-lays the
+   * text on every frame. */
+  inline-size: var(--s10-caption);
+  transition: inline-size var(--s10-swing) var(--ease-out);
+  pointer-events: none;
+}
+
+.panel[data-on] .plate {
+  inline-size: var(--s10-caption-open);
+}
+
+.sigil {
+  display: block;
+  inline-size: var(--s10-sigil);
+  block-size: var(--s10-sigil);
+  margin-block-end: 0.55em;
+}
+
+.sigil svg {
+  inline-size: 100%;
+  block-size: 100%;
+  fill: none;
+  stroke: var(--c-gold);
+  stroke-width: 1.15;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.name {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  inline-size: 100%;
+  color: var(--c-cream);
+  font-family: var(--font-display);
+  font-size: var(--fs-s10-name);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* The rule beside the name only has room on the open panel, so it draws itself
+ * from nothing as the panel widens. */
+.nameRule {
+  flex: 1 1 auto;
+  block-size: var(--hairline);
+  background: linear-gradient(to right, var(--c-gold-line) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity var(--s10-swing) var(--ease-out);
+}
+
+[dir="rtl"] .nameRule {
+  background: linear-gradient(to left, var(--c-gold-line) 0%, transparent 100%);
+}
+
+.panel[data-on] .nameRule {
+  opacity: 1;
+}
+
+.role {
+  margin-block-start: 0.55em;
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: var(--fs-s10-role);
+  font-weight: 300;
+  line-height: 1.35;
+}
+
+/* Wrapped rather than stacked: on a narrow panel the two clauses fall onto two
+ * lines, and on the open one they sit on a single line, exactly as the comp
+ * has them. Nothing has to know which panel is open. */
+.lines {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 0.35em;
+  margin-block-start: 0.35em;
+  color: rgb(237 234 227 / 0.72);
+  font-family: var(--font-sans);
+  font-size: var(--fs-s10-line);
+  font-weight: 300;
+  line-height: 1.55;
+}
+
+.line {
+  display: block;
+}
+
+/* ── The foot ─────────────────────────────────────────────────────────────── */
+
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1rem, 2.4vw, 2.5rem);
+  margin: 0;
+  color: var(--c-gold-soft);
+  font-family: var(--font-sans);
+  font-size: var(--fs-micro);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: var(--tracking-micro);
+  text-transform: uppercase;
+
+  opacity: max(var(--body), 0.001);
+}
+
+.footRule {
+  inline-size: var(--s10-foot-rule);
+  block-size: var(--hairline);
+  background: linear-gradient(to right, transparent 0%, var(--c-gold-line) 100%);
+}
+
+.footRule:last-child {
+  background: linear-gradient(to left, transparent 0%, var(--c-gold-line) 100%);
+}
+
+/* -----------------------------------------------------------------------------
+ * Compact frames.
+ *
+ * An accordion needs width to trade between panels, and below the tablet band
+ * there is none: four panels in 420px are four 100px slivers, and the open one
+ * is still too narrow for its own caption. It becomes a stack instead — every
+ * panel open, every caption read, no trading at all.
+ * -------------------------------------------------------------------------- */
+
+@media (max-width: 1023px) {
+  .archetypes {
+    padding-inline: var(--gutter);
+  }
+}
+
+@media (max-width: 767px) {
+  .gallery {
+    flex-direction: column;
+    block-size: auto;
+  }
+
+  .panel,
+  .panel[data-on] {
+    flex: 0 0 auto;
+    block-size: var(--s10-stacked-h);
+  }
+
+  .plate {
+    inline-size: auto;
+    inset-inline: var(--s10-plate-inset);
+  }
+
+  .nameRule,
+  .panel[data-on] .nameRule {
+    opacity: 1;
+  }
+
+  .art,
+  .panel[data-on] .art {
+    filter: saturate(0.9) brightness(0.9);
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .head,
+  .frame,
+  .foot {
+    opacity: 1;
+    transform: none;
+  }
+
+  .panel,
+  .art,
+  .veil,
+  .nameRule {
+    transition: none;
+  }
+}

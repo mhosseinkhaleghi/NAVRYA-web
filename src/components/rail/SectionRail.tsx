@@ -25,6 +25,7 @@ const LABEL: Record<(typeof RAIL)[number]["name"], (d: Dictionary) => string> = 
   dark: (d) => d.dark.headline.join(" "),
   partners: (d) => d.partners.headline,
   testimonials: (d) => d.testimonials.headline,
+  archetypes: (d) => d.archetypes.headline.join(" "),
 };
 
 /**

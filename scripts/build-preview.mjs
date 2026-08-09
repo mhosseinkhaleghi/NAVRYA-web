@@ -87,14 +87,19 @@ const dataUri = async (path) => {
 /**
  * Everything the stylesheet reaches for has to travel inside the page: the
  * artifact CSP blocks every other host, and a file:// preview has no server.
- * That means the font subsets and the scene stills alike.
+ * That means the font subsets, the scene stills and section 10's plates alike.
+ *
+ * Section 10's four plates are referenced from the stylesheet rather than from
+ * the markup for exactly this reason: the markup is repeated once per locale,
+ * so four pictures on `<img>` tags would travel five times over. Here they are
+ * inlined once and every pane shares them.
  */
 async function inlineCssAssets(css) {
-  const pattern = /url\((['"]?)(\/(?:fonts|scene)\/[^'")]+)\1\)/g;
+  const pattern = /url\((['"]?)(\/(?:fonts|scene|cast)\/[^'")]+)\1\)/g;
   const refs = [...new Set([...css.matchAll(pattern)].map((m) => m[0]))];
   const files = [];
   for (const ref of refs) {
-    const file = /(\/(?:fonts|scene)\/[^'")]+)/.exec(ref)[1];
+    const file = /(\/(?:fonts|scene|cast)\/[^'")]+)/.exec(ref)[1];
     css = css.replaceAll(ref, `url(${await dataUri(file)})`);
     files.push(file);
   }
