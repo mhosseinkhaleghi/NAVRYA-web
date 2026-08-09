@@ -21,8 +21,8 @@
  *
  * Four weights, because that is what the site asks for: 400 for body, 500 for
  * sub-headings, 600 for the tracked micro-labels, 700 for headlines. Each
- * `src` lists the short name first and the names the Pro package ships with
- * after it, so the files work whether or not they were renamed on the way in.
+ * `src` lists the name the Pro package actually shipped first and the other
+ * spellings after it, so a re-upload under any of them still resolves.
  * -------------------------------------------------------------------------- */
 
 @font-face {
@@ -31,6 +31,7 @@
   font-weight: 400;
   font-display: swap;
   src:
+    url("/fonts/brand/PeydaFaNumWeb-Regular.woff2") format("woff2"),
     url("/fonts/brand/peyda-400.woff2") format("woff2"),
     url("/fonts/brand/PeydaWebFaNum-Regular.woff2") format("woff2"),
     url("/fonts/brand/Peyda-Regular.woff2") format("woff2");
@@ -42,6 +43,7 @@
   font-weight: 500;
   font-display: swap;
   src:
+    url("/fonts/brand/PeydaFaNumWeb-Medium.woff2") format("woff2"),
     url("/fonts/brand/peyda-500.woff2") format("woff2"),
     url("/fonts/brand/PeydaWebFaNum-Medium.woff2") format("woff2"),
     url("/fonts/brand/Peyda-Medium.woff2") format("woff2");
@@ -53,6 +55,7 @@
   font-weight: 600;
   font-display: swap;
   src:
+    url("/fonts/brand/PeydaFaNumWeb-SemiBold.woff2") format("woff2"),
     url("/fonts/brand/peyda-600.woff2") format("woff2"),
     url("/fonts/brand/PeydaWebFaNum-SemiBold.woff2") format("woff2"),
     url("/fonts/brand/Peyda-SemiBold.woff2") format("woff2");
@@ -64,6 +67,7 @@
   font-weight: 700;
   font-display: swap;
   src:
+    url("/fonts/brand/PeydaFaNumWeb-Bold.woff2") format("woff2"),
     url("/fonts/brand/peyda-700.woff2") format("woff2"),
     url("/fonts/brand/PeydaWebFaNum-Bold.woff2") format("woff2"),
     url("/fonts/brand/Peyda-Bold.woff2") format("woff2");

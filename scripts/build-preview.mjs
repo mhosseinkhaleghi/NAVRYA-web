@@ -166,11 +166,15 @@ async function inlineScene(scene, seen) {
 const HARNESS_CSS = `
 .nv-locale[hidden]{display:none}
 .nv-locale{contain:none}
-/* The backdrop is shared across the panes, so it lives behind them and the
-   panes' own frame background steps aside to let it through. */
+/* The backdrop is shared across the panes, so it lives behind them and every
+   opaque box between a pane and that layer steps aside to let it through.
+   The stage used to be the pane's own child; it is a grandchild now that the
+   film is a block with a sticky screen inside it, and matching only the child
+   left the stage's black over the plates — the opening read as a black screen
+   where the first shot should have been. */
 #nv-scene{position:fixed;inset:0;z-index:0}
 #nv-scene>div{position:absolute;inset:0}
-.nv-locale>div{background-color:transparent}
+.nv-locale>div,.nv-locale>div>div{background-color:transparent}
 `;
 
 /**
