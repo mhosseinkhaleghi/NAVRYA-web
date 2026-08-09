@@ -108,6 +108,7 @@
     ]
   },
   "a11y": {
-    "primaryNav": "Primary navigation"
+    "primaryNav": "Primary navigation",
+    "sectionNav": "Section navigation"
   }
 }

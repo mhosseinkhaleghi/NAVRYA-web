@@ -6,6 +6,7 @@ import { MissSection } from "@/components/miss/MissSection";
 import { Scene } from "@/components/frame/Scene";
 import { Stage } from "@/components/frame/Stage";
 import { PanelSection } from "@/components/panel/PanelSection";
+import { SectionRail } from "@/components/rail/SectionRail";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
@@ -24,6 +25,7 @@ export default async function HomePage({
     <Stage>
       <Scene />
       <SiteHeader locale={locale} dictionary={dictionary} active="home" />
+      <SectionRail dictionary={dictionary} />
       <Hero dictionary={dictionary} />
       {dictionary.panels.map((panel, index) => (
         <PanelSection

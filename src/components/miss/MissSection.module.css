@@ -70,8 +70,11 @@
     calc(var(--header-h) + env(safe-area-inset-top, 0px))
     minmax(0, 1fr)
     clamp(2rem, 6vh, 5rem);
+  /* The device's column starts at the leading edge, which is the one place on
+   * the site where a composition reaches into the section rail's lane. It
+   * reserves the lane rather than the bare gutter, so the two never meet. */
   grid-template-columns:
-    var(--gutter)
+    var(--rail-lane)
     minmax(0, 1.04fr)
     clamp(1.5rem, 4.2vw, 5.5rem)
     minmax(0, 1fr)

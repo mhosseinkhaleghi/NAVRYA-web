@@ -198,6 +198,47 @@ const MISS_LIFT = 0.34;
 const TRAIT_HOLD = 0.26;
 
 /**
+ * The section rail — one mark per section, in the order the frame reaches them.
+ *
+ * `from` is the beat the section takes the frame on. A mark owns the scroll
+ * from there until the next mark's `from`, which is what decides the one that
+ * is lit, so the six between them cover the timeline with no gaps and no
+ * overlaps and the boundaries land on the plate handovers.
+ *
+ * `at` is where the mark *goes*, as a fraction of a beat, and it is deliberately
+ * not the same point. A section starts arriving at its cue and is not composed
+ * until a good deal later — jumping to the cue would land on a headline
+ * mid-blur with its panel still assembling. These land on each section at rest:
+ * the panel built, the closing sentence complete, section 6's statement whole
+ * and not yet lifting. Both come off the same beat table the rest of the
+ * sequence runs on, so retiming a beat moves the rail with it.
+ */
+const RAIL = [
+  { from: "turn", at: ["turn", 0] },
+  { from: "prey", at: ["prey", 0.93] },
+  { from: "draw", at: ["draw", 0.85] },
+  { from: "strike", at: ["strike", 0.88] },
+  // Section 5 spans three beats; it is whole when the last word goes white.
+  { from: "arrow", at: ["learn", 0.94] },
+  { from: "miss", at: ["miss", 0.34] },
+] as const;
+
+/**
+ * A jump is travelled, not teleported.
+ *
+ * The whole sequence is one continuous shot, and every frame of it is a pure
+ * function of scroll position — so a scrolled jump *plays* the footage between
+ * where the viewer is and where they asked to go, which is the only transition
+ * this site could honestly have. The browser's own smooth scroll is no use for
+ * it: Blink caps the duration well under a second, and nine thousand pixels in
+ * under a second is a blur, not a shot.
+ *
+ * Keyed to distance so a neighbouring section is brisk and the full length of
+ * the film is still a travelling shot rather than a smear.
+ */
+const GLIDE_MS = [620, 1400];
+
+/**
  * The opening plate is never started until it can run without stalling.
  *
  * `autoplay` starts at `canplay`, which promises exactly one more decodable
@@ -240,6 +281,8 @@ export const stageScript = `
   var MISS_STRUCK = ${ARROW_STRUCK}, MISS_SPAN = ${MISS_TITLE_SPAN};
   var MISS_BOLTS = ${DEER_BOLTS}, MISS_LIFT = ${MISS_LIFT}, MISS_CLEARS = ${DEER_CLEARS};
   var TRAIT_HOLD = ${TRAIT_HOLD};
+  var RAIL = ${JSON.stringify(RAIL)};
+  var GLIDE_MS = ${JSON.stringify(GLIDE_MS)};
 
   var reduced = window.matchMedia
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -486,6 +529,77 @@ export const stageScript = `
       miss.style.setProperty('--traits', tp > 0 ? 1 : 0);
     }
 
+    // ── the section rail ───────────────────────────────────────────────────
+    // Where each mark lands, and where its stretch of the timeline begins, both
+    // resolved from the beat table rather than written down anywhere.
+    var marks = [];
+    each('[data-rail-mark]', function (el) {
+      marks[+el.getAttribute('data-rail-mark')] = el;
+    });
+
+    var railAt = [], railFrom = [];
+    for (i = 0; i < RAIL.length; i++) {
+      var re = edge[RAIL[i].at[0]];
+      railAt.push(re[0] + (re[1] - re[0]) * RAIL[i].at[1]);
+      railFrom.push(edge[RAIL[i].from][0]);
+    }
+
+    function paintRail(p) {
+      // The last mark whose section has begun. The marks' ranges are contiguous
+      // and their boundaries are the plate handovers, so this is exactly the
+      // section that is on screen.
+      var on = 0;
+      for (var m = 1; m < railFrom.length; m++) if (p >= railFrom[m]) on = m;
+      for (m = 0; m < marks.length; m++) {
+        if (!marks[m]) continue;
+        if (m === on) {
+          marks[m].setAttribute('data-on', '');
+          marks[m].setAttribute('aria-current', 'true');
+        } else {
+          marks[m].removeAttribute('data-on');
+          marks[m].removeAttribute('aria-current');
+        }
+      }
+    }
+
+    var glide = null;
+    function stopGlide() {
+      if (glide === null) return;
+      cancelAnimationFrame(glide);
+      glide = null;
+    }
+
+    function goTo(where) {
+      var max = document.documentElement.scrollHeight - window.innerHeight;
+      var to = Math.round(clamp01(where) * max);
+      var from = window.scrollY;
+      var dist = Math.abs(to - from);
+      stopGlide();
+      if (reduced || dist < 2) { window.scrollTo(0, to); return; }
+
+      var ms = GLIDE_MS[0] + clamp01(dist / (max || 1)) * GLIDE_MS[1];
+      var t0 = performance.now();
+      (function step(now) {
+        var t = clamp01((now - t0) / ms);
+        window.scrollTo(0, from + (to - from) * ease(t));
+        glide = t < 1 ? requestAnimationFrame(step) : null;
+      })(t0);
+    }
+
+    for (i = 0; i < marks.length; i++) {
+      (function (m) {
+        if (!marks[m]) return;
+        marks[m].addEventListener('click', function () { goTo(railAt[m]); });
+      })(i);
+    }
+
+    // The wheel always wins. A jump in flight is abandoned the moment the
+    // viewer takes the scroll back, rather than fighting them for it.
+    var takeover = ['wheel', 'touchstart', 'keydown'];
+    for (i = 0; i < takeover.length; i++) {
+      window.addEventListener(takeover[i], stopGlide, { passive: true });
+    }
+
     function apply() {
       var max = document.documentElement.scrollHeight - window.innerHeight;
       var p = max > 0 ? clamp01(window.scrollY / max) : 0;
@@ -579,6 +693,8 @@ export const stageScript = `
         shown ? span(p, edge.miss[0], edge.miss[1]) : 0,
         shown ? span(p, edge.traits[0], edge.traits[1]) : 0
       );
+
+      paintRail(p);
 
       var hb = edge.turn, hw = hb[1] - hb[0];
       var heroOut = ease(span(p, hb[0] + HERO_EXIT[0] * hw, hb[0] + HERO_EXIT[1] * hw));

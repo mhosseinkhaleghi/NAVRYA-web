@@ -108,6 +108,7 @@
     ]
   },
   "a11y": {
-    "primaryNav": "Navegación principal"
+    "primaryNav": "Navegación principal",
+    "sectionNav": "Navegación por secciones"
   }
 }

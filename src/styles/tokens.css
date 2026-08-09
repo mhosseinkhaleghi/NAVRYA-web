@@ -129,6 +129,21 @@
       clamp(0.75rem, 1.6vh, 1.75rem)
   );
 
+  /* ── Section rail ───────────────────────────────────────────────────────── */
+  /* A mark's hit area. Wider than any dash it draws, so the rail is easy to hit
+   * without being easy to hit by accident. */
+  --rail-hit: clamp(2.25rem, 3.2vw, 3.5rem);
+  /*
+   * The lane the rail occupies down the leading edge, gutter included.
+   *
+   * Every block on the site is already inset well past this — the hero starts
+   * at 36.4% and the panels at 45.3% — so the rail costs the composition
+   * nothing anywhere it is simply sitting in the margin. Section 6's device is
+   * the one exception: it is a grid column that starts at the gutter, so it
+   * reserves this instead and the rail keeps its empty frame.
+   */
+  --rail-lane: calc(var(--gutter) + var(--rail-hit));
+
   /* ── Ornaments ──────────────────────────────────────────────────────────── */
   --node-size: clamp(0.3rem, 0.42vw, 0.5rem);
   --hairline: 1px;
@@ -192,6 +207,8 @@
 @media (max-width: 1023px) {
   :root {
     --gutter: clamp(1.25rem, 6vw, 2.5rem);
+    /* The rail stands down here, so its lane is just the ordinary margin. */
+    --rail-lane: var(--gutter);
     --fs-wordmark: clamp(1.6rem, min(7.2vw, 12.8vh), 2.4rem);
     --fs-nav: clamp(0.75rem, min(3vw, 5.33vh), 1rem);
     --nav-gap: clamp(0.6rem, 3.2vw, 1.4rem);

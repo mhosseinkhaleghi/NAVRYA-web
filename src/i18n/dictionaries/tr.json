@@ -108,6 +108,7 @@
     ]
   },
   "a11y": {
-    "primaryNav": "Ana gezinme"
+    "primaryNav": "Ana gezinme",
+    "sectionNav": "Bölüm gezinmesi"
   }
 }

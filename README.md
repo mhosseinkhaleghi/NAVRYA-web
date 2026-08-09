@@ -112,6 +112,37 @@ the tree trunk — directly behind a block of type, so this block alone carries
 `--text-lift-heavy`. It is still a shadow on the words, never a layer over the
 picture.
 
+### The section rail
+
+Six marks down the leading edge of the frame, one per section, the current one
+drawn long. The sequence is ~39 screens of scroll end to end, which is right for
+watching it and wrong for going back to something.
+
+It is not a component with state. Which mark is lit and where each one lands are
+both derived by the stage controller from the same beat table that drives
+everything else, so retiming a beat moves the rail with it. A mark owns the
+scroll from the beat its section takes the frame on until the next mark's, which
+puts every boundary on a plate handover.
+
+Where a mark *goes* is deliberately not where its section starts. A section
+begins arriving at its cue and is not composed until well after — jumping to the
+cue lands on a headline mid-blur with its panel still assembling. The targets are
+each section at rest: the panel built, the closing sentence complete, section 6's
+statement whole and not yet lifting.
+
+A jump is travelled, not teleported. Every frame is a pure function of scroll
+position, so scrolling to the target *plays* the footage in between, which is the
+only transition this site could honestly have. The browser's own smooth scroll is
+no use for it — Blink caps the duration well under a second, and nine thousand
+pixels in under a second is a blur — so the glide is keyed to distance, and the
+wheel cancels it the moment the viewer takes the scroll back.
+
+The rail lives in the margin every block on the site is already inset from: the
+hero starts at 36.4% and the panels at 45.3%. Section 6's device is the one
+exception, being a grid column that starts at the gutter, so it reserves
+`--rail-lane` instead. Below 1024px that inset is gone — the hero and the panels
+take the full measure — so the rail stands down rather than lie over the copy.
+
 ### Handovers are cuts
 
 The clips are pieces of one continuous render, so a plate's closing frame *is*
