@@ -33,9 +33,13 @@ const VIEWPORTS = [
   ["Short window 1500×600", 1500, 600],
 ];
 
-const TOTAL = 4130;
-const STOPS = [];
-for (let vh = 20; vh <= 4100; vh += 40) STOPS.push([`${vh}vh`, vh]);
+/*
+ * The timeline's length is read off the page rather than written down here.
+ * It was hardcoded, and it went stale twice — the constant still said 4130
+ * after the sequence had been retimed to 3870 and again to 3680, so every stop
+ * was labelled with a vh the build no longer had.
+ */
+const STEP = 40;
 
 const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
 const findings = [];
@@ -49,6 +53,13 @@ for (const [name, width, height] of VIEWPORTS) {
   const max = await page.evaluate(
     () => document.documentElement.scrollHeight - window.innerHeight,
   );
+  const TOTAL = await page.evaluate(() =>
+    parseFloat(
+      getComputedStyle(document.documentElement).getPropertyValue("--timeline-vh"),
+    ),
+  );
+  const STOPS = [];
+  for (let vh = 20; vh <= TOTAL; vh += STEP) STOPS.push([`${vh}vh`, vh]);
 
   for (const [label, vh] of STOPS) {
     await page.evaluate((y) => window.scrollTo(0, y), Math.round((max * vh) / TOTAL));

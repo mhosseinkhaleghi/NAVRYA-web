@@ -44,10 +44,10 @@ once. `components/frame/stage-script.ts` maps scroll onto the beats:
 | `strike` | 520vh | `hunter-strike` scrubs. The camera reaches the draw at **4.00s**, about 70% back, and section 4 arrives. Section 3 leaves over it. |
 | `clear` | 160vh | Section 4 leaves, over the closing frame and nothing else. The release is the loudest moment in the sequence and the text is off the screen before it. |
 | `arrow` | 520vh | `arrow-learns` scrubs: the release, the flight, the fall to black. At **2.00s** the arrow is dead centre and section 5's headline arrives above it; from **5.15s** the valley falls away and the paragraph fades up with it. |
-| `learn` | 340vh | The paragraph lights up a word at a time and the edge light draws itself round the frame. Both finish as the beat does — the sentence completing *is* the end of the section. |
-| `depart` | 240vh | Section 5's words leave, the arrow follows them off, the frame dips through black, and the next morning fades up. |
+| `learn` | 340vh | The paragraph lights up a word at a time and the edge light draws itself round the frame. Both finish as the beat does — the sentence completing *is* the end of the section, so the last word goes white at 95–97% of the beat, depending on how many words the locale's sentence has. |
+| `depart` | 150vh | Section 5's words leave, the arrow follows them off, the frame dips through black, and the next morning fades up. Every vh of it is moving, which is what lets it be this short. |
 | `miss` | 420vh | `forest-miss` scrubs. The arrow buries itself in the tree at **0.67s** and section 6's statement lands on it; the block lifts as the stag turns and runs at **1.30s**; the frame is empty by **3.95s**. |
-| `traits` | 660vh | The psychology features, one slide per stretch of scroll, over the plate's own last frame — which stays. |
+| `traits` | 560vh | The psychology features, one slide per stretch of scroll, over the plate's own last frame — which stays. The deck finishes at 96% of the beat rather than 75%, so the last feature landing is the end of the section. |
 | `rest` | 40vh | Tail room, so the last reveal is not pinned to the very bottom. |
 
 The shape repeats: a plate runs, its panel arrives on a cue taken from the
@@ -116,7 +116,7 @@ picture.
 
 One mark per section down the **trailing** edge of the frame — right in English,
 Turkish and Spanish, left in Persian and Arabic — with the current one drawn
-long. The sequence is ~39 screens of scroll end to end, which is right for
+long. The sequence is ~37 screens of scroll end to end, which is right for
 watching it and wrong for going back to something.
 
 It is not a component with state. Which mark is lit and where each one lands are

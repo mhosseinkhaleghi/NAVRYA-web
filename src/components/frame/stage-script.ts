@@ -52,9 +52,17 @@ const BEATS = [
   ["learn", 340],
   // Section 5 leaves, the arrow goes with it, and the frame dips through black
   // before the next morning fades up. The one handover that is not a cut.
-  ["depart", 240],
+  //
+  // Every vh of this is *moving* — the words go, the arrow goes, the morning
+  // arrives — which is why it can be this short. What made the old 240 feel
+  // long was not the handover but the 100vh of nothing in front of it, before
+  // `LEARN_LEAD` was taken to the end of its own beat.
+  ["depart", 150],
   ["miss", 420], // forest-miss   · 4.4s — the arrow is in the tree, the deer runs
-  ["traits", 660], // the psychology features, one per stretch of scroll
+  // The psychology features, one per stretch of scroll. The deck finishes with
+  // the beat — see `TRAIT_LEAD` — so there is no stretch left over once the
+  // last feature is up.
+  ["traits", 560],
   ["rest", 40], // tail room, so the last reveal is not pinned to the bottom
 ] as const;
 
@@ -163,13 +171,21 @@ const ARROW_BODY_SPAN = 0.18;
  * section, so there is nothing left to scroll through once it is whole.
  */
 const LEARN_FADE = 2;
-const LEARN_LEAD = 0.92;
+/**
+ * Taken all the way to the end of the beat. At 0.92 the last word went white
+ * with 8% of `learn` and the whole of `depart` still to scroll — 280vh, nearly
+ * three screens, and almost none of it moving. The sentence completing is the
+ * end of the section, so it now completes where the section ends: the last word
+ * lands at `(words + 1) / (words + 2)` of the beat, which is 95–97% of it in
+ * every locale.
+ */
+const LEARN_LEAD = 1;
 /**
  * The edge light is linear and finishes with the beat: `--glow` is the fraction
  * of the perimeter that has been drawn, so scrolling the beat draws the ring
  * exactly once, at a constant rate, and scrolling back erases it.
  */
-const GLOW_LEAD = 0.92;
+const GLOW_LEAD = 1;
 
 /**
  * The departure, as windows inside the `depart` beat.
@@ -180,9 +196,9 @@ const GLOW_LEAD = 0.92;
  * happens between them is the stage's own black, which is what a dip to black
  * is.
  */
-const DEPART_TEXT = [0, 0.3];
-const DEPART_PLATE = [0.24, 0.56];
-const ARRIVE_PLATE = [0.62, 1];
+const DEPART_TEXT = [0, 0.4];
+const DEPART_PLATE = [0.32, 0.62];
+const ARRIVE_PLATE = [0.7, 1];
 
 /**
  * Section 6's reveals, as fractions of the `forest-miss` plate.
@@ -194,8 +210,19 @@ const ARRIVE_PLATE = [0.62, 1];
 const MISS_TITLE_SPAN = 0.16;
 const MISS_LIFT = 0.34;
 
-/** How much of the `traits` beat one feature holds the frame for. */
+/** How much of the deck's run one feature holds the frame for. */
 const TRAIT_HOLD = 0.26;
+/**
+ * Where in the `traits` beat the deck finishes, which is `LEARN_LEAD`'s job one
+ * section along.
+ *
+ * The deck is complete once the last slide is fully in, and with the reach
+ * running plainly at `tp * n` that happened at `(n - 1 + hold) / n` — 75% of the
+ * beat for three slides, leaving a quarter of it, 163vh, in which nothing on
+ * screen could change no matter how far the viewer scrolled. Scaling the reach
+ * by this instead puts the last feature at the end of its own section.
+ */
+const TRAIT_LEAD = 0.96;
 
 /**
  * The section rail — one mark per section, in the order the frame reaches them.
@@ -224,8 +251,10 @@ export const RAIL = [
   { name: "panel1", from: "prey", at: ["prey", 0.93] },
   { name: "panel2", from: "draw", at: ["draw", 0.85] },
   { name: "panel3", from: "strike", at: ["strike", 0.88] },
-  // Section 5 spans three beats; it is whole when the last word goes white.
-  { name: "closing", from: "arrow", at: ["learn", 0.94] },
+  // Section 5 spans three beats; it is whole when the last word goes white,
+  // which `LEARN_LEAD` now puts at 95–97% of `learn` depending on how many
+  // words the locale's sentence has. Past all of them.
+  { name: "closing", from: "arrow", at: ["learn", 0.99] },
   { name: "miss", from: "miss", at: ["miss", 0.34] },
 ] as const;
 
@@ -286,7 +315,7 @@ export const stageScript = `
   var ARRIVE_PLATE = ${JSON.stringify(ARRIVE_PLATE)};
   var MISS_STRUCK = ${ARROW_STRUCK}, MISS_SPAN = ${MISS_TITLE_SPAN};
   var MISS_BOLTS = ${DEER_BOLTS}, MISS_LIFT = ${MISS_LIFT}, MISS_CLEARS = ${DEER_CLEARS};
-  var TRAIT_HOLD = ${TRAIT_HOLD};
+  var TRAIT_HOLD = ${TRAIT_HOLD}, TRAIT_LEAD = ${TRAIT_LEAD};
   var RAIL = ${JSON.stringify(RAIL)};
   var GLIDE_MS = ${JSON.stringify(GLIDE_MS)};
 
@@ -521,7 +550,9 @@ export const stageScript = `
       // and the whole thing reverses if the wheel does.
       var n = traitEls.length;
       if (!n) return;
-      var reach = tp * n;
+      // Scaled so the deck is complete at TRAIT_LEAD of the beat rather than at
+      // (n - 1 + hold) / n of it, which left the last quarter doing nothing.
+      var reach = (tp / TRAIT_LEAD) * (n - 1 + TRAIT_HOLD);
       for (var t = 0; t < n; t++) {
         var local = reach - t;
         var on = clamp01(local / TRAIT_HOLD);
