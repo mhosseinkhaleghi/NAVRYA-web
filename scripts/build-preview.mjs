@@ -98,12 +98,24 @@ async function inlineCssAssets(css) {
   const pattern = /url\((['"]?)(\/(?:fonts|scene|cast)\/[^'")]+)\1\)/g;
   const refs = [...new Set([...css.matchAll(pattern)].map((m) => m[0]))];
   const files = [];
+  const missing = [];
   for (const ref of refs) {
     const file = /(\/(?:fonts|scene|cast)\/[^'")]+)/.exec(ref)[1];
-    css = css.replaceAll(ref, `url(${await dataUri(file)})`);
+    // A @font-face `src` is a list of candidates and only one of them is
+    // expected to be on disk — the brand face names every filename its package
+    // might ship under. A name that is not there is skipped by the browser, so
+    // it is skipped here too rather than failing the build.
+    let uri;
+    try {
+      uri = await dataUri(file);
+    } catch {
+      missing.push(file);
+      continue;
+    }
+    css = css.replaceAll(ref, `url(${uri})`);
     files.push(file);
   }
-  return { css, files };
+  return { css, files, missing };
 }
 
 /* The whole backdrop layer: three plates, ending on the last one's video. */
