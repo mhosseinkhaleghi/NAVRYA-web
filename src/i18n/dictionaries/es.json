@@ -162,6 +162,58 @@
       }
     ]
   },
+  "testimonials": {
+    "eyebrow": "Sección 9",
+    "headline": "Lo Que Dicen Nuestros Traders",
+    "subline": "Nueve mesas, un mismo hábito: anotan la operación. Esto es lo que cambió cuando lo hicieron.",
+    "quotes": [
+      {
+        "name": "Daniel Reyes",
+        "role": "Trader Fondeado",
+        "quote": "Encontró el patrón que yo negaba: cada pérdida llegaba en mi primera hora. Cambié mi hora de inicio y el mes se dio la vuelta."
+      },
+      {
+        "name": "Sara Lindqvist",
+        "role": "Swing Trader",
+        "quote": "Antes dedicaba una tarde entera a revisar una semana. Ahora la revisión ya está escrita cuando cierro la plataforma."
+      },
+      {
+        "name": "Marcus Feld",
+        "role": "Jefe de Mesa Prop",
+        "quote": "Nueve traders, un solo idioma para el riesgo. Nuestras reuniones pasaron de la discusión a la aritmética."
+      },
+      {
+        "name": "Aiko Tanaka",
+        "role": "Trader de Futuros",
+        "quote": "No te adula. Te muestra el tamaño que tomas cuando estás enfadado, y después te muestra la factura."
+      },
+      {
+        "name": "Omar Haddad",
+        "role": "Trader de Divisas",
+        "quote": "A los dos meses, mi pérdida media bajó un tercio. Nada cambió en mi estrategia salvo que ahora puedo verla."
+      },
+      {
+        "name": "Elena Rossi",
+        "role": "Trader de Opciones",
+        "quote": "Pasé la evaluación al tercer intento. La diferencia fue saber qué setup me estaba pagando de verdad."
+      },
+      {
+        "name": "James Okoye",
+        "role": "Trader de Índices",
+        "quote": "La disciplina dejó de ser una sensación y pasó a ser un número que miro antes de hacer clic."
+      },
+      {
+        "name": "Nina Kovac",
+        "role": "Trader de Cripto",
+        "quote": "Lo más difícil de operar era ser honesta conmigo misma. Esa parte la hace por mí."
+      },
+      {
+        "name": "Tomas Herrera",
+        "role": "Gestor de Cartera",
+        "quote": "Dos cuentas, un solo diario. Es el único sitio donde todo mi libro tiene sentido a la vez."
+      }
+    ]
+  },
   "a11y": {
     "primaryNav": "Navegación principal",
     "sectionNav": "Navegación por secciones"

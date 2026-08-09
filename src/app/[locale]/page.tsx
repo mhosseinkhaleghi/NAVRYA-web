@@ -10,6 +10,7 @@ import { PanelSection } from "@/components/panel/PanelSection";
 import { PartnersSection } from "@/components/partners/PartnersSection";
 import { SectionRail } from "@/components/rail/SectionRail";
 import { SiteHeader } from "@/components/site/SiteHeader";
+import { TestimonialsSection } from "@/components/testimonials/TestimonialsSection";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 
@@ -35,6 +36,7 @@ export default async function HomePage({
         <>
           <DarkSection dark={dictionary.dark} />
           <PartnersSection partners={dictionary.partners} />
+          <TestimonialsSection testimonials={dictionary.testimonials} />
         </>
       }
     >

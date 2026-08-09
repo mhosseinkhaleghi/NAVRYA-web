@@ -1,0 +1,402 @@
+/* -----------------------------------------------------------------------------
+ * Section 9 — what the traders say.
+ *
+ * The third and last of the sections below the film. Same construction as 7 and
+ * 8: an ordinary section of a page, one screen tall, on the page's own ground,
+ * stacked directly under the one above it with nothing between them.
+ * -------------------------------------------------------------------------- */
+
+.testimonials {
+  position: relative;
+  display: grid;
+  align-content: center;
+  gap: clamp(2rem, 5vh, 4rem);
+  min-block-size: 100dvh;
+  /* The bar is fixed over this section as it is over every other one, and this
+   * is the only section whose head starts with a chip rather than a line of
+   * micro type — a chip is tall enough to reach the bar, so the bar's row is
+   * reserved outright rather than approximated with a round number. */
+  padding-block-start: calc(
+    var(--header-h) + env(safe-area-inset-top, 0px) + clamp(0.5rem, 2vh, 1.5rem)
+  );
+  padding-block-end: clamp(2rem, 6vh, 4rem);
+  padding-inline: var(--rail-lane);
+  background: var(--c-bg);
+  overflow: hidden;
+
+  /* Written by the controller from each block's own position in the frame and
+   * kept at its high-water mark, exactly as in sections 7 and 8. */
+  --head: 0;
+  --body: 0;
+}
+
+/* ── The head ─────────────────────────────────────────────────────────────── */
+
+.head {
+  display: grid;
+  justify-items: center;
+  inline-size: 100%;
+  max-inline-size: var(--s9-measure);
+  margin-inline: auto;
+  text-align: center;
+}
+
+/* The comp sets the label in a chip rather than as a bare micro-label — the
+ * only place on the site that does, which is what makes the last section read
+ * as a change of register rather than a ninth of the same. */
+.pill {
+  margin: 0;
+  padding: 0.55em 1.5em;
+  border: var(--hairline) solid var(--c-gold-line);
+  border-radius: 999px;
+  background: rgb(216 166 75 / 0.06);
+  color: var(--c-gold);
+  font-family: var(--font-sans);
+  font-size: var(--fs-micro);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: var(--tracking-micro);
+  text-transform: uppercase;
+}
+
+.headline {
+  margin: 0;
+  margin-block-start: calc(var(--s2-gap) * 2.1);
+  color: var(--c-cream);
+  font-family: var(--font-display);
+  font-size: var(--fs-s9-display);
+  font-weight: 400;
+  line-height: 1.06;
+  letter-spacing: var(--tracking-display);
+  text-wrap: balance;
+}
+
+[dir="rtl"] .headline {
+  line-height: 1.4;
+}
+
+.subline {
+  margin: 0;
+  margin-block-start: calc(var(--s2-gap) * 1.4);
+  max-inline-size: var(--s9-sub-measure);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: var(--fs-s9-sub);
+  font-weight: 300;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+/* The same stopped rule that closes section 7's and section 8's heads. */
+.rule {
+  position: relative;
+  block-size: var(--hairline);
+  inline-size: var(--s7-rule-wide);
+  margin-block-start: calc(var(--s2-gap) * 2.2);
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    var(--c-gold-line) 18%,
+    var(--c-gold-line-strong) 50%,
+    var(--c-gold-line) 82%,
+    transparent 100%
+  );
+}
+
+.rule::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-start: 50%;
+  inline-size: var(--node-size);
+  block-size: var(--node-size);
+  background: var(--c-gold);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+/* ── The wall ─────────────────────────────────────────────────────────────── */
+
+/*
+ * Three columns, each its own height and its own speed, cut off at the top and
+ * bottom by a fade rather than an edge — so the wall has no first card and no
+ * last one, which is the whole illusion.
+ */
+.columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s9-gap);
+  inline-size: 100%;
+  max-inline-size: var(--s9-wall);
+  block-size: var(--s9-height);
+  margin-inline: auto;
+
+  /* The mask has to be on the wall rather than on each column: three separate
+   * masks are three separate compositing layers, and on a frame that is also
+   * running a WebGL orb a screen above, that shows. */
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 11%,
+    #000 89%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 11%,
+    #000 89%,
+    transparent 100%
+  );
+}
+
+.column {
+  position: relative;
+  overflow: hidden;
+}
+
+/*
+ * The travel.
+ *
+ * The run is rendered twice and the stream moves exactly half its own height
+ * before the animation repeats, which lands the echo precisely where the run
+ * started — no seam to find, however long it is left running.
+ */
+.stream {
+  display: grid;
+  gap: var(--s9-gap);
+  animation: testimonial-drift var(--s9-drift) linear infinite;
+  animation-play-state: paused;
+  will-change: transform;
+}
+
+.run {
+  display: grid;
+  gap: var(--s9-gap);
+  align-content: start;
+}
+
+/* Held until the section has been seen. */
+.testimonials[data-in] .stream {
+  animation-play-state: running;
+}
+
+/*
+ * Three speeds, and the middle one against the other two. Travelling the same
+ * way at the same rate would read as one sheet sliding; opposed, it reads as a
+ * wall of separate voices.
+ */
+.column[data-column="0"] .stream {
+  --s9-drift: var(--s9-drift-a);
+}
+
+.column[data-column="1"] .stream {
+  --s9-drift: var(--s9-drift-b);
+  animation-direction: reverse;
+}
+
+.column[data-column="2"] .stream {
+  --s9-drift: var(--s9-drift-c);
+}
+
+/* Half its own height — the gap between the two runs is one of the grid's own,
+ * so half the stream is exactly the run plus one gap. */
+@keyframes testimonial-drift {
+  to {
+    transform: translateY(calc(-50% - var(--s9-gap) / 2));
+  }
+}
+
+/* ── A card ───────────────────────────────────────────────────────────────── */
+
+.card {
+  display: grid;
+  justify-items: start;
+  margin: 0;
+  padding: var(--s9-pad);
+  border: var(--hairline) solid var(--c-gold-line-faint);
+  border-radius: var(--s9-radius);
+  background:
+    linear-gradient(
+      to bottom,
+      rgb(216 166 75 / 0.045) 0%,
+      rgb(216 166 75 / 0.012) 100%
+    );
+  text-align: start;
+}
+
+.mark {
+  inline-size: var(--s9-mark);
+  /* The viewBox is 32 x 24. */
+  block-size: calc(var(--s9-mark) * 0.75);
+  fill: var(--c-gold);
+  opacity: 0.85;
+}
+
+/* The mark is an opening quote, so in Arabic and Persian it opens on the other
+ * side and faces the other way. */
+[dir="rtl"] .mark {
+  transform: scaleX(-1);
+}
+
+.quote {
+  margin: 0;
+  margin-block-start: calc(var(--s2-gap) * 1.2);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: var(--fs-s9-quote);
+  font-weight: 300;
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+.hair {
+  inline-size: 100%;
+  block-size: var(--hairline);
+  margin-block: calc(var(--s2-gap) * 1.5);
+  background: linear-gradient(
+    to right,
+    var(--c-gold-line) 0%,
+    var(--c-gold-line-faint) 62%,
+    transparent 100%
+  );
+}
+
+[dir="rtl"] .hair {
+  background: linear-gradient(
+    to left,
+    var(--c-gold-line) 0%,
+    var(--c-gold-line-faint) 62%,
+    transparent 100%
+  );
+}
+
+.who {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(0.6rem, 1vw, 1rem);
+  inline-size: 100%;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  inline-size: var(--s9-avatar);
+  block-size: var(--s9-avatar);
+  border: var(--hairline) solid var(--c-gold-line-strong);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 32%,
+    rgb(216 166 75 / 0.22) 0%,
+    rgb(216 166 75 / 0.06) 100%
+  );
+  color: var(--c-gold);
+  font-family: var(--font-display);
+  font-size: calc(var(--s9-avatar) * 0.38);
+  line-height: 1;
+  letter-spacing: 0.04em;
+  /* Initials are Latin in every locale, so they are set the same way in every
+   * locale rather than following the paragraph's direction. */
+  direction: ltr;
+}
+
+.whoText {
+  display: grid;
+  min-inline-size: 0;
+}
+
+.name {
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: var(--fs-s9-name);
+  line-height: 1.2;
+  letter-spacing: 0.03em;
+  /* The names are Latin in all five dictionaries, so in Arabic and Persian they
+   * are a left-to-right run inside a right-to-left block. Isolated rather than
+   * turned around: the run keeps its own order — which is what stops a trailing
+   * stop or initial from being flung to the wrong end — while the line still
+   * begins where every other line in the card begins, beside the avatar. */
+  unicode-bidi: isolate;
+  text-align: start;
+}
+
+.role {
+  margin-block-start: 0.3em;
+  color: var(--c-gold);
+  font-family: var(--font-sans);
+  font-size: var(--fs-micro);
+  font-weight: 300;
+  line-height: 1.2;
+  letter-spacing: var(--tracking-micro);
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+/* -----------------------------------------------------------------------------
+ * The reveal — the same two-step every section below the film makes.
+ *
+ * `--head` carries the heading in and `--body` the wall, which is lower down
+ * and so reaches its mark later. Neither runs backwards. With no JavaScript
+ * neither is ever written and both fall back to `0`, so the holding is a floor
+ * rather than a hide and the section still reads at full strength.
+ * -------------------------------------------------------------------------- */
+
+.head {
+  opacity: max(var(--head), 0.001);
+  transform: translateY(calc((1 - var(--head)) * 1.6rem));
+}
+
+.columns {
+  opacity: max(var(--body), 0.001);
+  transform: translateY(calc((1 - var(--body)) * 1.6rem));
+}
+
+/* -----------------------------------------------------------------------------
+ * Compact frames.
+ *
+ * Three columns of quotes is a wall on a desktop and a wall of noise on a
+ * phone. Below 1024 the wall drops to two columns and below 640 to one — the
+ * columns that go are *taken out*, not wrapped onto a second row: a second row
+ * would halve the window each column is seen through, and a window shorter than
+ * a card shows nobody. Nothing is lost by removing them, because each column
+ * carries all nine quotes; the frame simply reads them one at a time.
+ * -------------------------------------------------------------------------- */
+
+@media (max-width: 1023px) {
+  .testimonials {
+    padding-inline: var(--gutter);
+    gap: clamp(1.75rem, 4vh, 3rem);
+  }
+
+  .columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .column[data-column="2"] {
+    display: none;
+  }
+}
+
+@media (max-width: 639px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .column[data-column="1"] {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .head,
+  .columns {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* A wall that never stops moving is exactly what this asks to be spared. */
+  .stream {
+    animation: none;
+    transform: none;
+  }
+}

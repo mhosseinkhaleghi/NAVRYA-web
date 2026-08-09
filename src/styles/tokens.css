@@ -131,6 +131,36 @@
   /* Slow on purpose — atmosphere behind a row of names, not a ticker. */
   --s8-drift: 110s;
 
+  /* ── Section 9 — what the traders say ───────────────────────────────────── */
+  --fs-s9-display: clamp(1.7rem, min(3.9vw, 6.66vh), 5.25rem);
+  --fs-s9-sub: clamp(0.875rem, min(1.16vw, 1.98vh), 1.3rem);
+  --fs-s9-quote: clamp(0.8125rem, min(1.02vw, 1.74vh), 1.15rem);
+  --fs-s9-name: clamp(0.875rem, min(1.14vw, 1.95vh), 1.3rem);
+  --s9-measure: clamp(20rem, 58vw, 62rem);
+  --s9-sub-measure: clamp(18rem, 46vw, 48rem);
+  /* The wall is wider than the head it sits under — it is a field of cards, and
+   * a field reads as a field only once it runs past the measure of the type. */
+  --s9-wall: clamp(20rem, 84vw, 88rem);
+  --s9-gap: clamp(0.85rem, 1.35vw, 1.6rem);
+  /*
+   * How much of the wall is on screen.
+   *
+   * Capped well under the height of one column's run of three cards, because
+   * the loop only stays seamless while the run is taller than the window it is
+   * seen through — at the far end of the travel the run's own bottom edge is
+   * what fills the last of the frame.
+   */
+  --s9-height: clamp(19rem, 48vh, 31rem);
+  --s9-pad: clamp(1.1rem, 1.6vw, 1.9rem);
+  --s9-radius: clamp(0.65rem, 0.9vw, 1.1rem);
+  --s9-mark: clamp(1.5rem, 2.1vw, 2.4rem);
+  --s9-avatar: clamp(2.15rem, 2.9vw, 3.1rem);
+  /* Three speeds, none of them a multiple of another, so the columns never
+   * settle into step with each other. */
+  --s9-drift-a: 74s;
+  --s9-drift-b: 91s;
+  --s9-drift-c: 63s;
+
   /* ── Scroll indicator ───────────────────────────────────────────────────── */
   --scroll-bottom: clamp(1.5rem, min(3.8vw, 6.76vh), 4.5rem);
   --mouse-w: clamp(1.25rem, min(1.92vw, 3.41vh), 2.2rem);
@@ -280,6 +310,19 @@
     --s8-firm: clamp(8rem, 38vw, 11rem);
     --s8-gap: clamp(1.25rem, 6vw, 2.5rem);
     --s8-drift: 80s;
+    --fs-s9-display: clamp(1.55rem, min(7vw, 12.4vh), 3rem);
+    --fs-s9-sub: clamp(0.8125rem, min(3.4vw, 6vh), 1.05rem);
+    --fs-s9-quote: clamp(0.8125rem, min(3.3vw, 5.87vh), 1rem);
+    --fs-s9-name: clamp(0.875rem, min(3.4vw, 6.04vh), 1.05rem);
+    --s9-measure: 100%;
+    --s9-sub-measure: 100%;
+    --s9-wall: 100%;
+    /* Two columns, then one — so the window can be deeper without the run
+     * running short of it. */
+    --s9-height: clamp(19rem, 48vh, 28rem);
+    --s9-drift-a: 52s;
+    --s9-drift-b: 64s;
+    --s9-drift-c: 45s;
     --s6-measure: 100%;
     --s6-rule: clamp(5rem, 24vw, 8rem);
     --s6-notch: clamp(4.5rem, 22vw, 7rem);

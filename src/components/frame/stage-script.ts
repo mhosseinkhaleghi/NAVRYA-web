@@ -290,7 +290,20 @@ export const RAIL = [
   // document's offsets are not fixed the way a timeline's are.
   { name: "dark", flow: "[data-dark]" },
   { name: "partners", flow: "[data-partners]" },
+  { name: "testimonials", flow: "[data-testimonials]" },
 ] as const;
+
+/**
+ * The sections below the film, as one selector.
+ *
+ * Every one of them reveals the same way — blocks that rise on the way in and
+ * stay risen — so the controller only needs to know which element a rising
+ * block belongs to. Written once here and read by `RAIL` and by the riser pass
+ * alike, so a fourth section is one line rather than three.
+ */
+const FLOW_SECTIONS = RAIL.filter((s) => "flow" in s)
+  .map((s) => (s as { flow: string }).flow)
+  .join(", ");
 
 /**
  * A jump is travelled, not teleported.
@@ -354,6 +367,7 @@ export const stageScript = `
   var FALL_PLATE = ${JSON.stringify(FALL_PLATE)};
   var RISE = ${JSON.stringify(RISE)};
   var RAIL = ${JSON.stringify(RAIL)};
+  var FLOW_SECTIONS = ${JSON.stringify(FLOW_SECTIONS)};
   var GLIDE_MS = ${JSON.stringify(GLIDE_MS)};
 
   var reduced = window.matchMedia
@@ -634,7 +648,7 @@ export const stageScript = `
     // simply moves, which is the whole of what was asked for.
     var risers = [];
     each('[data-rise]', function (el) {
-      var owner = el.closest('[data-dark], [data-partners]');
+      var owner = el.closest(FLOW_SECTIONS);
       if (owner) risers.push({ el: el, owner: owner, prop: '--' + el.getAttribute('data-rise'), high: 0 });
     });
 

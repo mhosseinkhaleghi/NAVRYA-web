@@ -162,6 +162,58 @@
       }
     ]
   },
+  "testimonials": {
+    "eyebrow": "Bölüm 9",
+    "headline": "Yatırımcılarımız Ne Diyor",
+    "subline": "Dokuz masa, tek alışkanlık: işlemi yazıyorlar. Yazdıktan sonra değişen şey bu.",
+    "quotes": [
+      {
+        "name": "Daniel Reyes",
+        "role": "Fonlanmış Yatırımcı",
+        "quote": "İnkâr edip durduğum kalıbı buldu: her zarar ilk saatimde geliyordu. Başlangıç saatimi değiştirdim, ay döndü."
+      },
+      {
+        "name": "Sara Lindqvist",
+        "role": "Swing Yatırımcı",
+        "quote": "Bir haftayı gözden geçirmek bir akşamımı alırdı. Artık platformu kapatana kadar değerlendirme yazılmış oluyor."
+      },
+      {
+        "name": "Marcus Feld",
+        "role": "Prop Masa Lideri",
+        "quote": "Dokuz yatırımcı, risk için tek bir dil. Değerlendirme toplantılarımız tartışmadan aritmetiğe döndü."
+      },
+      {
+        "name": "Aiko Tanaka",
+        "role": "Vadeli İşlem Yatırımcısı",
+        "quote": "Sizi pohpohlamıyor. Sinirliyken aldığınız pozisyon büyüklüğünü, sonra da faturasını gösteriyor."
+      },
+      {
+        "name": "Omar Haddad",
+        "role": "Forex Yatırımcısı",
+        "quote": "İki ay sonra ortalama zararım üçte bir azaldı. Stratejimde hiçbir şey değişmedi, sadece artık görebiliyorum."
+      },
+      {
+        "name": "Elena Rossi",
+        "role": "Opsiyon Yatırımcısı",
+        "quote": "Değerlendirmeyi üçüncü denemede geçtim. Fark, hangi kurulumun bana gerçekten kazandırdığını bilmekti."
+      },
+      {
+        "name": "James Okoye",
+        "role": "Endeks Yatırımcısı",
+        "quote": "Disiplin bir his olmaktan çıktı, tıklamadan önce baktığım bir sayı oldu."
+      },
+      {
+        "name": "Nina Kovac",
+        "role": "Kripto Yatırımcısı",
+        "quote": "İşlem yapmanın en zor yanı kendime karşı dürüst olmaktı. O kısmı benim yerime o yapıyor."
+      },
+      {
+        "name": "Tomas Herrera",
+        "role": "Portföy Yatırımcısı",
+        "quote": "İki hesap, tek günlük. Tüm defterimin aynı anda anlam kazandığı tek yer."
+      }
+    ]
+  },
   "a11y": {
     "primaryNav": "Ana gezinme",
     "sectionNav": "Bölüm gezinmesi"

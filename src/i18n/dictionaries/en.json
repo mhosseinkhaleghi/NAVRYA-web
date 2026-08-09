@@ -162,6 +162,58 @@
       }
     ]
   },
+  "testimonials": {
+    "eyebrow": "Section 9",
+    "headline": "What Our Traders Say",
+    "subline": "Nine desks, one habit: they write the trade down. This is what changed once they did.",
+    "quotes": [
+      {
+        "name": "Daniel Reyes",
+        "role": "Funded Trader",
+        "quote": "It found the pattern I kept denying — every loss arrived in my first hour. I moved my start time and the month turned."
+      },
+      {
+        "name": "Sara Lindqvist",
+        "role": "Swing Trader",
+        "quote": "I used to spend an evening reviewing a week. Now the review is written by the time I close the platform."
+      },
+      {
+        "name": "Marcus Feld",
+        "role": "Prop Desk Lead",
+        "quote": "Nine traders, one language for risk. Our review meetings went from arguments to arithmetic."
+      },
+      {
+        "name": "Aiko Tanaka",
+        "role": "Futures Trader",
+        "quote": "It does not flatter you. It shows the size you take when you are angry, and then it shows you the bill."
+      },
+      {
+        "name": "Omar Haddad",
+        "role": "FX Trader",
+        "quote": "Two months in, my average loss is down by a third. Nothing changed in my strategy except that I can see it."
+      },
+      {
+        "name": "Elena Rossi",
+        "role": "Options Trader",
+        "quote": "I passed the evaluation on the third attempt. The difference was knowing which setup was actually paying me."
+      },
+      {
+        "name": "James Okoye",
+        "role": "Index Trader",
+        "quote": "Discipline stopped being a feeling and became a number I check before I click."
+      },
+      {
+        "name": "Nina Kovac",
+        "role": "Crypto Trader",
+        "quote": "The hardest part of trading was being honest with myself. This does that part for me."
+      },
+      {
+        "name": "Tomas Herrera",
+        "role": "Portfolio Trader",
+        "quote": "Two accounts, one journal. It is the only place where my whole book makes sense at once."
+      }
+    ]
+  },
   "a11y": {
     "primaryNav": "Primary navigation",
     "sectionNav": "Section navigation"
