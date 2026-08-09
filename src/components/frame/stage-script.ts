@@ -390,6 +390,31 @@ export const stageScript = `
   // controller states it rather than trusting the two to be kept in step. This
   // runs before first paint, so the track is never the wrong height for a frame.
   root.style.setProperty('--timeline-vh', total);
+
+  /*
+   * How tall a frame the timeline is measured against.
+   *
+   * The track's length used to be pure vh, and that is a loop as soon as the
+   * page is in a frame something else sizes to its content: a taller frame
+   * makes a taller document, which makes a taller frame. Measured in a 4000px
+   * frame the document came out 151,900px, and every scroll made the end
+   * recede — the sections after the film could not be reached by wheel at all,
+   * while the rail, which jumps by script, still got there.
+   *
+   * Clamping cuts the loop. Once the frame is past the ceiling the length stops
+   * changing, so the second measurement equals the first and it settles. The
+   * range covers every real viewport; past it the number is a constant.
+   */
+  var FRAME_MIN = 380, FRAME_MAX = 1100;
+  function frameH() {
+    var h = window.innerHeight || FRAME_MAX;
+    return h < FRAME_MIN ? FRAME_MIN : h > FRAME_MAX ? FRAME_MAX : h;
+  }
+  function sizeTrack() {
+    root.style.setProperty('--track-px', Math.round((total / 100) * frameH()) + 'px');
+  }
+  sizeTrack();
+
   var edge = {}, run = 0;
   for (i = 0; i < BEATS.length; i++) {
     edge[BEATS[i][0]] = [run / total, (run + BEATS[i][1]) / total];
@@ -1054,6 +1079,7 @@ export const stageScript = `
     var bar = document.querySelector('header');
     var filmMax = 0;
     function measure() {
+      sizeTrack();
       filmMax = track ? track.offsetHeight - window.innerHeight : 0;
       if (filmMax < 1) filmMax = 1;
       // The bar is a layer above the document now, so on compact frames the

@@ -32,7 +32,12 @@
 .track {
   position: relative;
   z-index: 0;
+  /* The vh form is the no-JS fallback. The controller replaces it with a pixel
+   * length measured against a clamped frame height, because vh is a feedback
+   * loop the moment something sizes this page's frame to this page's content —
+   * see `sizeTrack` in the controller. */
   block-size: calc(var(--timeline-vh) * 1vh);
+  block-size: var(--track-px, calc(var(--timeline-vh) * 1vh));
   pointer-events: none;
 }
 

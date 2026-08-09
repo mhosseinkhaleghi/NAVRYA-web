@@ -28,7 +28,20 @@ body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-  overscroll-behavior: none;
+  /*
+   * Sideways only.
+   *
+   * `overscroll-behavior: none` was on both axes, and on the vertical axis that
+   * is not "no rubber-banding" — it is "this document does not hand a scroll to
+   * whatever contains it". Inside the artifact's iframe that is exactly the
+   * wrong promise: when the frame's own scroll runs out, the only way further
+   * down the page is to chain to the parent, and this forbade it. The wheel
+   * died and stayed dead while the section rail, which scrolls by script rather
+   * than by wheel, went on working — which is precisely the shape of the fault
+   * that was reported. Measured in a frame sized to a slice of the document:
+   * with `none`, the parent moved 0px under 4800px of wheel.
+   */
+  overscroll-behavior-x: none;
 }
 
 html {
