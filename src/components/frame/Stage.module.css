@@ -1,16 +1,29 @@
-/* The single, fixed, full-screen frame every scene renders into.
- * Nothing outside this element is ever visible, and it never translates. */
+/*
+ * The film's own length. Nothing renders here — this block exists to give the
+ * screen inside it something to stick through, and its height is what decides
+ * how much wheel travel each beat gets.
+ */
+.film {
+  position: relative;
+  block-size: calc(var(--timeline-vh) * 1vh);
+  block-size: var(--track-px, calc(var(--timeline-vh) * 1vh));
+}
+
+/* The single full-screen frame every scene renders into. Stuck to the top for
+ * as long as the film lasts, and released at its end — so the sections after
+ * it simply follow, with nothing to scroll *over*. */
 .stage {
-  position: fixed;
-  inset: 0;
+  position: sticky;
+  inset-block-start: 0;
   z-index: 1;
   overflow: hidden;
   isolation: isolate;
   background-color: var(--c-bg);
-  /* Fallback for browsers without dvh; the fixed inset already handles the
-   * mobile URL-bar case, this just keeps the box explicit. */
-  height: 100vh;
-  height: var(--frame-h);
+  /* One screen exactly. A sticky box has no `inset: 0` to size it, so this is
+   * now the only thing that says how tall the frame is — and the scroll the
+   * controller measures is the block's height less this. */
+  block-size: 100vh;
+  block-size: var(--frame-h);
   /* On wide frames the header overlays and the scenes centre against the whole
    * viewport, as the comps do. On compact frames the header joins the grid as
    * its own row, so no scene can be pushed under it whatever the bar's height —
@@ -21,37 +34,12 @@
 }
 
 /*
- * The timeline's length, expressed as scrollable document.
- *
- * Nothing is rendered here — this element exists only to give the document
- * something to scroll through. Its height is what decides how much wheel travel
- * each beat of the sequence gets; the controller reads scroll *position* and
- * maps it onto the beats, so retiming the whole sequence is a change to
- * `--timeline-vh` and nothing else.
- */
-.track {
-  position: relative;
-  z-index: 0;
-  /* The vh form is the no-JS fallback. The controller replaces it with a pixel
-   * length measured against a clamped frame height, because vh is a feedback
-   * loop the moment something sizes this page's frame to this page's content —
-   * see `sizeTrack` in the controller. */
-  block-size: calc(var(--timeline-vh) * 1vh);
-  block-size: var(--track-px, calc(var(--timeline-vh) * 1vh));
-  pointer-events: none;
-}
-
-/*
- * Everything after the film.
- *
- * Above the stage and opaque, so it scrolls up over the pinned frame and covers
- * it. The frame has faded to this same black by the time any of this is on
- * screen, so there is no seam to see — the film simply stops being what you are
- * looking at.
+ * Everything after the film — and after is all it is now. The screen above
+ * stops being sticky at the end of its own block, so these are the next
+ * siblings on an ordinary page rather than a layer stacked over a pinned one.
  */
 .flow {
   position: relative;
-  z-index: 2;
   background: var(--c-bg);
 }
 
