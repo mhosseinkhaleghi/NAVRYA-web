@@ -67,9 +67,10 @@ const BEATS = [
   // The last plate of the sequence has nothing after it to cut to, so this one
   // ends on the page's own ground rather than on another shot.
   ["fall", 180],
-  ["orb", 300], // section 7's headline rises, and the orb comes up behind it
-  ["tell", 260], // the paragraph follows it up
-  ["rest", 40], // tail room, so the last reveal is not pinned to the bottom
+  // The film ends here. Sections 7 and 8 are ordinary document below the track
+  // — see `Stage`'s `after` — so they take no beats: they reveal once on
+  // approach and stay revealed, which is what a page does.
+  ["rest", 60], // a moment of settled black before the document begins
 ] as const;
 
 /**
@@ -231,20 +232,15 @@ const TRAIT_HOLD = 0.26;
 const TRAIT_LEAD = 0.96;
 
 /**
- * Section 7 — the fall to black, and what rises out of it.
+ * The fall to black — the film's last act.
  *
  * `FALL_TEXT` is section 6 lifting away, `FALL_PLATE` the forest going down
  * behind it; the text leads, so the words are gone before the picture is. Both
- * are windows inside the `fall` beat.
- *
- * `ORB_IN` is the one that matters to the composition: the orb comes up on the
- * *same* window as the headline, not after it, so the backdrop arrives with the
- * words rather than announcing them. The paragraph then follows on its own beat.
+ * are windows inside the `fall` beat. What is left is the page's own ground,
+ * and the document takes over from there.
  */
 const FALL_TEXT = [0, 0.5];
 const FALL_PLATE = [0.16, 0.78];
-const HEAD_IN = [0.12, 0.72];
-const BODY_IN = [0.05, 0.6];
 
 /**
  * The section rail — one mark per section, in the order the frame reaches them.
@@ -278,8 +274,11 @@ export const RAIL = [
   // words the locale's sentence has. Past all of them.
   { name: "closing", from: "arrow", at: ["learn", 0.99] },
   { name: "miss", from: "miss", at: ["miss", 0.34] },
-  // Section 7 is composed once the paragraph is up, which is its own beat.
-  { name: "dark", from: "fall", at: ["tell", 0.85] },
+  // Below the film. These are elements in ordinary flow, so the mark goes to
+  // where the element *is* rather than to a fraction of a beat — read at click
+  // time, because a document's offsets are not fixed the way a timeline's are.
+  { name: "dark", flow: "[data-dark]" },
+  { name: "partners", flow: "[data-partners]" },
 ] as const;
 
 /**
@@ -342,8 +341,6 @@ export const stageScript = `
   var TRAIT_HOLD = ${TRAIT_HOLD}, TRAIT_LEAD = ${TRAIT_LEAD};
   var FALL_TEXT = ${JSON.stringify(FALL_TEXT)};
   var FALL_PLATE = ${JSON.stringify(FALL_PLATE)};
-  var HEAD_IN = ${JSON.stringify(HEAD_IN)};
-  var BODY_IN = ${JSON.stringify(BODY_IN)};
   var RAIL = ${JSON.stringify(RAIL)};
   var GLIDE_MS = ${JSON.stringify(GLIDE_MS)};
 
@@ -609,49 +606,126 @@ export const stageScript = `
       miss.style.setProperty('--traits', tp > 0 ? 1 : 0);
     }
 
-    // ── section 7 ──────────────────────────────────────────────────────────
-    // Black ground, and two reveals over it. The orb rides the same --head as
-    // the headline, so it comes up on exactly the window the words do.
-    var dark = document.querySelector('[data-dark]');
+    // ── the document below the film ────────────────────────────────────────
+    //
+    // Sections 7 and 8 are ordinary flow, so they are not painted from scroll
+    // position — they *latch*. Each crosses a threshold on the way in, gains an
+    // attribute, and keeps it: scrolling back up does not take a revealed
+    // section apart again, it simply scrolls off it. That is the one place on
+    // this site where something is one-shot, and it is deliberate; a page below
+    // a film should behave like a page.
+    //
+    // Two thresholds rather than one, so section 7 keeps the shape the film
+    // gave it: the headline and the orb arrive together as the block comes up,
+    // and the paragraph follows a little further on.
+    var REVEAL_IN = 0.3, REVEAL_ON = 0.62;
+
+    each('[data-reveal]', function (el) {
+      // No observer, no reveal, and the CSS holds nothing back — so with the
+      // API missing the section is simply, statically there.
+      if (!window.IntersectionObserver) {
+        el.setAttribute('data-in', '');
+        el.setAttribute('data-on', '');
+        return;
+      }
+      var io = new IntersectionObserver(function (entries) {
+        for (var e = 0; e < entries.length; e++) {
+          if (entries[e].intersectionRatio >= REVEAL_IN) {
+            el.setAttribute('data-in', '');
+            io.disconnect();
+          }
+        }
+      }, { threshold: [REVEAL_IN] });
+      io.observe(el);
+    });
+
+    // The second threshold cannot be a ratio of the section: a section one
+    // screen tall goes straight from a quarter visible to whole, so both would
+    // fire together and there would be no "and then". It is a mark placed
+    // further down instead — reaching it means the viewer scrolled on, which is
+    // the thing being waited for.
+    each('[data-reveal-next]', function (mark) {
+      var owner = mark.closest('[data-reveal]');
+      if (!owner) return;
+      if (!window.IntersectionObserver) { owner.setAttribute('data-on', ''); return; }
+      var io = new IntersectionObserver(function (entries) {
+        for (var e = 0; e < entries.length; e++) {
+          if (entries[e].isIntersecting) { owner.setAttribute('data-on', ''); io.disconnect(); }
+        }
+      });
+      io.observe(mark);
+    });
+
+    // The orb compiles when its own section is within a screen of the frame,
+    // which is the flow equivalent of fetching a plate a beat ahead.
     var orb = document.querySelector('[data-orb]');
-
-    function paintDark(fp, op, tp) {
-      if (!dark) return;
-
-      if (fp > 0) dark.setAttribute('data-active', '');
-      else dark.removeAttribute('data-active');
-
-      dark.style.setProperty('--head', ease(span(op, HEAD_IN[0], HEAD_IN[1])));
-      dark.style.setProperty('--body', ease(span(tp, BODY_IN[0], BODY_IN[1])));
-
-      // Compiled and run only while the section is in reach — a beat ahead, as
-      // the plates are fetched a beat ahead, and given back afterwards.
-      if (!orb) return;
-      if (fp > 0) orb.setAttribute('data-orb-live', '');
-      else orb.removeAttribute('data-orb-live');
+    if (orb && window.IntersectionObserver) {
+      new IntersectionObserver(function (entries) {
+        for (var e = 0; e < entries.length; e++) {
+          if (entries[e].isIntersecting) orb.setAttribute('data-orb-live', '');
+          else orb.removeAttribute('data-orb-live');
+        }
+      }, { rootMargin: '100% 0px' }).observe(orb);
+    } else if (orb) {
+      orb.setAttribute('data-orb-live', '');
     }
 
     // ── the section rail ───────────────────────────────────────────────────
-    // Where each mark lands, and where its stretch of the timeline begins, both
-    // resolved from the beat table rather than written down anywhere.
+    //
+    // The rail spans both halves of the site. Its first marks are beats of the
+    // film and resolve from the beat table; its last are elements in ordinary
+    // flow and resolve from where those elements are. A document's offsets move
+    // — fonts land, the viewport changes — so the flow marks are measured when
+    // they are needed rather than cached at boot.
     var marks = [];
     each('[data-rail-mark]', function (el) {
       marks[+el.getAttribute('data-rail-mark')] = el;
     });
 
-    var railAt = [], railFrom = [];
+    var railAt = [], railFrom = [], railFlow = [];
     for (i = 0; i < RAIL.length; i++) {
-      var re = edge[RAIL[i].at[0]];
-      railAt.push(re[0] + (re[1] - re[0]) * RAIL[i].at[1]);
-      railFrom.push(edge[RAIL[i].from][0]);
+      if (RAIL[i].flow) {
+        railFlow.push(document.querySelector(RAIL[i].flow));
+        railAt.push(null);
+        railFrom.push(null);
+      } else {
+        var re = edge[RAIL[i].at[0]];
+        railFlow.push(null);
+        railAt.push(re[0] + (re[1] - re[0]) * RAIL[i].at[1]);
+        railFrom.push(edge[RAIL[i].from][0]);
+      }
     }
 
-    function paintRail(p) {
-      // The last mark whose section has begun. The marks' ranges are contiguous
-      // and their boundaries are the plate handovers, so this is exactly the
-      // section that is on screen.
+    // Where a mark goes, in document pixels.
+    function railTarget(m) {
+      var el = railFlow[m];
+      if (el) return el.getBoundingClientRect().top + window.scrollY;
+      return railAt[m] * filmMax;
+    }
+
+    function paintRail() {
       var on = 0;
-      for (var m = 1; m < railFrom.length; m++) if (p >= railFrom[m]) on = m;
+
+      // Below the film the lit mark is whichever flow section holds the middle
+      // of the frame — the same question the beat ranges answer above it, asked
+      // of a document instead of a timeline.
+      var mid = window.scrollY + window.innerHeight / 2;
+      var inFlow = false;
+      for (var m = 0; m < railFlow.length; m++) {
+        var el = railFlow[m];
+        if (!el) continue;
+        var box = el.getBoundingClientRect();
+        var top = box.top + window.scrollY;
+        if (mid >= top && mid < top + box.height) { on = m; inFlow = true; }
+      }
+
+      if (!inFlow) {
+        var p = filmMax > 0 ? clamp01(window.scrollY / filmMax) : 0;
+        for (m = 1; m < railFrom.length; m++) {
+          if (railFrom[m] !== null && p >= railFrom[m]) on = m;
+        }
+      }
+
       for (m = 0; m < marks.length; m++) {
         if (!marks[m]) continue;
         if (m === on) {
@@ -671,9 +745,10 @@ export const stageScript = `
       glide = null;
     }
 
+    // The argument is a document offset in pixels.
     function goTo(where) {
       var max = document.documentElement.scrollHeight - window.innerHeight;
-      var to = Math.round(clamp01(where) * max);
+      var to = Math.round(Math.max(0, Math.min(where, max)));
       var from = window.scrollY;
       var dist = Math.abs(to - from);
       stopGlide();
@@ -691,7 +766,7 @@ export const stageScript = `
     for (i = 0; i < marks.length; i++) {
       (function (m) {
         if (!marks[m]) return;
-        marks[m].addEventListener('click', function () { goTo(railAt[m]); });
+        marks[m].addEventListener('click', function () { goTo(railTarget(m)); });
       })(i);
     }
 
@@ -707,7 +782,7 @@ export const stageScript = `
         (function (t) {
           var tp = TRAIT_LEAD * (t + TRAIT_HOLD) / reachAll;
           dotEls[t].addEventListener('click', function () {
-            goTo(tb[0] + tp * tw);
+            goTo((tb[0] + tp * tw) * filmMax);
           });
         })(i);
       }
@@ -721,8 +796,12 @@ export const stageScript = `
     }
 
     function apply() {
-      var max = document.documentElement.scrollHeight - window.innerHeight;
-      var p = max > 0 ? clamp01(window.scrollY / max) : 0;
+      // Against the *track*, not the document. The document now continues past
+      // the film into ordinary sections, and measuring the whole of it would
+      // stretch every beat over content the film has nothing to do with. The
+      // film completes exactly as the track's last screen goes by, which is the
+      // moment the first flow section reaches the bottom of the frame.
+      var p = filmMax > 0 ? clamp01(window.scrollY / filmMax) : 0;
       var shown = root.dataset.intro === 'shown';
 
       // Exactly one plate is ever composited: the last one whose beat has
@@ -823,13 +902,8 @@ export const stageScript = `
         shown ? span(p, edge.traits[0], edge.traits[1]) : 0,
         shown ? span(p, edge.fall[0], edge.fall[1]) : 0
       );
-      paintDark(
-        shown ? span(p, edge.fall[0], edge.fall[1]) : 0,
-        shown ? span(p, edge.orb[0], edge.orb[1]) : 0,
-        shown ? span(p, edge.tell[0], edge.tell[1]) : 0
-      );
 
-      paintRail(p);
+      paintRail();
 
       var hb = edge.turn, hw = hb[1] - hb[0];
       var heroOut = ease(span(p, hb[0] + HERO_EXIT[0] * hw, hb[0] + HERO_EXIT[1] * hw));
@@ -842,6 +916,28 @@ export const stageScript = `
       }
     }
 
+    var track = document.querySelector('[data-track]');
+    var bar = document.querySelector('header');
+    var filmMax = 0;
+    function measure() {
+      filmMax = track ? track.offsetHeight - window.innerHeight : 0;
+      if (filmMax < 1) filmMax = 1;
+      // The bar is a layer above the document now, so on compact frames the
+      // stage can no longer size a row from it. Its real height is published
+      // instead, and the stage holds that much open.
+      if (bar) root.style.setProperty('--chrome-h', bar.offsetHeight + 'px');
+    }
+    measure();
+
+    // The bar's height is not settled at this point: it is measured with
+    // fallback metrics and grows when the faces land, which left the compact
+    // spacer four pixels short and the scene four pixels under the bar. Watch
+    // the bar itself rather than guessing when it has stopped moving.
+    if (bar && window.ResizeObserver) new ResizeObserver(measure).observe(bar);
+    else if (bar && document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(measure);
+    }
+
     var queued = false;
     function onScroll() {
       if (queued) return;
@@ -849,7 +945,7 @@ export const stageScript = `
       requestAnimationFrame(function () { queued = false; apply(); });
     }
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
+    window.addEventListener('resize', function () { measure(); onScroll(); });
     each('[data-scene-video]', function (v) {
       v.addEventListener('loadedmetadata', apply);
     });

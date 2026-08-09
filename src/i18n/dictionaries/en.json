@@ -119,6 +119,49 @@
       "become a more disciplined trader."
     ]
   },
+  "partners": {
+    "eyebrow": "Section 8",
+    "headline": "Prop Firms Working With Navrya",
+    "subline": "Our partners share our mission to elevate traders through innovation, capital, and aligned success.",
+    "firms": [
+      {
+        "name": "Apexion",
+        "kind": "Trading",
+        "tagline": "Fueling Ambition",
+        "icon": "apex"
+      },
+      {
+        "name": "Velora",
+        "kind": "Capital",
+        "tagline": "Capital With Clarity",
+        "icon": "vee"
+      },
+      {
+        "name": "Quantforge",
+        "kind": "Capital",
+        "tagline": "Data. Edge. Execution.",
+        "icon": "forge"
+      },
+      {
+        "name": "Northscale",
+        "kind": "Trading",
+        "tagline": "Scaling Potential",
+        "icon": "bars"
+      },
+      {
+        "name": "Prime Arc",
+        "kind": "Capital",
+        "tagline": "Performance Driven",
+        "icon": "arc"
+      },
+      {
+        "name": "Lumera",
+        "kind": "Fund",
+        "tagline": "Illuminate Markets",
+        "icon": "star"
+      }
+    ]
+  },
   "a11y": {
     "primaryNav": "Primary navigation",
     "sectionNav": "Section navigation"

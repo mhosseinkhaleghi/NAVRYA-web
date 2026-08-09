@@ -119,6 +119,49 @@
       "على أن تصبح متداولًا أكثر انضباطًا."
     ]
   },
+  "partners": {
+    "eyebrow": "القسم ٨",
+    "headline": "شركات التمويل الشريكة لنوريا",
+    "subline": "يشاركنا شركاؤنا رسالتنا: الارتقاء بالمتداولين عبر الابتكار ورأس المال والنجاح المشترك.",
+    "firms": [
+      {
+        "name": "Apexion",
+        "kind": "تداول",
+        "tagline": "وقود الطموح",
+        "icon": "apex"
+      },
+      {
+        "name": "Velora",
+        "kind": "رأس مال",
+        "tagline": "رأس مال بوضوح",
+        "icon": "vee"
+      },
+      {
+        "name": "Quantforge",
+        "kind": "رأس مال",
+        "tagline": "بيانات. أفضلية. تنفيذ.",
+        "icon": "forge"
+      },
+      {
+        "name": "Northscale",
+        "kind": "تداول",
+        "tagline": "إمكانات التوسّع",
+        "icon": "bars"
+      },
+      {
+        "name": "Prime Arc",
+        "kind": "رأس مال",
+        "tagline": "مدفوع بالأداء",
+        "icon": "arc"
+      },
+      {
+        "name": "Lumera",
+        "kind": "صندوق",
+        "tagline": "إضاءة الأسواق",
+        "icon": "star"
+      }
+    ]
+  },
   "a11y": {
     "primaryNav": "التنقل الرئيسي",
     "sectionNav": "التنقل بين الأقسام"

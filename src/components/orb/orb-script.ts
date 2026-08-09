@@ -259,7 +259,13 @@ export const orbScript = `
 
     var canvas = document.createElement('canvas');
     gl = canvas.getContext('webgl', {
-      alpha: true, premultipliedAlpha: false, antialias: true, depth: false
+      // Premultiplied, and it has to be. The shader's last line is
+      // gl_FragColor = vec4(col.rgb * col.a, col.a) and the blend below is the
+      // premultiplied one, so declaring the context straight makes the
+      // compositor multiply by alpha a *second* time — which is what turned the
+      // ring into a soft, dim smear instead of a line of light. Upstream
+      // carries this mismatch; it is less visible over ogl's own clear colour.
+      alpha: true, premultipliedAlpha: true, antialias: true, depth: false
     }) || canvas.getContext('experimental-webgl', { alpha: true });
     // No WebGL, no orb. The section still reads — the words were never inside
     // the canvas, they are markup over it.

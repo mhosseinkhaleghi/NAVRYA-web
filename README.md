@@ -1,6 +1,6 @@
 # Navrya — web
 
-A premium cinematic marketing site. **Current scope: sections 1–7.**
+A premium cinematic marketing site. **Current scope: sections 1–8.**
 
 ```bash
 npm install
@@ -32,12 +32,40 @@ first paint — the two drifted once, when a beat was added and the token was no
 and the sequence ran off the end of its own track — so what is in `tokens.css`
 is the no-JS fallback.
 
+### Where the film stops
+
+The site is a film and then a document. Sections 1–6 are the film: a fixed frame,
+scrubbed by scroll, nothing latching. **Sections 7 and 8 are ordinary flow** —
+`Stage`'s `after` — laid out below the track, scrolling up over the pinned frame
+on their own opaque black. The frame has faded to that same black by the time any
+of it is on screen, so the handover has nothing to see.
+
+That split is why the film measures its progress against **the track** rather
+than the document: the document now continues past the film, and measuring the
+whole of it would stretch every beat over content the film has nothing to do
+with. The film completes exactly as the track's last screen goes by.
+
+The flow sections **latch**. Each crosses a threshold on the way in, gains an
+attribute, and keeps it — scrolling back up scrolls off a finished section rather
+than dismantling one, which is what a page below a film should do. It is the only
+one-shot behaviour on the site and it is deliberate. Section 7 keeps its
+two-part shape with a second mark placed lower in the section: a ratio would not
+work, because a section one screen tall goes from a quarter visible to whole in a
+single movement and both thresholds would fire together. It is half a screen
+taller than a screen, with the composition `sticky` inside it, so there is real
+scroll for the paragraph to arrive on.
+
+The bar and the section rail are a **third layer**, fixed above both. They cannot
+live in the stage: it is a stacking context, so anything inside it is covered the
+moment a document section scrolls over the frame. On compact frames the bar used
+to be a grid row of the stage, so the stage now holds that row open with a spacer
+sized from `--chrome-h`, which the controller measures off the real bar.
+
 ## The sequence
 
-One continuous shot in seven plates, and then the ground beneath it, driven end
-to end by scroll **position** — so it runs backwards exactly as readily as
-forwards. Nothing latches, nothing fires
-once. `components/frame/stage-script.ts` maps scroll onto the beats:
+One continuous shot in seven plates, driven end to end by scroll **position** —
+so it runs backwards exactly as readily as forwards. Nothing latches, nothing
+fires once. `components/frame/stage-script.ts` maps scroll onto the beats:
 
 | beat | scroll | what happens |
 | ---- | ------ | ------------ |
@@ -53,9 +81,7 @@ once. `components/frame/stage-script.ts` maps scroll onto the beats:
 | `miss` | 420vh | `forest-miss` scrubs. The arrow buries itself in the tree at **0.67s** and section 6's statement lands on it; the block lifts as the stag turns and runs at **1.30s**; the frame is empty by **3.95s**. |
 | `traits` | 560vh | The psychology features, one slide per stretch of scroll, over the plate's own last frame — which stays. The deck finishes at 96% of the beat rather than 75%, so the last feature landing is the end of the section. |
 | `fall` | 180vh | Section 6 lifts away and the forest goes down behind it, leaving the frame on the page's own black. The one handover with no plate on the other side. |
-| `orb` | 300vh | Section 7's headline rises, and the orb comes up behind it on the same property. |
-| `tell` | 260vh | The paragraph follows it up. |
-| `rest` | 40vh | Tail room, so the last reveal is not pinned to the very bottom. |
+| `rest` | 60vh | A moment of settled black, and the film is over. Sections 7 and 8 follow as ordinary document — see *Where the film stops*. |
 
 The shape repeats: a plate runs, its panel arrives on a cue taken from the
 footage, and the panel leaves again **over the next plate**, which is already
@@ -128,7 +154,10 @@ picture.
 
 ### Section 7
 
-The one section composed over nothing. The forest goes down through `fall` and
+The first section that is not a shot — ordinary flow below the track, latching
+rather than scrubbed. See *Where the film stops* for why.
+
+It is composed over nothing: The forest goes down through `fall` and
 what is left is the near-black the document has underneath the whole film, so
 the sequence ends on the page's own ground rather than handing over to another
 shot — there is no plate after the forest to cut to.
@@ -137,6 +166,10 @@ Two reveals over it. The headline rises on `--head` and **the orb rides the same
 property**, which is the whole of "the backdrop fades in as the words come up":
 one number, written once per frame, read by both. The paragraph follows on its
 own beat, `--body`.
+
+It is half a screen taller than a screen with the composition `sticky` inside
+it, so the headline and the orb come up as the block arrives and the paragraph
+follows on a further stretch of scroll — the shape it had as a beat, kept.
 
 The block carries the comp's own ornament: a hairline with a pair of facing
 scrolls around a centred diamond, and a second, longer one below the headline
@@ -176,6 +209,23 @@ there is no arithmetic that turns the shader's purple into the site's gold: the
 ring was sampled at 120 points around its circumference and swept in 20° steps
 until it read back at the right hue. `ORB_HUE = 200` renders rgb(175, 139, 72),
 hue 39°, against 40° for `--c-gold`.
+
+### Section 8
+
+The prop firms, and the first section on the site that is a section rather than
+a scene: its own height, its own black, revealed once and then left alone.
+
+The firms sit on one continuous rail and **drift** along it. The run is rendered
+twice and the track travels exactly half its own width before repeating, so the
+loop has no seam to find; it is slow on purpose — atmosphere behind a row of
+names, not a ticker — and it is what makes six firms work on a frame that cannot
+hold six firms. Nothing is cut off, it is simply not on screen yet. The drift is
+paused until the section has been seen, and switched off entirely under reduced
+motion. In Arabic and Persian it runs the other way, because the eye does.
+
+The emblems are line art on the site's own hairline, each a mark rather than a
+logo — these are placeholder partners. Firm names stay Latin in every locale, as
+brand names do; the kind and the tagline are translated.
 
 ### The section rail
 

@@ -35,3 +35,47 @@
   block-size: calc(var(--timeline-vh) * 1vh);
   pointer-events: none;
 }
+
+/*
+ * Everything after the film.
+ *
+ * Above the stage and opaque, so it scrolls up over the pinned frame and covers
+ * it. The frame has faded to this same black by the time any of this is on
+ * screen, so there is no seam to see — the film simply stops being what you are
+ * looking at.
+ */
+.flow {
+  position: relative;
+  z-index: 2;
+  background: var(--c-bg);
+}
+
+/* Holds the compact bar's row open now that the bar itself is a layer above. */
+.band {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .band {
+    display: block;
+    block-size: var(--chrome-h, 0px);
+  }
+}
+
+/*
+ * The bar and the section rail, over both halves of the site.
+ *
+ * Fixed and above the flow, because the film's stage is a stacking context and
+ * anything left inside it would be covered the moment a document section
+ * scrolled up over the frame. Transparent to the pointer except where it draws.
+ */
+.chrome {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.chrome > * {
+  pointer-events: auto;
+}

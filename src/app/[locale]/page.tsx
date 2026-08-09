@@ -7,6 +7,7 @@ import { MissSection } from "@/components/miss/MissSection";
 import { Scene } from "@/components/frame/Scene";
 import { Stage } from "@/components/frame/Stage";
 import { PanelSection } from "@/components/panel/PanelSection";
+import { PartnersSection } from "@/components/partners/PartnersSection";
 import { SectionRail } from "@/components/rail/SectionRail";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { isLocale } from "@/i18n/config";
@@ -23,10 +24,21 @@ export default async function HomePage({
   const dictionary = await getDictionary(locale);
 
   return (
-    <Stage>
+    <Stage
+      chrome={
+        <>
+          <SiteHeader locale={locale} dictionary={dictionary} active="home" />
+          <SectionRail dictionary={dictionary} />
+        </>
+      }
+      after={
+        <>
+          <DarkSection dark={dictionary.dark} />
+          <PartnersSection partners={dictionary.partners} />
+        </>
+      }
+    >
       <Scene />
-      <SiteHeader locale={locale} dictionary={dictionary} active="home" />
-      <SectionRail dictionary={dictionary} />
       <Hero dictionary={dictionary} />
       {dictionary.panels.map((panel, index) => (
         <PanelSection
@@ -38,7 +50,6 @@ export default async function HomePage({
       ))}
       <ArrowSection closing={dictionary.closing} />
       <MissSection miss={dictionary.miss} />
-      <DarkSection dark={dictionary.dark} />
     </Stage>
   );
 }

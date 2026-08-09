@@ -50,8 +50,11 @@ for (const [name, width, height] of VIEWPORTS) {
   await page.waitForFunction(() => document.documentElement.dataset.timeline === "live", null, {
     timeout: 30000,
   });
+  // The film maps onto its own track, not the whole document: past the track
+  // the site is ordinary sections, which this audit is not about — it checks
+  // the composition inside a fixed frame.
   const max = await page.evaluate(
-    () => document.documentElement.scrollHeight - window.innerHeight,
+    () => document.querySelector("[data-track]").offsetHeight - window.innerHeight,
   );
   const TOTAL = await page.evaluate(() =>
     parseFloat(

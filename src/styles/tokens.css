@@ -118,6 +118,19 @@
   --s7-rule-wide: clamp(13rem, 26vw, 29rem);
   --s7-flourish: clamp(3.5rem, 6vw, 6.5rem);
 
+  /* ── Section 8 — the prop firms ─────────────────────────────────────────── */
+  --fs-s8-display: clamp(1.75rem, min(4.1vw, 7vh), 5.5rem);
+  --fs-s8-sub: clamp(0.9rem, min(1.22vw, 2.08vh), 1.4rem);
+  --fs-s8-name: clamp(0.95rem, min(1.32vw, 2.26vh), 1.55rem);
+  --fs-s8-tag: clamp(0.8rem, min(1.02vw, 1.74vh), 1.2rem);
+  --s8-measure: clamp(20rem, 62vw, 70rem);
+  --s8-emblem: clamp(3.4rem, 5.2vw, 5.6rem);
+  --s8-firm: clamp(9rem, 14vw, 15rem);
+  --s8-gap: clamp(1.5rem, 3.4vw, 4rem);
+  --s8-cap: clamp(0.7rem, 1.1vw, 1.1rem);
+  /* Slow on purpose — atmosphere behind a row of names, not a ticker. */
+  --s8-drift: 110s;
+
   /* ── Scroll indicator ───────────────────────────────────────────────────── */
   --scroll-bottom: clamp(1.5rem, min(3.8vw, 6.76vh), 4.5rem);
   --mouse-w: clamp(1.25rem, min(1.92vw, 3.41vh), 2.2rem);
@@ -260,6 +273,13 @@
     --s7-rule: clamp(6rem, 30vw, 9rem);
     --s7-rule-wide: clamp(9rem, 46vw, 14rem);
     --s7-flourish: clamp(3rem, 14vw, 4.5rem);
+    --fs-s8-display: clamp(1.6rem, min(7.4vw, 13.2vh), 3.2rem);
+    --fs-s8-sub: clamp(0.875rem, min(3.5vw, 6.2vh), 1.1rem);
+    --s8-measure: 100%;
+    --s8-emblem: clamp(3rem, 13vw, 4.2rem);
+    --s8-firm: clamp(8rem, 38vw, 11rem);
+    --s8-gap: clamp(1.25rem, 6vw, 2.5rem);
+    --s8-drift: 80s;
     --s6-measure: 100%;
     --s6-rule: clamp(5rem, 24vw, 8rem);
     --s6-notch: clamp(4.5rem, 22vw, 7rem);

@@ -119,6 +119,49 @@
       "daha disiplinli bir yatırımcı olun."
     ]
   },
+  "partners": {
+    "eyebrow": "Bölüm 8",
+    "headline": "Navrya İle Çalışan Prop Firmalar",
+    "subline": "Ortaklarımız misyonumuzu paylaşıyor: yenilik, sermaye ve ortak başarı ile yatırımcıları yükseltmek.",
+    "firms": [
+      {
+        "name": "Apexion",
+        "kind": "Trading",
+        "tagline": "Hırsı Besler",
+        "icon": "apex"
+      },
+      {
+        "name": "Velora",
+        "kind": "Capital",
+        "tagline": "Netlikle Sermaye",
+        "icon": "vee"
+      },
+      {
+        "name": "Quantforge",
+        "kind": "Capital",
+        "tagline": "Veri. Avantaj. Uygulama.",
+        "icon": "forge"
+      },
+      {
+        "name": "Northscale",
+        "kind": "Trading",
+        "tagline": "Ölçeklenme Potansiyeli",
+        "icon": "bars"
+      },
+      {
+        "name": "Prime Arc",
+        "kind": "Capital",
+        "tagline": "Performans Odaklı",
+        "icon": "arc"
+      },
+      {
+        "name": "Lumera",
+        "kind": "Fon",
+        "tagline": "Piyasaları Aydınlat",
+        "icon": "star"
+      }
+    ]
+  },
   "a11y": {
     "primaryNav": "Ana gezinme",
     "sectionNav": "Bölüm gezinmesi"

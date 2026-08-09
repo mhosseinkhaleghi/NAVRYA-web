@@ -6,19 +6,47 @@
  * rows and not padding.
  * -------------------------------------------------------------------------- */
 
+/*
+ * Half a screen taller than a screen, and the composition pinned inside it.
+ *
+ * That extra half is what "and then the paragraph comes up" is made of: the
+ * block holds still while it scrolls past, the mark at the bottom is reached,
+ * and the paragraph arrives. A section exactly one screen tall has no room for
+ * a second beat — it goes from part-visible to whole in one movement.
+ */
 .dark {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-
-  /* Written by the controller, both from scroll position. */
-  --head: 0; /* the headline rises, and the orb comes up with it */
-  --body: 0; /* the paragraph follows on the next beat */
+  position: relative;
+  min-block-size: 165dvh;
+  background: var(--c-bg);
 }
 
-.dark:not([data-active]) {
-  visibility: hidden;
+/* Sticky, so the composition holds still while the extra half-screen scrolls
+ * past it, and the grid at the same time — the bands are the same as every
+ * other scene's. */
+.frame {
+  position: sticky;
+  inset-block-start: 0;
+  block-size: 100dvh;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows:
+    calc(var(--header-h) + env(safe-area-inset-top, 0px))
+    minmax(0, 1fr)
+    clamp(2rem, 6vh, 5rem);
+  /* Symmetric, not gutter-then-lane: this block is centred on the frame and the
+   * orb behind it is centred on the frame, so insetting only the trailing side
+   * would set the words off-centre from their own backdrop. */
+  grid-template-columns: var(--rail-lane) minmax(0, 1fr) var(--rail-lane);
+  justify-items: center;
+}
+
+/* Sits in the last third, so it is only reached by scrolling on. */
+.next {
+  position: absolute;
+  inset-block-end: 12dvh;
+  inset-inline-start: 0;
+  inline-size: 1px;
+  block-size: 1px;
 }
 
 /*
@@ -39,9 +67,20 @@
   inline-size: min(92vmin, 54rem);
   block-size: min(92vmin, 54rem);
   transform: translate(-50%, -50%);
-  opacity: var(--head);
+  opacity: 0;
   pointer-events: none;
   will-change: opacity;
+}
+
+/* The orb comes up on the same latch as the headline — that is the whole of
+ * "the backdrop fades in as the words rise", now that neither is scrubbed. */
+.dark[data-in] .orb {
+  animation: dark-orb 1.6s var(--ease-cine) both;
+}
+
+@keyframes dark-orb {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* The canvas the orb script appends. */
@@ -49,21 +88,6 @@
   display: block;
   inline-size: 100%;
   block-size: 100%;
-}
-
-.frame {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  grid-template-rows:
-    calc(var(--header-h) + env(safe-area-inset-top, 0px))
-    minmax(0, 1fr)
-    clamp(2rem, 6vh, 5rem);
-  /* Symmetric, not gutter-then-lane: this block is centred on the frame and the
-   * orb behind it is centred on the frame, so insetting only the trailing side
-   * would set the words off-centre from their own backdrop. */
-  grid-template-columns: var(--rail-lane) minmax(0, 1fr) var(--rail-lane);
-  justify-items: center;
 }
 
 .block {
@@ -89,9 +113,7 @@
   letter-spacing: var(--tracking-micro);
   text-transform: uppercase;
   text-shadow: var(--text-lift-micro);
-
-  opacity: var(--head);
-  transform: translateY(calc((1 - var(--head)) * 1.4rem));
+  opacity: 0;
 }
 
 /* ── The comp's flourish ──────────────────────────────────────────────────── */
@@ -111,8 +133,7 @@
     transparent 100%
   );
 
-  opacity: var(--head);
-  transform: translateY(calc((1 - var(--head)) * 1.8rem));
+  opacity: 0;
 }
 
 /* The second rule is longer and stopped with a dot at each end, as the comp
@@ -174,11 +195,8 @@
   text-align: center;
   text-shadow: var(--text-lift);
 
-  opacity: var(--head);
-  transform: translateY(calc((1 - var(--head)) * 2.6rem));
-  /* The same resolve every other headline on the site makes. */
-  filter: blur(calc((1 - var(--head)) * 12px));
-  will-change: opacity, transform;
+  opacity: 0;
+  will-change: opacity, transform, filter;
 }
 
 [dir="rtl"] .headline {
@@ -201,13 +219,67 @@
   text-wrap: pretty;
   text-shadow: var(--text-lift);
 
-  opacity: var(--body);
-  transform: translateY(calc((1 - var(--body)) * 2.2rem));
+  opacity: 0;
   will-change: opacity, transform;
 }
 
 .bodyLine {
   display: block;
+}
+
+/* -----------------------------------------------------------------------------
+ * The reveal — latched, not scrubbed.
+ *
+ * `[data-in]` and `[data-on]` are set once on the way in and never cleared. The
+ * holding rules are written *on* the attributes rather than against them, so
+ * with no JavaScript nothing is ever hidden and the section is simply there.
+ * -------------------------------------------------------------------------- */
+
+.dark[data-in] .eyebrow {
+  animation: dark-rise 0.9s var(--ease-cine) both;
+}
+
+.dark[data-in] .flourish {
+  animation: dark-rise 0.9s var(--ease-cine) 0.1s both;
+}
+
+/* The one moment on this site that earns a blur, kept from the film. */
+.dark[data-in] .headline {
+  animation: dark-resolve 1.25s var(--ease-cine) 0.18s both;
+}
+
+.dark[data-in] .flourishWide {
+  animation: dark-rise 0.9s var(--ease-cine) 0.4s both;
+}
+
+/* The paragraph waits for the second threshold — the next stretch of scroll,
+ * which is what it did when this was a beat. */
+.dark[data-on] .body {
+  animation: dark-rise 1s var(--ease-cine) both;
+}
+
+@keyframes dark-rise {
+  from {
+    opacity: 0;
+    transform: translateY(1.8rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes dark-resolve {
+  from {
+    opacity: 0;
+    transform: translateY(2.6rem);
+    filter: blur(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
 }
 
 /* -----------------------------------------------------------------------------
@@ -217,14 +289,6 @@
  * -------------------------------------------------------------------------- */
 
 @media (max-width: 1023px) {
-  .dark {
-    position: relative;
-    inset: auto;
-    grid-row: 2;
-    grid-column: 1;
-    min-block-size: 0;
-  }
-
   .frame {
     grid-template-rows: minmax(0, 1fr) clamp(1.5rem, 4vh, 3rem);
     grid-template-columns: var(--gutter) minmax(0, 1fr) var(--gutter);
@@ -241,7 +305,20 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .headline {
+  .eyebrow,
+  .flourish,
+  .flourishWide,
+  .headline,
+  .body,
+  .orb {
+    opacity: 1;
+    transform: none;
     filter: none;
+    animation: none !important;
+  }
+
+  .orb {
+    /* translate is the centring, not the reveal — it has to survive. */
+    transform: translate(-50%, -50%);
   }
 }

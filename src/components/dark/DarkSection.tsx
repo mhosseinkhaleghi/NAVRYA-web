@@ -39,10 +39,14 @@ function Flourish({ wide = false }: { wide?: boolean }) {
  * near-black the document has underneath the whole film. The orb is the only
  * light in it.
  *
- * Two reveals, both driven by scroll like everything else. The headline rises
- * on `--head`, and the orb rides the *same* property, so the backdrop comes up
- * with the words rather than announcing them. The paragraph follows on its own
- * beat, `--body`.
+ * It is the first section that is not part of the film — ordinary document
+ * below the track, which is why it reveals *once* and keeps its reveal. Scroll
+ * back up and you scroll off a finished section rather than taking it apart.
+ *
+ * Two thresholds, so it keeps the shape the film gave it: `[data-in]` brings up
+ * the headline and the orb together — the backdrop arriving with the words
+ * rather than announcing them — and `[data-on]`, a little further on, brings
+ * the paragraph.
  *
  * The orb's host is markup, not a component: an empty div the inline orb script
  * boots a WebGL canvas into once the controller marks it live. See
@@ -50,11 +54,11 @@ function Flourish({ wide = false }: { wide?: boolean }) {
  */
 export function DarkSection({ dark }: { dark: Dictionary["dark"] }) {
   return (
-    <section className={styles.dark} data-dark="" aria-hidden="true">
-      {/* Behind everything, and behind the words in particular. */}
-      <div className={styles.orb} data-orb="" />
-
+    <section className={styles.dark} data-dark="" data-reveal="">
       <div className={styles.frame}>
+        {/* Behind everything, and behind the words in particular. */}
+        <div className={styles.orb} data-orb="" />
+
         <div className={styles.block}>
           <p className={styles.eyebrow}>{dark.eyebrow}</p>
           <Flourish />
@@ -78,6 +82,10 @@ export function DarkSection({ dark }: { dark: Dictionary["dark"] }) {
           </p>
         </div>
       </div>
+
+      {/* Reaching this is what brings the paragraph up — see the note on
+          `data-reveal-next` in the controller. */}
+      <span className={styles.next} data-reveal-next="" aria-hidden="true" />
     </section>
   );
 }

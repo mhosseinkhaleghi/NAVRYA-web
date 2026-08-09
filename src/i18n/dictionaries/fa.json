@@ -119,6 +119,49 @@
       "معامله‌گر منضبط‌تری شوی."
     ]
   },
+  "partners": {
+    "eyebrow": "بخش ۸",
+    "headline": "پراپ‌فرم‌های همکار نوریا",
+    "subline": "شرکای ما در مأموریت‌مان سهیم‌اند: ارتقای معامله‌گران از راه نوآوری، سرمایه و موفقیت هم‌راستا.",
+    "firms": [
+      {
+        "name": "Apexion",
+        "kind": "تریدینگ",
+        "tagline": "سوخت جاه‌طلبی",
+        "icon": "apex"
+      },
+      {
+        "name": "Velora",
+        "kind": "کپیتال",
+        "tagline": "سرمایه با شفافیت",
+        "icon": "vee"
+      },
+      {
+        "name": "Quantforge",
+        "kind": "کپیتال",
+        "tagline": "داده. برتری. اجرا.",
+        "icon": "forge"
+      },
+      {
+        "name": "Northscale",
+        "kind": "تریدینگ",
+        "tagline": "پتانسیل مقیاس‌پذیری",
+        "icon": "bars"
+      },
+      {
+        "name": "Prime Arc",
+        "kind": "کپیتال",
+        "tagline": "بر پایه‌ی عملکرد",
+        "icon": "arc"
+      },
+      {
+        "name": "Lumera",
+        "kind": "صندوق",
+        "tagline": "روشنایی بازارها",
+        "icon": "star"
+      }
+    ]
+  },
   "a11y": {
     "primaryNav": "ناوبری اصلی",
     "sectionNav": "پیمایش بخش‌ها"
