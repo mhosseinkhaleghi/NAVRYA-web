@@ -28,7 +28,7 @@ const LABEL: Record<(typeof RAIL)[number]["name"], (d: Dictionary) => string> = 
 /**
  * The section rail — one mark per section, down the trailing edge of the frame.
  *
- * The sequence is thirty-nine screens of scroll end to end, which is right for
+ * The sequence is forty-odd screens of scroll end to end, which is right for
  * watching it and wrong for going back to something. The rail is the way back:
  * one mark per section, the current one drawn long, and a click travels to that
  * section *through* the footage rather than cutting to it.
