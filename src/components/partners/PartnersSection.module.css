@@ -12,11 +12,11 @@
   --head: 0;
   --body: 0;
   display: grid;
-  align-content: center;
+  /* A screen tall, and the head and the rail spread through it rather than
+   * huddled in the middle — see section 7 for why both halves of that matter. */
+  min-block-size: 100dvh;
+  align-content: space-evenly;
   gap: var(--s8-stack);
-  /* Its content's height, not the frame's — see section 7. A screen-tall
-   * section here put most of a screen of black between this heading and the
-   * one above it. */
   padding-block: var(--s8-pad);
   padding-inline: var(--rail-lane);
   background: var(--c-bg);

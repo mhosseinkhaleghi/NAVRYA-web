@@ -10,9 +10,11 @@
 .testimonials {
   position: relative;
   display: grid;
+  /* A screen tall, with the wall taking every pixel the head does not — see
+   * section 7. A fixed wall height in a screen-tall section is a void. */
+  min-block-size: 100dvh;
   align-content: center;
   gap: var(--s9-stack);
-  /* Its content's height, not the frame's — see section 7. */
   padding-block: var(--s9-pad);
   padding-inline: var(--rail-lane);
   background: var(--c-bg);
@@ -121,6 +123,11 @@
   gap: var(--s9-gap);
   inline-size: 100%;
   max-inline-size: var(--s9-wall);
+  /* An explicit height, and it has to be explicit: this box holds a stream of
+   * nine cards thousands of pixels tall, and anything content-derived — `auto`,
+   * `100%` against an indefinite row, an `fr` row in a min-height grid — takes
+   * that as the answer. One of those measured 5390px and made this section six
+   * screens long on its own. */
   block-size: var(--s9-height);
   margin-inline: auto;
 
@@ -145,6 +152,7 @@
 
 .column {
   position: relative;
+  min-block-size: 0;
   overflow: hidden;
 }
 

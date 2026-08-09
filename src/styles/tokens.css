@@ -125,7 +125,10 @@
    * height — or its shorter axis — would be a diameter the section has no room
    * for on a tall frame, and the orb would be cut off by its own section.
    */
-  --s7-orb: clamp(17rem, 46vw, 50rem);
+  /* The light is allowed past the frame's edges on a narrow screen — it is a
+   * circle of glow, not a picture, and the section clips it. Held to the width
+   * instead left a third of a screen of black under it on a phone. */
+  --s7-orb: min(80vh, 148vw, 56rem);
   --s7-pad: clamp(2.5rem, 4vw, 5rem);
 
   /* ── Section 8 — the prop firms ─────────────────────────────────────────── */
@@ -162,7 +165,7 @@
    * also stays well under the height of one column's run, because the loop is
    * only seamless while the run is taller than the window it is seen through.
    */
-  --s9-height: clamp(17rem, 30vw, 29rem);
+  --s9-height: clamp(15rem, 54vh, 40rem);
   --s9-pad: clamp(2.5rem, 4vw, 5rem);
   --s9-stack: clamp(1.75rem, 3vw, 3rem);
   --s9-card-pad: clamp(1.1rem, 1.6vw, 1.9rem);
@@ -189,7 +192,7 @@
   --s10-frame-pad: clamp(0.6rem, 1vw, 1.1rem);
   --s10-radius: clamp(0.6rem, 0.9vw, 1.1rem);
   --s10-gap: clamp(0.4rem, 0.7vw, 0.85rem);
-  --s10-h: clamp(17rem, 25.5vw, 27rem);
+  --s10-h: clamp(15rem, 44vh, 32rem);
   /*
    * How much of the row the open panel takes.
    *

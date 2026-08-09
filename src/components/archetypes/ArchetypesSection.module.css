@@ -10,6 +10,10 @@
   position: relative;
   display: grid;
   justify-items: stretch;
+  /* A screen tall, with the gallery taking every pixel the head and the foot
+   * do not — see section 7. */
+  min-block-size: 100dvh;
+  align-content: center;
   gap: var(--s10-stack);
   /* The bar's row is reserved outright at the top. This is the last section on
    * the page, so the document ends with it and there is no scrolling further:
@@ -195,6 +199,7 @@
 
   opacity: max(var(--body), 0.001);
   transform: translateY(calc((1 - var(--body)) * 1.6rem));
+
 }
 
 /* The comp hangs a single mark off the leading edge of the frame. */

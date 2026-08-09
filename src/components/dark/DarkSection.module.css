@@ -10,18 +10,18 @@
  * An ordinary section of a page: stacked below the film and above section 8,
  * scrolled like anything else. Nothing pins and nothing is held back.
  *
- * Its height is its content's, not the frame's. A screen-tall section centres
- * a few hundred pixels of type in a thousand and leaves the rest black, and
- * three of those in a row put two-thirds of a screen of nothing between every
- * heading and the next — which is what made this stretch read as broken rather
- * than as a page. The only floor here is the orb's own diameter, because the
- * orb has to be whole.
+ * A screen tall, like every section after it — four sections sharing under
+ * three screens of scroll between them is what made the second half of the
+ * site end in two flicks of a trackpad. What must not come back with the
+ * height is the emptiness: a small block centred in a tall box left
+ * two-thirds of a screen of black at every join. So the orb is sized to
+ * *fill* the screen it now has, and the words sit on it.
  */
 .dark {
   position: relative;
   display: grid;
   place-items: center;
-  min-block-size: calc(var(--s7-orb) + var(--s7-pad) * 2);
+  min-block-size: 100dvh;
   padding-block: var(--s7-pad);
   padding-inline: var(--rail-lane);
   background: var(--c-bg);
