@@ -1,0 +1,16 @@
+name: navrya-web
+
+services:
+  website:
+    build:
+      context: .
+    restart: unless-stopped
+    networks:
+      navrya-edge:
+        aliases:
+          - navrya-marketing
+
+networks:
+  navrya-edge:
+    external: true
+    name: navrya_default
