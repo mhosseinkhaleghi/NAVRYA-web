@@ -42,10 +42,12 @@
 
   /* ── Frame ──────────────────────────────────────────────────────────────── */
   --frame-h: 100dvh;
-  /* How much document the timeline is spread over, in vh. This single number
-   * sets the pace of the whole sequence — the controller works in scroll
-   * *position*, so stretching it slows every beat proportionally. */
-  --timeline-vh: 3680;
+  /* How much document the timeline is spread over, in vh.
+   *
+   * The controller overwrites this from its own beat table before first paint,
+   * so what is written here is the no-JS fallback and nothing else. Keep it
+   * near the real total anyway — it is what a reader of this file will believe. */
+  --timeline-vh: 4420;
   --gutter: clamp(1.25rem, 2.87vw, 3.25rem);
   --header-h: clamp(4rem, min(6.04vw, 10.74vh), 6.75rem);
   --nav-gap: clamp(0.5rem, 1.26vw, 1.5rem);
@@ -103,6 +105,13 @@
   --s6-rule: clamp(7rem, 14.2vw, 16rem);
   --s6-notch: clamp(6rem, 12.5vw, 14rem);
   --s6-star: clamp(0.6rem, 0.86vw, 1.05rem);
+
+  /* ── Section 7 — the black ground, and the orb ──────────────────────────── */
+  /* Centred over nothing, so it is set like section 5's statement rather than
+   * like a railed panel. */
+  --fs-s7-display: clamp(2.1rem, min(5.7vw, 9.74vh), 8rem);
+  --fs-s7-body: clamp(1rem, min(1.5vw, 2.56vh), 1.75rem);
+  --s7-measure: clamp(20rem, 54vw, 60rem);
 
   /* ── Scroll indicator ───────────────────────────────────────────────────── */
   --scroll-bottom: clamp(1.5rem, min(3.8vw, 6.76vh), 4.5rem);

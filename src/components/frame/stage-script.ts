@@ -63,6 +63,12 @@ const BEATS = [
   // the beat — see `TRAIT_LEAD` — so there is no stretch left over once the
   // last feature is up.
   ["traits", 560],
+  // Section 6 lifts away and the forest goes with it, leaving the frame black.
+  // The last plate of the sequence has nothing after it to cut to, so this one
+  // ends on the page's own ground rather than on another shot.
+  ["fall", 180],
+  ["orb", 300], // section 7's headline rises, and the orb comes up behind it
+  ["tell", 260], // the paragraph follows it up
   ["rest", 40], // tail room, so the last reveal is not pinned to the bottom
 ] as const;
 
@@ -225,6 +231,22 @@ const TRAIT_HOLD = 0.26;
 const TRAIT_LEAD = 0.96;
 
 /**
+ * Section 7 — the fall to black, and what rises out of it.
+ *
+ * `FALL_TEXT` is section 6 lifting away, `FALL_PLATE` the forest going down
+ * behind it; the text leads, so the words are gone before the picture is. Both
+ * are windows inside the `fall` beat.
+ *
+ * `ORB_IN` is the one that matters to the composition: the orb comes up on the
+ * *same* window as the headline, not after it, so the backdrop arrives with the
+ * words rather than announcing them. The paragraph then follows on its own beat.
+ */
+const FALL_TEXT = [0, 0.5];
+const FALL_PLATE = [0.16, 0.78];
+const HEAD_IN = [0.12, 0.72];
+const BODY_IN = [0.05, 0.6];
+
+/**
  * The section rail — one mark per section, in the order the frame reaches them.
  *
  * ── Adding a section ────────────────────────────────────────────────────────
@@ -256,6 +278,8 @@ export const RAIL = [
   // words the locale's sentence has. Past all of them.
   { name: "closing", from: "arrow", at: ["learn", 0.99] },
   { name: "miss", from: "miss", at: ["miss", 0.34] },
+  // Section 7 is composed once the paragraph is up, which is its own beat.
+  { name: "dark", from: "fall", at: ["tell", 0.85] },
 ] as const;
 
 /**
@@ -316,6 +340,10 @@ export const stageScript = `
   var MISS_STRUCK = ${ARROW_STRUCK}, MISS_SPAN = ${MISS_TITLE_SPAN};
   var MISS_BOLTS = ${DEER_BOLTS}, MISS_LIFT = ${MISS_LIFT}, MISS_CLEARS = ${DEER_CLEARS};
   var TRAIT_HOLD = ${TRAIT_HOLD}, TRAIT_LEAD = ${TRAIT_LEAD};
+  var FALL_TEXT = ${JSON.stringify(FALL_TEXT)};
+  var FALL_PLATE = ${JSON.stringify(FALL_PLATE)};
+  var HEAD_IN = ${JSON.stringify(HEAD_IN)};
+  var BODY_IN = ${JSON.stringify(BODY_IN)};
   var RAIL = ${JSON.stringify(RAIL)};
   var GLIDE_MS = ${JSON.stringify(GLIDE_MS)};
 
@@ -325,6 +353,13 @@ export const stageScript = `
   // ── beat boundaries, as fractions of total scroll ────────────────────────
   var total = 0, i;
   for (i = 0; i < BEATS.length; i++) total += BEATS[i][1];
+
+  // The beat table is the source of truth for how long the timeline is, and the
+  // token in tokens.css is only the no-JS fallback. They drifted the first time
+  // a beat was added and the sequence ran off the end of its own track, so the
+  // controller states it rather than trusting the two to be kept in step. This
+  // runs before first paint, so the track is never the wrong height for a frame.
+  root.style.setProperty('--timeline-vh', total);
   var edge = {}, run = 0;
   for (i = 0; i < BEATS.length; i++) {
     edge[BEATS[i][0]] = [run / total, (run + BEATS[i][1]) / total];
@@ -533,10 +568,13 @@ export const stageScript = `
     var traitEls = miss ? miss.querySelectorAll('[data-trait]') : [];
     var dotEls = miss ? miss.querySelectorAll('[data-dot]') : [];
 
-    function paintMiss(mp, tp) {
+    function paintMiss(mp, tp, fp) {
       if (!miss) return;
 
-      if (mp > 0) miss.setAttribute('data-active', '');
+      // Section 6 lifts away over the fall beat, ahead of its own plate.
+      var gone = ease(span(fp, FALL_TEXT[0], FALL_TEXT[1]));
+      miss.style.setProperty('--exit', gone);
+      if (mp > 0 && gone < 1) miss.setAttribute('data-active', '');
       else miss.removeAttribute('data-active');
 
       // The headline lands on the impact, and the block lifts as the stag runs,
@@ -564,6 +602,28 @@ export const stageScript = `
         if (dotEls[t]) dotEls[t].style.setProperty('--in', into * (1 - away));
       }
       miss.style.setProperty('--traits', tp > 0 ? 1 : 0);
+    }
+
+    // ── section 7 ──────────────────────────────────────────────────────────
+    // Black ground, and two reveals over it. The orb rides the same --head as
+    // the headline, so it comes up on exactly the window the words do.
+    var dark = document.querySelector('[data-dark]');
+    var orb = document.querySelector('[data-orb]');
+
+    function paintDark(fp, op, tp) {
+      if (!dark) return;
+
+      if (fp > 0) dark.setAttribute('data-active', '');
+      else dark.removeAttribute('data-active');
+
+      dark.style.setProperty('--head', ease(span(op, HEAD_IN[0], HEAD_IN[1])));
+      dark.style.setProperty('--body', ease(span(tp, BODY_IN[0], BODY_IN[1])));
+
+      // Compiled and run only while the section is in reach — a beat ahead, as
+      // the plates are fetched a beat ahead, and given back afterwards.
+      if (!orb) return;
+      if (fp > 0) orb.setAttribute('data-orb-live', '');
+      else orb.removeAttribute('data-orb-live');
     }
 
     // ── the section rail ───────────────────────────────────────────────────
@@ -677,6 +737,15 @@ export const stageScript = `
         opacity[MISS_PLATE] = into;
       }
 
+      // The end of the sequence. There is no plate after the forest, so it goes
+      // down to the page's own black rather than handing over to another shot,
+      // and section 7 is composed on that ground.
+      var fb = edge.fall, fw = fb[1] - fb[0];
+      if (shown && p > fb[0]) {
+        opacity[MISS_PLATE] =
+          1 - span(p, fb[0] + FALL_PLATE[0] * fw, fb[0] + FALL_PLATE[1] * fw);
+      }
+
       for (i = 0; i < plateEls.length; i++) {
         if (!plateEls[i]) continue;
         plateEls[i].style.setProperty('--o', opacity[i]);
@@ -728,7 +797,13 @@ export const stageScript = `
       );
       paintMiss(
         shown ? span(p, edge.miss[0], edge.miss[1]) : 0,
-        shown ? span(p, edge.traits[0], edge.traits[1]) : 0
+        shown ? span(p, edge.traits[0], edge.traits[1]) : 0,
+        shown ? span(p, edge.fall[0], edge.fall[1]) : 0
+      );
+      paintDark(
+        shown ? span(p, edge.fall[0], edge.fall[1]) : 0,
+        shown ? span(p, edge.orb[0], edge.orb[1]) : 0,
+        shown ? span(p, edge.tell[0], edge.tell[1]) : 0
       );
 
       paintRail(p);

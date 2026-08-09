@@ -107,6 +107,17 @@
       }
     ]
   },
+  "dark": {
+    "eyebrow": "Section 7",
+    "headline": [
+      "Section Seven",
+      "Copy to Come."
+    ],
+    "body": [
+      "The motion for this section is finished.",
+      "The words are waiting on the comp."
+    ]
+  },
   "a11y": {
     "primaryNav": "Primary navigation",
     "sectionNav": "Section navigation"

@@ -1,6 +1,6 @@
 # Navrya — web
 
-A premium cinematic marketing site. **Current scope: sections 1–6.**
+A premium cinematic marketing site. **Current scope: sections 1–7.**
 
 ```bash
 npm install
@@ -27,12 +27,16 @@ frame reads as a scrolling page.
 Scroll input feeds scene changes *inside* the frame. `Stage` renders a track
 below itself whose only job is to give the document height to scroll through;
 `--timeline-vh` is that height, and stretching it slows every beat of the
-sequence proportionally.
+sequence proportionally. The controller writes it from its own beat table before
+first paint — the two drifted once, when a beat was added and the token was not,
+and the sequence ran off the end of its own track — so what is in `tokens.css`
+is the no-JS fallback.
 
 ## The sequence
 
-One continuous shot in seven plates, driven end to end by scroll **position** — so
-it runs backwards exactly as readily as forwards. Nothing latches, nothing fires
+One continuous shot in seven plates, and then the ground beneath it, driven end
+to end by scroll **position** — so it runs backwards exactly as readily as
+forwards. Nothing latches, nothing fires
 once. `components/frame/stage-script.ts` maps scroll onto the beats:
 
 | beat | scroll | what happens |
@@ -48,6 +52,9 @@ once. `components/frame/stage-script.ts` maps scroll onto the beats:
 | `depart` | 150vh | Section 5's words leave, the arrow follows them off, the frame dips through black, and the next morning fades up. Every vh of it is moving, which is what lets it be this short. |
 | `miss` | 420vh | `forest-miss` scrubs. The arrow buries itself in the tree at **0.67s** and section 6's statement lands on it; the block lifts as the stag turns and runs at **1.30s**; the frame is empty by **3.95s**. |
 | `traits` | 560vh | The psychology features, one slide per stretch of scroll, over the plate's own last frame — which stays. The deck finishes at 96% of the beat rather than 75%, so the last feature landing is the end of the section. |
+| `fall` | 180vh | Section 6 lifts away and the forest goes down behind it, leaving the frame on the page's own black. The one handover with no plate on the other side. |
+| `orb` | 300vh | Section 7's headline rises, and the orb comes up behind it on the same property. |
+| `tell` | 260vh | The paragraph follows it up. |
 | `rest` | 40vh | Tail room, so the last reveal is not pinned to the very bottom. |
 
 The shape repeats: a plate runs, its panel arrives on a cue taken from the
@@ -112,11 +119,56 @@ the tree trunk — directly behind a block of type, so this block alone carries
 `--text-lift-heavy`. It is still a shadow on the words, never a layer over the
 picture.
 
+### Section 7
+
+The one section composed over nothing. The forest goes down through `fall` and
+what is left is the near-black the document has underneath the whole film, so
+the sequence ends on the page's own ground rather than handing over to another
+shot — there is no plate after the forest to cut to.
+
+Two reveals over it. The headline rises on `--head` and **the orb rides the same
+property**, which is the whole of "the backdrop fades in as the words come up":
+one number, written once per frame, read by both. The paragraph follows on its
+own beat, `--body`.
+
+> **The copy in the `dark` block of every dictionary is provisional.** Section
+> 7's comp had not landed when this was built, so the motion is finished and the
+> words are placeholders. Replacing those three keys per locale is all that is
+> outstanding; nothing else in the section depends on them.
+
+#### The orb
+
+`components/orb/orb-script.ts`. The fragment shader is React Bits' `Orb`,
+carried over unchanged; the delivery is not. Upstream it is a React client
+component importing `ogl`, and this site has no client React and no client
+bundle, so it runs as an inline script over raw WebGL instead. Three reasons,
+all pointing the same way:
+
+- `ogl`'s part in it is a renderer, a program, a full-screen triangle and a
+  vec3 — about eighty lines, against a dependency and a hydration boundary.
+- **The preview build inlines the site into one file and drops every
+  `<script src>`**, so a client component would never run in the artifact,
+  which is where this actually gets looked at.
+- Nothing else on the site needs React on the client, and one decorative
+  backdrop is a poor reason to start.
+
+It compiles nothing until the controller marks its host live, a beat ahead of
+the section, exactly as each plate is fetched a beat ahead of the viewer — and
+it gives the frame back when the section is out of reach or the tab is hidden.
+Under `prefers-reduced-motion` it never runs; without WebGL the section simply
+reads without it. The words are markup over the canvas, never inside it.
+
+The hue is measured, not derived. `adjustHue` rotates in YIQ rather than HSL, so
+there is no arithmetic that turns the shader's purple into the site's gold: the
+ring was sampled at 120 points around its circumference and swept in 20° steps
+until it read back at the right hue. `ORB_HUE = 200` renders rgb(175, 139, 72),
+hue 39°, against 40° for `--c-gold`.
+
 ### The section rail
 
 One mark per section down the **trailing** edge of the frame — right in English,
 Turkish and Spanish, left in Persian and Arabic — with the current one drawn
-long. The sequence is ~37 screens of scroll end to end, which is right for
+long. The sequence is ~44 screens of scroll end to end, which is right for
 watching it and wrong for going back to something.
 
 It is not a component with state. Which mark is lit and where each one lands are

@@ -22,6 +22,7 @@ const LABEL: Record<(typeof RAIL)[number]["name"], (d: Dictionary) => string> = 
   panel3: (d) => d.panels[2].headline,
   closing: (d) => d.closing.headline,
   miss: (d) => d.miss.headline.join(" "),
+  dark: (d) => d.dark.headline.join(" "),
 };
 
 /**

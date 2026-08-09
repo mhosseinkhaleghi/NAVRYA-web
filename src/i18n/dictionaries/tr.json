@@ -107,6 +107,17 @@
       }
     ]
   },
+  "dark": {
+    "eyebrow": "Bölüm 7",
+    "headline": [
+      "Yedinci Bölüm",
+      "Metin Yolda."
+    ],
+    "body": [
+      "Bu bölümün hareketi tamamlandı.",
+      "Metinler tasarımı bekliyor."
+    ]
+  },
   "a11y": {
     "primaryNav": "Ana gezinme",
     "sectionNav": "Bölüm gezinmesi"

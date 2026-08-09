@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 
 import { stageScript } from "@/components/frame/stage-script";
+import { orbScript } from "@/components/orb/orb-script";
 import { getDirection, isLocale, locales, type Locale } from "@/i18n/config";
 
 import "../globals.css";
@@ -60,6 +61,11 @@ export default async function LocaleLayout({
         {/* Runs before the composition is painted, so the opening beat can
          * hold it back without it flashing on screen first. */}
         <script dangerouslySetInnerHTML={{ __html: stageScript }} />
+        {/* Section 7's backdrop. Inline for the same reason the controller
+         * is: no client bundle on this site, and the preview build drops
+         * every `<script src>`. It compiles nothing until the controller
+         * marks its host live, a beat ahead of the section. */}
+        <script dangerouslySetInnerHTML={{ __html: orbScript }} />
         {children}
       </body>
     </html>

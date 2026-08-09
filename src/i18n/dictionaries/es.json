@@ -107,6 +107,17 @@
       }
     ]
   },
+  "dark": {
+    "eyebrow": "Sección 7",
+    "headline": [
+      "Sección Siete",
+      "Texto Pendiente."
+    ],
+    "body": [
+      "El movimiento de esta sección está terminado.",
+      "El texto espera al diseño."
+    ]
+  },
   "a11y": {
     "primaryNav": "Navegación principal",
     "sectionNav": "Navegación por secciones"

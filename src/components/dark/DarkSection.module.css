@@ -1,0 +1,176 @@
+/* -----------------------------------------------------------------------------
+ * Section 7 — black ground, one light in it.
+ *
+ * The same band structure as every other scene: the bar's row, the content's
+ * row, a foot. See the note in `PanelSection.module.css` for why those are grid
+ * rows and not padding.
+ * -------------------------------------------------------------------------- */
+
+.dark {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+
+  /* Written by the controller, both from scroll position. */
+  --head: 0; /* the headline rises, and the orb comes up with it */
+  --body: 0; /* the paragraph follows on the next beat */
+}
+
+.dark:not([data-active]) {
+  visibility: hidden;
+}
+
+/*
+ * The orb's host.
+ *
+ * Square and centred: the shader works in a square UV space and takes the
+ * smaller side, so a full-bleed box would put the orb's own margin off screen
+ * on a wide frame. Sized against the shorter axis instead, which keeps it whole
+ * at every aspect.
+ *
+ * It shares `--head` with the headline — that is the whole of "the orb fades in
+ * as the words rise". No second timeline, no transition, no state.
+ */
+.orb {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  inline-size: min(92vmin, 54rem);
+  block-size: min(92vmin, 54rem);
+  transform: translate(-50%, -50%);
+  opacity: var(--head);
+  pointer-events: none;
+  will-change: opacity;
+}
+
+/* The canvas the orb script appends. */
+.orb canvas {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.frame {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows:
+    calc(var(--header-h) + env(safe-area-inset-top, 0px))
+    minmax(0, 1fr)
+    clamp(2rem, 6vh, 5rem);
+  grid-template-columns: var(--gutter) minmax(0, 1fr) var(--rail-lane);
+  justify-items: center;
+}
+
+.block {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: center;
+  display: grid;
+  justify-items: center;
+  inline-size: 100%;
+  max-inline-size: var(--s7-measure);
+  text-align: center;
+}
+
+/* ── Type ─────────────────────────────────────────────────────────────────── */
+
+.eyebrow {
+  margin: 0;
+  color: var(--c-gold);
+  font-family: var(--font-sans);
+  font-size: var(--fs-micro);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: var(--tracking-micro);
+  text-transform: uppercase;
+  text-shadow: var(--text-lift-micro);
+
+  opacity: var(--head);
+  transform: translateY(calc((1 - var(--head)) * 1.4rem));
+}
+
+.headline {
+  margin: 0;
+  margin-block-start: calc(var(--s2-gap) * 2.2);
+  color: var(--c-cream);
+  font-family: var(--font-display);
+  font-size: var(--fs-s7-display);
+  font-weight: 400;
+  line-height: 1.04;
+  letter-spacing: var(--tracking-display);
+  text-align: center;
+  text-shadow: var(--text-lift);
+
+  opacity: var(--head);
+  transform: translateY(calc((1 - var(--head)) * 2.6rem));
+  /* The same resolve every other headline on the site makes. */
+  filter: blur(calc((1 - var(--head)) * 12px));
+  will-change: opacity, transform;
+}
+
+[dir="rtl"] .headline {
+  line-height: 1.35;
+}
+
+.headlineLine {
+  display: block;
+}
+
+.body {
+  margin: 0;
+  margin-block-start: calc(var(--s2-gap) * 2.4);
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-s7-body);
+  font-weight: 300;
+  line-height: 1.6;
+  text-align: center;
+  text-wrap: pretty;
+  text-shadow: var(--text-lift);
+
+  opacity: var(--body);
+  transform: translateY(calc((1 - var(--body)) * 2.2rem));
+  will-change: opacity, transform;
+}
+
+.bodyLine {
+  display: block;
+}
+
+/* -----------------------------------------------------------------------------
+ * Compact frames — the bar is a row of the stage rather than an overlay, and it
+ * is two rows tall, so the section joins the column instead of insetting
+ * against the whole frame. Exactly as sections 2–6 do.
+ * -------------------------------------------------------------------------- */
+
+@media (max-width: 1023px) {
+  .dark {
+    position: relative;
+    inset: auto;
+    grid-row: 2;
+    grid-column: 1;
+    min-block-size: 0;
+  }
+
+  .frame {
+    grid-template-rows: minmax(0, 1fr) clamp(1.5rem, 4vh, 3rem);
+    grid-template-columns: var(--gutter) minmax(0, 1fr) var(--gutter);
+  }
+
+  .block {
+    grid-row: 1;
+  }
+
+  .orb {
+    inline-size: min(96vmin, 30rem);
+    block-size: min(96vmin, 30rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .headline {
+    filter: none;
+  }
+}
