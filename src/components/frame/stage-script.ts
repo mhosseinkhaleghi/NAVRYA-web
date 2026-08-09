@@ -409,20 +409,38 @@ export const stageScript = `
   //     Switched off, and the position reset here, before first paint.
   //   · the document growing — the track is not in the DOM yet at this point,
   //     so the reset above lands on a short page. Repeated once the layout
-  //     exists, and again on the load event, when nothing can move it.
+  //     exists, and again on the load event.
   //   · the back/forward cache — a restored page keeps its scroll offset *and*
   //     every video's playhead, so the sequence resumes mid-shot with the
   //     opening already over. There is nothing to rewind into; the page is
   //     reloaded outright, which is also what makes a language change replay
   //     from the top after the viewer navigates back to it.
+  //
+  // Every one of those resets is off-limits the moment the viewer has moved the
+  // page themselves. The load event waits on the last byte of the last plate,
+  // and in the single-file preview that is megabytes of base64 — so it can land
+  // long after someone has started scrolling, and it used to take them back to
+  // the top when it did. Scrolling far enough to reach the sections below the
+  // film takes long enough that this was almost guaranteed to happen on the way.
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-  function toTop() { window.scrollTo(0, 0); }
+  var touched = false;
+  function markTouched() { touched = true; }
+  var TOUCHES = ['wheel', 'touchstart', 'keydown', 'pointerdown'];
+  for (var ti = 0; ti < TOUCHES.length; ti++) {
+    window.addEventListener(TOUCHES[ti], markTouched, { passive: true, capture: true });
+  }
+  function toTop() { if (!touched) window.scrollTo(0, 0); }
   toTop();
   ready(toTop);
   window.addEventListener('load', toTop);
   window.addEventListener('pageshow', function (e) {
-    if (e.persisted) location.reload();
-    else toTop();
+    if (!e.persisted) { toTop(); return; }
+    // Reloading is the clean way to rewind a restored page, but inside a frame
+    // the whole site is one multi-megabyte file and a reload is a long stall in
+    // front of the viewer. Rewound in place there instead.
+    if (window.top === window) { location.reload(); return; }
+    touched = false;
+    toTop();
   });
 
   // Two separate gates. \`intro\` raises the interface, on the frame the hunter
