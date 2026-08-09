@@ -200,10 +200,16 @@ const TRAIT_HOLD = 0.26;
 /**
  * The section rail — one mark per section, in the order the frame reaches them.
  *
+ * ── Adding a section ────────────────────────────────────────────────────────
+ *
+ * This array is the rail, and it is the only place the rail is written down.
+ * A new section needs one entry here, and `SectionRail.tsx` will not compile
+ * until its `name` is given a label, so the two cannot drift apart.
+ *
  * `from` is the beat the section takes the frame on. A mark owns the scroll
  * from there until the next mark's `from`, which is what decides the one that
- * is lit, so the six between them cover the timeline with no gaps and no
- * overlaps and the boundaries land on the plate handovers.
+ * is lit, so the marks cover the timeline with no gaps and no overlaps and the
+ * boundaries land on the plate handovers.
  *
  * `at` is where the mark *goes*, as a fraction of a beat, and it is deliberately
  * not the same point. A section starts arriving at its cue and is not composed
@@ -213,14 +219,14 @@ const TRAIT_HOLD = 0.26;
  * and not yet lifting. Both come off the same beat table the rest of the
  * sequence runs on, so retiming a beat moves the rail with it.
  */
-const RAIL = [
-  { from: "turn", at: ["turn", 0] },
-  { from: "prey", at: ["prey", 0.93] },
-  { from: "draw", at: ["draw", 0.85] },
-  { from: "strike", at: ["strike", 0.88] },
+export const RAIL = [
+  { name: "hero", from: "turn", at: ["turn", 0] },
+  { name: "panel1", from: "prey", at: ["prey", 0.93] },
+  { name: "panel2", from: "draw", at: ["draw", 0.85] },
+  { name: "panel3", from: "strike", at: ["strike", 0.88] },
   // Section 5 spans three beats; it is whole when the last word goes white.
-  { from: "arrow", at: ["learn", 0.94] },
-  { from: "miss", at: ["miss", 0.34] },
+  { name: "closing", from: "arrow", at: ["learn", 0.94] },
+  { name: "miss", from: "miss", at: ["miss", 0.34] },
 ] as const;
 
 /**

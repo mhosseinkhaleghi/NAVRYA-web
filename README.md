@@ -114,8 +114,9 @@ picture.
 
 ### The section rail
 
-Six marks down the leading edge of the frame, one per section, the current one
-drawn long. The sequence is ~39 screens of scroll end to end, which is right for
+One mark per section down the **trailing** edge of the frame — right in English,
+Turkish and Spanish, left in Persian and Arabic — with the current one drawn
+long. The sequence is ~39 screens of scroll end to end, which is right for
 watching it and wrong for going back to something.
 
 It is not a component with state. Which mark is lit and where each one lands are
@@ -137,11 +138,20 @@ no use for it — Blink caps the duration well under a second, and nine thousand
 pixels in under a second is a blur — so the glide is keyed to distance, and the
 wheel cancels it the moment the viewer takes the scroll back.
 
-The rail lives in the margin every block on the site is already inset from: the
-hero starts at 36.4% and the panels at 45.3%. Section 6's device is the one
-exception, being a grid column that starts at the gutter, so it reserves
-`--rail-lane` instead. Below 1024px that inset is gone — the hero and the panels
-take the full measure — so the rail stands down rather than lie over the copy.
+Unlike the leading margin, the trailing edge is not free: the hero and the panels
+are inset from the leading edge and then run all the way to it, and section 6's
+features column ends there too. Each of those takes `--rail-lane` in place of its
+trailing gutter. They are all logical columns, so the reservation mirrors with
+the writing direction on its own. Below 1024px the leading inset is gone and the
+blocks take the full measure, so the rail stands down rather than lie over the
+copy.
+
+**Adding a section:** the rail is `RAIL` in `stage-script.ts` and nowhere else.
+Add an entry — a `name`, the beat the section takes the frame on, and the point
+it is composed at — and `SectionRail.tsx` will fail to compile until that `name`
+is given a label, because the label map is a `Record` keyed by `RAIL`'s own
+names. The rail cannot silently fall a section behind the site. If the new
+section's composition runs to the trailing edge, give it `--rail-lane` as well.
 
 ### Handovers are cuts
 

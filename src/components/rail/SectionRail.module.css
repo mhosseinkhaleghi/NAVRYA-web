@@ -1,15 +1,19 @@
 /* -----------------------------------------------------------------------------
- * Section 6 marks down the leading edge of the frame.
+ * Six marks down the trailing edge of the frame.
  *
- * A hairline each, the current one drawn long. The rail carries no labels and
+ * A short line each, the current one drawn long. The rail carries no labels and
  * no numbers: it sits over the footage for the whole length of the sequence, so
  * anything with weight to it would be a second thing to read on every frame.
  * The mark that is lit is the only information it gives.
+ *
+ * `inset-inline-end`, so the rail is on the right in English, Turkish and
+ * Spanish and on the left in Persian and Arabic — the edge the reading eye
+ * finishes on, in either direction.
  * -------------------------------------------------------------------------- */
 
 .rail {
   position: absolute;
-  inset-inline-start: var(--gutter);
+  inset-inline-end: var(--gutter);
   inset-block-start: 50%;
   z-index: 3;
   transform: translateY(-50%);
@@ -19,6 +23,10 @@
    * edge this takes; see `--rail-lane` in `tokens.css`. */
   --rail-step: clamp(1.15rem, min(1.5vw, 2.67vh), 1.7rem);
   --rail-dash: clamp(0.8rem, 1.1vw, 1.3rem);
+  /* A pixel heavier than the site's hairline. Every other rule on the page is
+   * an ornament and wants to disappear into the frame; this one is a control,
+   * and it has to be findable against seven plates of moving footage. */
+  --rail-weight: 2px;
   --rail-dash-hover: clamp(1.15rem, 1.6vw, 1.9rem);
   --rail-dash-on: clamp(1.95rem, 2.7vw, 3.2rem);
 
@@ -47,6 +55,10 @@
 .mark {
   display: flex;
   align-items: center;
+  /* The marks are anchored to the frame's edge and grow inward, so their outer
+   * ends line up and the length is the only thing that changes. The hit area is
+   * what reaches inward from there. */
+  justify-content: flex-end;
   inline-size: var(--rail-hit);
   block-size: var(--rail-step);
   margin: 0;
@@ -62,7 +74,7 @@
 .dash {
   display: block;
   inline-size: var(--rail-dash);
-  block-size: var(--hairline);
+  block-size: var(--rail-weight);
   background: var(--c-gold-line);
   transition:
     inline-size 520ms var(--ease-cine),

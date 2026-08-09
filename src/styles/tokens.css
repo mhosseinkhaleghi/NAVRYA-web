@@ -134,13 +134,15 @@
    * without being easy to hit by accident. */
   --rail-hit: clamp(2.25rem, 3.2vw, 3.5rem);
   /*
-   * The lane the rail occupies down the leading edge, gutter included.
+   * The lane the rail occupies down the trailing edge, gutter included.
    *
-   * Every block on the site is already inset well past this — the hero starts
-   * at 36.4% and the panels at 45.3% — so the rail costs the composition
-   * nothing anywhere it is simply sitting in the margin. Section 6's device is
-   * the one exception: it is a grid column that starts at the gutter, so it
-   * reserves this instead and the rail keeps its empty frame.
+   * The rail is on the side the reading eye finishes on — right in English,
+   * left in Persian and Arabic — which is also the side every block on the site
+   * runs *to*: the hero and the panels are inset from the leading edge and then
+   * fill the rest of the frame. So unlike the leading margin, this one is not
+   * free, and each composition that reaches it takes this in place of its
+   * trailing gutter. Every one of them is a logical column, so the reservation
+   * mirrors with the writing direction on its own.
    */
   --rail-lane: calc(var(--gutter) + var(--rail-hit));
 

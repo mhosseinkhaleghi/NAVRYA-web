@@ -18,8 +18,14 @@
   z-index: 1;
   display: grid;
   /* The rail is a column rather than padding, so the cue can span the whole
-   * frame and still centre on it while the block keeps its inset. */
-  grid-template-columns: max(var(--gutter), var(--hero-inline-start)) 1fr var(--gutter);
+   * frame and still centre on it while the block keeps its inset. The trailing
+   * column is the section rail's lane rather than the bare gutter — the block
+   * fills the frame from its inset to that edge, so it is the rail it would
+   * otherwise run into. */
+  grid-template-columns:
+    max(var(--gutter), var(--hero-inline-start))
+    1fr
+    var(--rail-lane);
   grid-template-rows:
     calc(var(--header-h) + env(safe-area-inset-top, 0px))
     minmax(0, 1fr)

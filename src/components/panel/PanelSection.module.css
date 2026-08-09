@@ -27,8 +27,13 @@
   display: grid;
   /* The rail is a column rather than padding, so the cue can span the whole
    * frame and still centre on it while the block keeps its inset. Tracks run
-   * in the inline direction, so RTL mirrors the rail with no override. */
-  grid-template-columns: max(var(--gutter), var(--s2-inline-start)) 1fr var(--gutter);
+   * in the inline direction, so RTL mirrors the rail with no override. The
+   * trailing column is the section rail's lane rather than the bare gutter,
+   * because the block runs all the way to that edge. */
+  grid-template-columns:
+    max(var(--gutter), var(--s2-inline-start))
+    1fr
+    var(--rail-lane);
   grid-template-rows:
     calc(var(--header-h) + env(safe-area-inset-top, 0px))
     minmax(0, 1fr)

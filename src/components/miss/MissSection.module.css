@@ -70,15 +70,14 @@
     calc(var(--header-h) + env(safe-area-inset-top, 0px))
     minmax(0, 1fr)
     clamp(2rem, 6vh, 5rem);
-  /* The device's column starts at the leading edge, which is the one place on
-   * the site where a composition reaches into the section rail's lane. It
-   * reserves the lane rather than the bare gutter, so the two never meet. */
+  /* The features column runs to the trailing edge, which is where the section
+   * rail is, so that gutter is the rail's lane. */
   grid-template-columns:
-    var(--rail-lane)
+    var(--gutter)
     minmax(0, 1.04fr)
     clamp(1.5rem, 4.2vw, 5.5rem)
     minmax(0, 1fr)
-    var(--gutter);
+    var(--rail-lane);
   align-items: center;
 
   opacity: var(--told);
