@@ -294,3 +294,34 @@
     transform: translateY(-0.75rem);
   }
 }
+
+/* -----------------------------------------------------------------------------
+ * Over the document rather than the film.
+ *
+ * The bar is transparent for the whole of the sequence — the footage is the
+ * point and nothing should sit on a panel over it. Below the film it is a
+ * page's bar with a page's copy scrolling underneath, so it takes the ground
+ * the page is on. Faded rather than switched, because the changeover happens
+ * while the viewer is moving.
+ * -------------------------------------------------------------------------- */
+
+.header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--c-bg);
+  opacity: 0;
+  transition: opacity 420ms var(--ease-out);
+  pointer-events: none;
+}
+
+:global([data-past-film]) .header::before {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header::before {
+    transition: none;
+  }
+}

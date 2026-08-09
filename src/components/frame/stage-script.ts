@@ -67,10 +67,8 @@ const BEATS = [
   // The last plate of the sequence has nothing after it to cut to, so this one
   // ends on the page's own ground rather than on another shot.
   ["fall", 180],
-  // The film ends here. Sections 7 and 8 are ordinary document below the track
-  // — see `Stage`'s `after` — so they take no beats: they reveal once on
-  // approach and stay revealed, which is what a page does.
-  ["rest", 60], // a moment of settled black before the document begins
+  // The film ends here. Everything below is ordinary document — see `Stage`'s
+  // `after` — vertical sections one after another, scrolled like any page.
 ] as const;
 
 /**
@@ -232,15 +230,28 @@ const TRAIT_HOLD = 0.26;
 const TRAIT_LEAD = 0.96;
 
 /**
- * The fall to black — the film's last act.
+ * Section 7 — the fall to black, and what rises out of it.
  *
  * `FALL_TEXT` is section 6 lifting away, `FALL_PLATE` the forest going down
  * behind it; the text leads, so the words are gone before the picture is. Both
- * are windows inside the `fall` beat. What is left is the page's own ground,
- * and the document takes over from there.
+ * are windows inside the `fall` beat.
+ *
+ * `HEAD_IN` is the one that matters to the composition: the orb comes up on the
+ * *same* window as the headline, not after it, so the backdrop arrives with the
+ * words rather than announcing them. The paragraph then follows on its own beat.
  */
 const FALL_TEXT = [0, 0.5];
 const FALL_PLATE = [0.16, 0.78];
+/**
+ * Where a block of a document section is on its way in, as fractions of the
+ * frame's height: nothing at `RISE[0]` down the frame, whole at `RISE[1]`.
+ *
+ * This is what makes the sections below the film read as a page rather than a
+ * reel. Each block answers for itself, from its own position — so the headline
+ * arrives, and then the paragraph does, because the paragraph is lower down and
+ * reaches the mark later. No beats, no thresholds, no stagger written by hand.
+ */
+const RISE = [0.9, 0.55];
 
 /**
  * The section rail — one mark per section, in the order the frame reaches them.
@@ -274,9 +285,9 @@ export const RAIL = [
   // words the locale's sentence has. Past all of them.
   { name: "closing", from: "arrow", at: ["learn", 0.99] },
   { name: "miss", from: "miss", at: ["miss", 0.34] },
-  // Below the film. These are elements in ordinary flow, so the mark goes to
-  // where the element *is* rather than to a fraction of a beat — read at click
-  // time, because a document's offsets are not fixed the way a timeline's are.
+  // Below the film, and so not beats at all: elements in ordinary flow. The
+  // mark goes to where the element *is*, read at click time, because a
+  // document's offsets are not fixed the way a timeline's are.
   { name: "dark", flow: "[data-dark]" },
   { name: "partners", flow: "[data-partners]" },
 ] as const;
@@ -341,6 +352,7 @@ export const stageScript = `
   var TRAIT_HOLD = ${TRAIT_HOLD}, TRAIT_LEAD = ${TRAIT_LEAD};
   var FALL_TEXT = ${JSON.stringify(FALL_TEXT)};
   var FALL_PLATE = ${JSON.stringify(FALL_PLATE)};
+  var RISE = ${JSON.stringify(RISE)};
   var RAIL = ${JSON.stringify(RAIL)};
   var GLIDE_MS = ${JSON.stringify(GLIDE_MS)};
 
@@ -608,17 +620,38 @@ export const stageScript = `
 
     // ── the document below the film ────────────────────────────────────────
     //
-    // Sections 7 and 8 are ordinary flow, so they are not painted from scroll
-    // position — they *latch*. Each crosses a threshold on the way in, gains an
-    // attribute, and keeps it: scrolling back up does not take a revealed
-    // section apart again, it simply scrolls off it. That is the one place on
-    // this site where something is one-shot, and it is deliberate; a page below
-    // a film should behave like a page.
+    // These sections are a page, not a reel: they stack vertically, they scroll
+    // like anything else, and their content arrives *on the way in* and then
+    // stays. Two mechanisms, and both are needed.
     //
-    // Two thresholds rather than one, so section 7 keeps the shape the film
-    // gave it: the headline and the orb arrive together as the block comes up,
-    // and the paragraph follows a little further on.
-    var REVEAL_IN = 0.3, REVEAL_ON = 0.62;
+    // The first is the arrival. Every block that rises carries a data-rise and
+    // names the property it feeds — the controller measures where the block is
+    // in the frame and writes that progress onto its section, so the CSS is the
+    // same --head / --body the film used and looks identical. It is scrubbed
+    // by scroll, so it comes in with the wheel rather than playing at the
+    // viewer, and it is kept at its high-water mark, so scrolling back up does
+    // not unbuild a section that has already arrived. Past that point the page
+    // simply moves, which is the whole of what was asked for.
+    var risers = [];
+    each('[data-rise]', function (el) {
+      var owner = el.closest('[data-dark], [data-partners]');
+      if (owner) risers.push({ el: el, owner: owner, prop: '--' + el.getAttribute('data-rise'), high: 0 });
+    });
+
+    function paintRisers() {
+      var h = window.innerHeight;
+      for (var r = 0; r < risers.length; r++) {
+        var it = risers[r];
+        var top = it.el.getBoundingClientRect().top;
+        var v = ease(clamp01((h * RISE[0] - top) / (h * (RISE[0] - RISE[1]))));
+        if (v > it.high) it.high = v;
+        it.owner.style.setProperty(it.prop, it.high);
+      }
+    }
+
+    // The second is the drift in section 8, which is an animation rather than a
+    // reveal — it only needs to know whether to run at all.
+    var REVEAL_IN = 0.3;
 
     each('[data-reveal]', function (el) {
       // No observer, no reveal, and the CSS holds nothing back — so with the
@@ -639,25 +672,8 @@ export const stageScript = `
       io.observe(el);
     });
 
-    // The second threshold cannot be a ratio of the section: a section one
-    // screen tall goes straight from a quarter visible to whole, so both would
-    // fire together and there would be no "and then". It is a mark placed
-    // further down instead — reaching it means the viewer scrolled on, which is
-    // the thing being waited for.
-    each('[data-reveal-next]', function (mark) {
-      var owner = mark.closest('[data-reveal]');
-      if (!owner) return;
-      if (!window.IntersectionObserver) { owner.setAttribute('data-on', ''); return; }
-      var io = new IntersectionObserver(function (entries) {
-        for (var e = 0; e < entries.length; e++) {
-          if (entries[e].isIntersecting) { owner.setAttribute('data-on', ''); io.disconnect(); }
-        }
-      });
-      io.observe(mark);
-    });
-
     // The orb compiles when its own section is within a screen of the frame,
-    // which is the flow equivalent of fetching a plate a beat ahead.
+    // which is the document's version of fetching a plate a beat ahead.
     var orb = document.querySelector('[data-orb]');
     if (orb && window.IntersectionObserver) {
       new IntersectionObserver(function (entries) {
@@ -903,7 +919,18 @@ export const stageScript = `
         shown ? span(p, edge.fall[0], edge.fall[1]) : 0
       );
 
+      paintRisers();
       paintRail();
+
+      // Past the film the site is a page, and a page's content scrolls *under*
+      // its bar. The bar is transparent over the footage by design — over
+      // moving copy it just looks like a collision — so it takes the page's own
+      // ground from here on.
+      if (window.scrollY > filmMax - window.innerHeight * 0.5) {
+        root.setAttribute('data-past-film', '');
+      } else {
+        root.removeAttribute('data-past-film');
+      }
 
       var hb = edge.turn, hw = hb[1] - hb[0];
       var heroOut = ease(span(p, hb[0] + HERO_EXIT[0] * hw, hb[0] + HERO_EXIT[1] * hw));

@@ -47,7 +47,7 @@
    * The controller overwrites this from its own beat table before first paint,
    * so what is written here is the no-JS fallback and nothing else. Keep it
    * near the real total anyway — it is what a reader of this file will believe. */
-  --timeline-vh: 4420;
+  --timeline-vh: 4380;
   --gutter: clamp(1.25rem, 2.87vw, 3.25rem);
   --header-h: clamp(4rem, min(6.04vw, 10.74vh), 6.75rem);
   --nav-gap: clamp(0.5rem, 1.26vw, 1.5rem);

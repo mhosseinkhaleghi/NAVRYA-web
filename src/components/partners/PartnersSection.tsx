@@ -87,7 +87,7 @@ export function PartnersSection({ partners }: { partners: Dictionary["partners"]
 
   return (
     <section className={styles.partners} data-partners="" data-reveal="">
-      <div className={styles.head}>
+      <div className={styles.head} data-rise="head">
         <p className={styles.eyebrow}>{partners.eyebrow}</p>
         <div className={styles.rule} />
         <h2 className={styles.headline}>{partners.headline}</h2>
@@ -95,7 +95,7 @@ export function PartnersSection({ partners }: { partners: Dictionary["partners"]
         <div className={styles.ruleWide} />
       </div>
 
-      <div className={styles.rail}>
+      <div className={styles.rail} data-rise="body">
         <span className={styles.line} aria-hidden="true" />
         <div className={styles.marquee}>
           {run}

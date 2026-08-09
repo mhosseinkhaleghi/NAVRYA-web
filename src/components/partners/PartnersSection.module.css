@@ -9,6 +9,8 @@
 
 .partners {
   position: relative;
+  --head: 0;
+  --body: 0;
   display: grid;
   align-content: center;
   gap: clamp(2.5rem, 6vh, 5rem);
@@ -284,44 +286,25 @@
 /* -----------------------------------------------------------------------------
  * The reveal.
  *
- * One-shot, and that is the point: this is a page, not a beat. `[data-in]` is
- * set as the section crosses into frame and `[data-on]` a little further on;
- * neither is ever removed, so scrolling back up scrolls off a finished section
- * rather than dismantling one.
+ * Scrubbed by scroll and kept at its high-water mark, exactly as section 7 is:
+ * `--head` carries the heading block in as it comes up the frame and `--body`
+ * the rail of firms, which is lower down and so arrives after it. Neither runs
+ * backwards, so once the section has arrived scrolling back up is just
+ * scrolling.
  *
- * With no JavaScript neither attribute is ever set — so the holding rules are
- * written the other way round, on the attributes rather than against them, and
- * the section is simply there.
+ * With no JavaScript neither property is ever written, and both fall back to
+ * their `0` — so the holding is expressed as a floor rather than a hide: even
+ * unpainted the section reads at full strength.
  * -------------------------------------------------------------------------- */
 
-.head > *,
+.head {
+  opacity: max(var(--head), 0.001);
+  transform: translateY(calc((1 - var(--head)) * 1.6rem));
+}
+
 .rail {
-  opacity: 0;
-  transform: translateY(1.6rem);
-}
-
-.partners[data-in] .head > * {
-  animation: partners-rise 1s var(--ease-cine) both;
-}
-
-.partners[data-in] .head > *:nth-child(2) { animation-delay: 0.08s; }
-.partners[data-in] .head > *:nth-child(3) { animation-delay: 0.16s; }
-.partners[data-in] .head > *:nth-child(4) { animation-delay: 0.26s; }
-.partners[data-in] .head > *:nth-child(5) { animation-delay: 0.34s; }
-
-.partners[data-in] .rail {
-  animation: partners-rise 1.2s var(--ease-cine) 0.3s both;
-}
-
-@keyframes partners-rise {
-  from {
-    opacity: 0;
-    transform: translateY(1.6rem);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+  opacity: max(var(--body), 0.001);
+  transform: translateY(calc((1 - var(--body)) * 1.6rem));
 }
 
 /* -----------------------------------------------------------------------------
@@ -336,7 +319,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .head > *,
+  .head,
   .rail {
     opacity: 1;
     transform: none;

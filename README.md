@@ -34,32 +34,43 @@ is the no-JS fallback.
 
 ### Where the film stops
 
-The site is a film and then a document. Sections 1–6 are the film: a fixed frame,
-scrubbed by scroll, nothing latching. **Sections 7 and 8 are ordinary flow** —
-`Stage`'s `after` — laid out below the track, scrolling up over the pinned frame
-on their own opaque black. The frame has faded to that same black by the time any
-of it is on screen, so the handover has nothing to see.
+The site is a film and then a page. Sections 1–6 are the film: a fixed frame,
+scrubbed by scroll, nothing latching. **Section 7 onward is an ordinary
+document** — `Stage`'s `after` — vertical sections stacked one against the next,
+each on its own opaque black, scrolling up over the pinned frame and past it.
+The frame has faded to that same black by the time any of it is on screen, so the
+handover has nothing to see. Nothing pins, nothing is a slide: they scroll like
+any site's sections, and a ninth section is one more block in the same list.
 
 That split is why the film measures its progress against **the track** rather
-than the document: the document now continues past the film, and measuring the
-whole of it would stretch every beat over content the film has nothing to do
-with. The film completes exactly as the track's last screen goes by.
+than the document: the document continues past the film, and measuring the whole
+of it would stretch every beat over content the film has nothing to do with. The
+film completes exactly as the track's last screen goes by, and the first document
+section begins on the pixel the track ends.
 
-The flow sections **latch**. Each crosses a threshold on the way in, gains an
-attribute, and keeps it — scrolling back up scrolls off a finished section rather
-than dismantling one, which is what a page below a film should do. It is the only
-one-shot behaviour on the site and it is deliberate. Section 7 keeps its
-two-part shape with a second mark placed lower in the section: a ratio would not
-work, because a section one screen tall goes from a quarter visible to whole in a
-single movement and both thresholds would fire together. It is half a screen
-taller than a screen, with the composition `sticky` inside it, so there is real
-scroll for the paragraph to arrive on.
+**The reveal is still scrubbed**, which is what keeps these sections feeling like
+the film they follow rather than a different website bolted on. Every block that
+arrives carries `data-rise` and names a property; the controller measures where
+that block is in the frame and writes the progress onto its section, so the CSS
+is the same `--head` / `--body` the film used. The headline rises, and the
+paragraph follows *because it is lower down and reaches the mark later* — no
+stagger is written by hand, and adding a block to a section needs no timing.
+
+What is different from the film is that none of it runs backwards. Each value is
+kept at its high-water mark, so scrolling back up leaves an arrived section
+arrived and the page simply moves. That is the only one-shot behaviour on the
+site and it is deliberate: below the film, a page should behave like a page.
 
 The bar and the section rail are a **third layer**, fixed above both. They cannot
 live in the stage: it is a stacking context, so anything inside it is covered the
-moment a document section scrolls over the frame. On compact frames the bar used
-to be a grid row of the stage, so the stage now holds that row open with a spacer
-sized from `--chrome-h`, which the controller measures off the real bar.
+moment a document section scrolls over the frame. The bar is transparent for the
+whole of the film — the footage is the point — and takes the page's own ground
+below it, because copy scrolling under a transparent bar just reads as a
+collision. On compact frames the bar used to be a grid row of the stage, so the
+stage now holds that row open with a spacer sized from `--chrome-h`, which the
+controller measures off the real bar with a `ResizeObserver`: measuring it once
+was not enough, because the bar is first measured with fallback metrics and grows
+when the faces land.
 
 ## The sequence
 
@@ -80,8 +91,7 @@ fires once. `components/frame/stage-script.ts` maps scroll onto the beats:
 | `depart` | 150vh | Section 5's words leave, the arrow follows them off, the frame dips through black, and the next morning fades up. Every vh of it is moving, which is what lets it be this short. |
 | `miss` | 420vh | `forest-miss` scrubs. The arrow buries itself in the tree at **0.67s** and section 6's statement lands on it; the block lifts as the stag turns and runs at **1.30s**; the frame is empty by **3.95s**. |
 | `traits` | 560vh | The psychology features, one slide per stretch of scroll, over the plate's own last frame — which stays. The deck finishes at 96% of the beat rather than 75%, so the last feature landing is the end of the section. |
-| `fall` | 180vh | Section 6 lifts away and the forest goes down behind it, leaving the frame on the page's own black. The one handover with no plate on the other side. |
-| `rest` | 60vh | A moment of settled black, and the film is over. Sections 7 and 8 follow as ordinary document — see *Where the film stops*. |
+| `fall` | 180vh | Section 6 lifts away and the forest goes down behind it, leaving the frame on the page's own black. The one handover with no plate on the other side, and the end of the film — section 7 begins on the next pixel. |
 
 The shape repeats: a plate runs, its panel arrives on a cue taken from the
 footage, and the panel leaves again **over the next plate**, which is already
@@ -154,8 +164,8 @@ picture.
 
 ### Section 7
 
-The first section that is not a shot — ordinary flow below the track, latching
-rather than scrubbed. See *Where the film stops* for why.
+The first section that is not a shot — an ordinary block of the document below
+the track. See *Where the film stops* for how those behave.
 
 It is composed over nothing: The forest goes down through `fall` and
 what is left is the near-black the document has underneath the whole film, so
@@ -167,9 +177,10 @@ property**, which is the whole of "the backdrop fades in as the words come up":
 one number, written once per frame, read by both. The paragraph follows on its
 own beat, `--body`.
 
-It is half a screen taller than a screen with the composition `sticky` inside
-it, so the headline and the orb come up as the block arrives and the paragraph
-follows on a further stretch of scroll — the shape it had as a beat, kept.
+The headline and the orb come up together on `--head` — the orb reads the same
+property, which is the whole of "the backdrop fades in as the words rise" — and
+the paragraph follows on `--body` a little further into the scroll. The shape it
+had as a beat, kept.
 
 The block carries the comp's own ornament: a hairline with a pair of facing
 scrolls around a centred diamond, and a second, longer one below the headline
@@ -212,8 +223,9 @@ hue 39°, against 40° for `--c-gold`.
 
 ### Section 8
 
-The prop firms, and the first section on the site that is a section rather than
-a scene: its own height, its own black, revealed once and then left alone.
+The prop firms. One screen, hard against section 7, scrolled like any other part
+of a page — its heading arrives on `--head` and the rail of firms on `--body`,
+which is lower down and so comes after it.
 
 The firms sit on one continuous rail and **drift** along it. The run is rendered
 twice and the track travels exactly half its own width before repeating, so the

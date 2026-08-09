@@ -1,52 +1,27 @@
 /* -----------------------------------------------------------------------------
  * Section 7 — black ground, one light in it.
  *
- * The same band structure as every other scene: the bar's row, the content's
- * row, a foot. See the note in `PanelSection.module.css` for why those are grid
- * rows and not padding.
+ * The first section below the film, and so the first that is a section of a
+ * page rather than a scene in a frame. It keeps the film's band structure —
+ * the bar's row, the content's row, a foot — because the bar is still over it.
  * -------------------------------------------------------------------------- */
 
 /*
- * Half a screen taller than a screen, and the composition pinned inside it.
- *
- * That extra half is what "and then the paragraph comes up" is made of: the
- * block holds still while it scrolls past, the mark at the bottom is reached,
- * and the paragraph arrives. A section exactly one screen tall has no room for
- * a second beat — it goes from part-visible to whole in one movement.
+ * An ordinary section of a page: its own screen, stacked below the film and
+ * above section 8, scrolled like anything else. Nothing pins and nothing is
+ * held back — what happens on the way in is the reveal, and once it has
+ * happened the section simply stays and the page keeps moving.
  */
 .dark {
   position: relative;
-  min-block-size: 165dvh;
+  min-block-size: 100dvh;
   background: var(--c-bg);
-}
-
-/* Sticky, so the composition holds still while the extra half-screen scrolls
- * past it, and the grid at the same time — the bands are the same as every
- * other scene's. */
-.frame {
-  position: sticky;
-  inset-block-start: 0;
-  block-size: 100dvh;
   overflow: hidden;
-  display: grid;
-  grid-template-rows:
-    calc(var(--header-h) + env(safe-area-inset-top, 0px))
-    minmax(0, 1fr)
-    clamp(2rem, 6vh, 5rem);
-  /* Symmetric, not gutter-then-lane: this block is centred on the frame and the
-   * orb behind it is centred on the frame, so insetting only the trailing side
-   * would set the words off-centre from their own backdrop. */
-  grid-template-columns: var(--rail-lane) minmax(0, 1fr) var(--rail-lane);
-  justify-items: center;
-}
 
-/* Sits in the last third, so it is only reached by scrolling on. */
-.next {
-  position: absolute;
-  inset-block-end: 12dvh;
-  inset-inline-start: 0;
-  inline-size: 1px;
-  block-size: 1px;
+  /* Written by the controller from each block's own position in the frame,
+   * kept at its high-water mark so scrolling back does not unbuild it. */
+  --head: 0; /* the headline rises, and the orb comes up with it */
+  --body: 0; /* the paragraph follows, because it is lower down */
 }
 
 /*
@@ -67,20 +42,9 @@
   inline-size: min(92vmin, 54rem);
   block-size: min(92vmin, 54rem);
   transform: translate(-50%, -50%);
-  opacity: 0;
+  opacity: var(--head);
   pointer-events: none;
   will-change: opacity;
-}
-
-/* The orb comes up on the same latch as the headline — that is the whole of
- * "the backdrop fades in as the words rise", now that neither is scrubbed. */
-.dark[data-in] .orb {
-  animation: dark-orb 1.6s var(--ease-cine) both;
-}
-
-@keyframes dark-orb {
-  from { opacity: 0; }
-  to { opacity: 1; }
 }
 
 /* The canvas the orb script appends. */
@@ -88,6 +52,21 @@
   display: block;
   inline-size: 100%;
   block-size: 100%;
+}
+
+.frame {
+  position: relative;
+  min-block-size: 100dvh;
+  display: grid;
+  grid-template-rows:
+    calc(var(--header-h) + env(safe-area-inset-top, 0px))
+    minmax(0, 1fr)
+    clamp(2rem, 6vh, 5rem);
+  /* Symmetric, not gutter-then-lane: this block is centred on the frame and the
+   * orb behind it is centred on the frame, so insetting only the trailing side
+   * would set the words off-centre from their own backdrop. */
+  grid-template-columns: var(--rail-lane) minmax(0, 1fr) var(--rail-lane);
+  justify-items: center;
 }
 
 .block {
@@ -113,7 +92,9 @@
   letter-spacing: var(--tracking-micro);
   text-transform: uppercase;
   text-shadow: var(--text-lift-micro);
-  opacity: 0;
+
+  opacity: var(--head);
+  transform: translateY(calc((1 - var(--head)) * 1.4rem));
 }
 
 /* ── The comp's flourish ──────────────────────────────────────────────────── */
@@ -133,7 +114,8 @@
     transparent 100%
   );
 
-  opacity: 0;
+  opacity: var(--head);
+  transform: translateY(calc((1 - var(--head)) * 1.8rem));
 }
 
 /* The second rule is longer and stopped with a dot at each end, as the comp
@@ -195,8 +177,11 @@
   text-align: center;
   text-shadow: var(--text-lift);
 
-  opacity: 0;
-  will-change: opacity, transform, filter;
+  opacity: var(--head);
+  transform: translateY(calc((1 - var(--head)) * 2.6rem));
+  /* The same resolve every other headline on the site makes. */
+  filter: blur(calc((1 - var(--head)) * 12px));
+  will-change: opacity, transform;
 }
 
 [dir="rtl"] .headline {
@@ -219,7 +204,8 @@
   text-wrap: pretty;
   text-shadow: var(--text-lift);
 
-  opacity: 0;
+  opacity: var(--body);
+  transform: translateY(calc((1 - var(--body)) * 2.2rem));
   will-change: opacity, transform;
 }
 
@@ -228,64 +214,11 @@
 }
 
 /* -----------------------------------------------------------------------------
- * The reveal — latched, not scrubbed.
+ * Compact frames.
  *
- * `[data-in]` and `[data-on]` are set once on the way in and never cleared. The
- * holding rules are written *on* the attributes rather than against them, so
- * with no JavaScript nothing is ever hidden and the section is simply there.
- * -------------------------------------------------------------------------- */
-
-.dark[data-in] .eyebrow {
-  animation: dark-rise 0.9s var(--ease-cine) both;
-}
-
-.dark[data-in] .flourish {
-  animation: dark-rise 0.9s var(--ease-cine) 0.1s both;
-}
-
-/* The one moment on this site that earns a blur, kept from the film. */
-.dark[data-in] .headline {
-  animation: dark-resolve 1.25s var(--ease-cine) 0.18s both;
-}
-
-.dark[data-in] .flourishWide {
-  animation: dark-rise 0.9s var(--ease-cine) 0.4s both;
-}
-
-/* The paragraph waits for the second threshold — the next stretch of scroll,
- * which is what it did when this was a beat. */
-.dark[data-on] .body {
-  animation: dark-rise 1s var(--ease-cine) both;
-}
-
-@keyframes dark-rise {
-  from {
-    opacity: 0;
-    transform: translateY(1.8rem);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes dark-resolve {
-  from {
-    opacity: 0;
-    transform: translateY(2.6rem);
-    filter: blur(12px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-    filter: blur(0);
-  }
-}
-
-/* -----------------------------------------------------------------------------
- * Compact frames — the bar is a row of the stage rather than an overlay, and it
- * is two rows tall, so the section joins the column instead of insetting
- * against the whole frame. Exactly as sections 2–6 do.
+ * Nothing structural changes here any more — this is a section of a page, not a
+ * scene in a pinned frame, so it is already laid out the way a page lays out.
+ * Only the reserved bands and the orb's size come down.
  * -------------------------------------------------------------------------- */
 
 @media (max-width: 1023px) {
@@ -305,20 +238,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .eyebrow,
-  .flourish,
-  .flourishWide,
-  .headline,
-  .body,
-  .orb {
-    opacity: 1;
-    transform: none;
+  .headline {
     filter: none;
-    animation: none !important;
-  }
-
-  .orb {
-    /* translate is the centring, not the reveal — it has to survive. */
-    transform: translate(-50%, -50%);
   }
 }

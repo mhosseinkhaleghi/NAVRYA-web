@@ -39,14 +39,16 @@ function Flourish({ wide = false }: { wide?: boolean }) {
  * near-black the document has underneath the whole film. The orb is the only
  * light in it.
  *
- * It is the first section that is not part of the film — ordinary document
- * below the track, which is why it reveals *once* and keeps its reveal. Scroll
- * back up and you scroll off a finished section rather than taking it apart.
+ * It is not part of the film. Below the track the site is an ordinary page —
+ * vertical sections one after another — and this is the first of them.
  *
- * Two thresholds, so it keeps the shape the film gave it: `[data-in]` brings up
- * the headline and the orb together — the backdrop arriving with the words
- * rather than announcing them — and `[data-on]`, a little further on, brings
- * the paragraph.
+ * The reveal is still scrubbed by scroll, which is what makes it feel like the
+ * film it follows: `--head` and `--body` are written from each block's own
+ * position in the frame. The headline rises and the orb rides the *same*
+ * property, so the backdrop comes up with the words rather than announcing
+ * them; the paragraph follows because it is lower down and reaches the mark
+ * later. Neither ever runs backwards — once a section has arrived, scrolling
+ * back up is just scrolling.
  *
  * The orb's host is markup, not a component: an empty div the inline orb script
  * boots a WebGL canvas into once the controller marks it live. See
@@ -54,16 +56,16 @@ function Flourish({ wide = false }: { wide?: boolean }) {
  */
 export function DarkSection({ dark }: { dark: Dictionary["dark"] }) {
   return (
-    <section className={styles.dark} data-dark="" data-reveal="">
-      <div className={styles.frame}>
-        {/* Behind everything, and behind the words in particular. */}
-        <div className={styles.orb} data-orb="" />
+    <section className={styles.dark} data-dark="">
+      {/* Behind everything, and behind the words in particular. */}
+      <div className={styles.orb} data-orb="" />
 
+      <div className={styles.frame}>
         <div className={styles.block}>
           <p className={styles.eyebrow}>{dark.eyebrow}</p>
           <Flourish />
 
-          <h2 className={styles.headline}>
+          <h2 className={styles.headline} data-rise="head">
             {dark.headline.map((line) => (
               <span key={line} className={styles.headlineLine}>
                 {line}
@@ -73,7 +75,7 @@ export function DarkSection({ dark }: { dark: Dictionary["dark"] }) {
 
           <Flourish wide />
 
-          <p className={styles.body}>
+          <p className={styles.body} data-rise="body">
             {dark.body.map((line) => (
               <span key={line} className={styles.bodyLine}>
                 {line}
@@ -82,10 +84,6 @@ export function DarkSection({ dark }: { dark: Dictionary["dark"] }) {
           </p>
         </div>
       </div>
-
-      {/* Reaching this is what brings the paragraph up — see the note on
-          `data-reveal-next` in the controller. */}
-      <span className={styles.next} data-reveal-next="" aria-hidden="true" />
     </section>
   );
 }
