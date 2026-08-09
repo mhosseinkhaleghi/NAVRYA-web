@@ -51,7 +51,16 @@
 .orb {
   position: absolute;
   inset-block-start: 50%;
-  inset-inline-start: 50%;
+  /*
+   * Physical `left`, not `inset-inline-start`.
+   *
+   * A circle of light has no reading direction, and the pairing of a logical
+   * inset with a physical `translateX(-50%)` does not survive being mirrored:
+   * in Arabic and Persian the inset resolves to `right: 50%` and the translate
+   * still pulls left, so the orb ended up half off the leading edge with the
+   * words centred on nothing. The same pairing is wrong wherever it appears.
+   */
+  left: 50%;
   inline-size: var(--s7-orb);
   block-size: var(--s7-orb);
   transform: translate(-50%, -50%);
@@ -151,7 +160,7 @@
 
 .flourishMark {
   position: absolute;
-  inset-inline-start: 50%;
+  left: 50%;
   inset-block-start: 50%;
   inline-size: var(--s7-flourish);
   /* The viewBox is 72 x 18. */

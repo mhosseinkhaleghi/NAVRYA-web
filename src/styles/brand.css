@@ -1,21 +1,79 @@
 /* -----------------------------------------------------------------------------
- * Navrya — brand typeface slot
+ * Navrya — brand typefaces
  *
- * The two families below are the ONLY place the project names a typeface.
- * Every component reads `--font-display` / `--font-sans`, so swapping the
- * brand font is a change to this file and nothing else.
+ * The families below are the ONLY place the project names a typeface. Every
+ * component reads `--font-display` / `--font-sans`, so changing what the site
+ * is set in is a change to this file and nothing else.
  *
- * ── To install the custom brand font ─────────────────────────────────────────
- * 1. Drop the web files into `public/fonts/brand/`
- *    (.woff2 strongly preferred — one file per weight, or one variable file).
- * 2. Uncomment the matching @font-face block(s) below and fix the filenames.
- * 3. Nothing else. 'Navrya Display' / 'Navrya Sans' already sit first in the
- *    stacks, so the brand font wins the moment it resolves.
+ * ── Peyda, for Persian and Arabic ────────────────────────────────────────────
  *
- * Until then the stand-ins (Playfair Display + DM Sans) render the reference
- * design, and Amiri + Vazirmatn cover Arabic and Persian glyphs automatically
- * through per-glyph font fallback.
+ * Peyda is the Persian face. It is declared here and already sits in both
+ * stacks, so it takes over the moment the files are in `public/fonts/brand/`
+ * and does nothing at all until then — a missing @font-face source is skipped,
+ * not an error.
+ *
+ * Where it sits in the stacks is the whole trick. Peyda carries Latin glyphs
+ * too, so putting it first would take the English wordmark and headlines off
+ * Playfair as well. It goes *after* the Latin faces instead: per-glyph
+ * fallback hands Latin to Playfair or DM Sans, which have it, and every
+ * Arabic-script glyph falls through to Peyda, which is the only face in the
+ * stack that does. Persian changes; English does not move.
+ *
+ * Four weights, because that is what the site asks for: 400 for body, 500 for
+ * sub-headings, 600 for the tracked micro-labels, 700 for headlines. Each
+ * `src` lists the short name first and the names the Pro package ships with
+ * after it, so the files work whether or not they were renamed on the way in.
  * -------------------------------------------------------------------------- */
+
+@font-face {
+  font-family: "Peyda";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    url("/fonts/brand/peyda-400.woff2") format("woff2"),
+    url("/fonts/brand/PeydaWebFaNum-Regular.woff2") format("woff2"),
+    url("/fonts/brand/Peyda-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Peyda";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src:
+    url("/fonts/brand/peyda-500.woff2") format("woff2"),
+    url("/fonts/brand/PeydaWebFaNum-Medium.woff2") format("woff2"),
+    url("/fonts/brand/Peyda-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Peyda";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src:
+    url("/fonts/brand/peyda-600.woff2") format("woff2"),
+    url("/fonts/brand/PeydaWebFaNum-SemiBold.woff2") format("woff2"),
+    url("/fonts/brand/Peyda-SemiBold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Peyda";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src:
+    url("/fonts/brand/peyda-700.woff2") format("woff2"),
+    url("/fonts/brand/PeydaWebFaNum-Bold.woff2") format("woff2"),
+    url("/fonts/brand/Peyda-Bold.woff2") format("woff2");
+}
+
+/* ── A Latin brand face, if one is ever commissioned ──────────────────────────
+ *
+ * Nothing to do until then. Drop the files in and uncomment; both names
+ * already sit first in the stacks below.
+ */
 
 /*
 @font-face {
@@ -38,13 +96,26 @@
 */
 
 :root {
-  /* Display: the wordmark and the hero headline. */
+  /* Display: the wordmark and every headline.
+   *
+   * Amiri stays behind Peyda as the last resort for Arabic script — it is the
+   * face the site rendered Persian headlines in before, and it is what shows
+   * if Peyda's files are not there. */
   --font-display:
-    "Navrya Display", "Playfair Display", "Amiri", "Iowan Old Style",
+    "Navrya Display", "Playfair Display", "Peyda", "Amiri", "Iowan Old Style",
     "Times New Roman", serif;
 
-  /* Sans: navigation, sub-headline, labels, buttons. */
+  /* Sans: navigation, sub-headlines, labels, buttons. */
   --font-sans:
-    "Navrya Sans", "DM Sans", "Vazirmatn", -apple-system, BlinkMacSystemFont,
-    "Segoe UI", system-ui, sans-serif;
+    "Navrya Sans", "DM Sans", "Peyda", "Vazirmatn", -apple-system,
+    BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+}
+
+/*
+ * Persian and Arabic set tighter than the serif they used to fall back to.
+ * Peyda's ascenders and descenders are shorter than Amiri's, so the generous
+ * leading the headlines carry for Amiri leaves them looking loose.
+ */
+[dir="rtl"] {
+  --tracking-display: 0;
 }

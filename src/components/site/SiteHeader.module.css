@@ -50,8 +50,19 @@
   position: relative;
   display: flex;
   align-items: center;
+  gap: var(--brand-gap);
   block-size: 100%;
   flex: 0 0 auto;
+  /* The lockup is a mark: mark first, word second, in every locale. Without
+   * this it flips with the page and the arrow ends up leaving through the
+   * word. */
+  direction: ltr;
+}
+
+/* Nudged up a hair: the ring's optical centre sits below its geometric one
+ * because the gap is at the top. */
+.brandMark {
+  margin-block-start: -0.06em;
 }
 
 .wordmark {

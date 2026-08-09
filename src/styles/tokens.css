@@ -39,6 +39,9 @@
   --c-cream: #ede4d2; /* hero headline + wordmark */
   --c-text: #e8e6e0; /* hero sub-headline */
   --c-nav: rgb(237 234 227 / 0.88);
+  /* The one colour carried in from the brand book, and only the mark's arrow
+   * uses it: #6C5CFF to #9A6CFF is the book's gradient, and this is its middle. */
+  --c-brand-violet: #8364ff;
 
   /* ── Frame ──────────────────────────────────────────────────────────────── */
   --frame-h: 100dvh;
@@ -54,6 +57,10 @@
 
   /* ── Type ───────────────────────────────────────────────────────────────── */
   --fs-wordmark: clamp(1.65rem, min(2.95vw, 5.25vh), 3.3rem);
+  /* The mark stands a little above the word's cap height, as the book locks
+   * them up. Keyed to the word so the pair never drifts apart. */
+  --brand-mark: calc(var(--fs-wordmark) * 1.12);
+  --brand-gap: calc(var(--fs-wordmark) * 0.42);
   --fs-nav: clamp(0.8125rem, min(1.1vw, 1.96vh), 1.3rem);
   --fs-display: clamp(2.6rem, min(6.4vw, 11.38vh), 9.5rem);
   --fs-sub: clamp(1rem, min(2.04vw, 3.63vh), 2.6rem);

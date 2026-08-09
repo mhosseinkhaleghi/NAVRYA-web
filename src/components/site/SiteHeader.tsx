@@ -2,6 +2,8 @@ import { type Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
 
 import { LanguageMenu } from "./LanguageMenu";
+import { BrandMark } from "./BrandMark";
+
 import styles from "./SiteHeader.module.css";
 
 type NavKey = keyof Dictionary["nav"];
@@ -28,6 +30,7 @@ export function SiteHeader({
   return (
     <header className={styles.header}>
       <div className={styles.brand}>
+        <BrandMark className={styles.brandMark} />
         <span className={styles.wordmark}>Navrya</span>
         <span className={styles.brandNode} aria-hidden="true" />
       </div>

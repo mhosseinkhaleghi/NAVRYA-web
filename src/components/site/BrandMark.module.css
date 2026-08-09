@@ -1,0 +1,32 @@
+/* -----------------------------------------------------------------------------
+ * The Navrya mark.
+ *
+ * Sized from the wordmark beside it, so the two always keep their proportion —
+ * the mark is the cap height of the word plus a little, which is how the brand
+ * book locks them up.
+ * -------------------------------------------------------------------------- */
+
+.mark {
+  display: block;
+  inline-size: var(--brand-mark);
+  block-size: var(--brand-mark);
+  flex: 0 0 auto;
+  overflow: visible;
+  /* The mark is a mark: it does not mirror with the writing direction, any more
+   * than the word does. */
+  transform: none;
+}
+
+.ring {
+  fill: none;
+  stroke: var(--c-gold);
+  stroke-width: 5.6;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 10px rgb(216 166 75 / 0.28));
+}
+
+.arrow {
+  fill: var(--c-brand-violet);
+  stroke: none;
+  filter: drop-shadow(0 0 12px rgb(124 92 255 / 0.45));
+}

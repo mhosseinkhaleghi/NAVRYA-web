@@ -72,7 +72,7 @@
 .ruleWide::after {
   content: "";
   position: absolute;
-  inset-inline-start: 50%;
+  left: 50%;
   inset-block-start: 50%;
   inline-size: var(--node-size);
   block-size: var(--node-size);
@@ -184,15 +184,30 @@
   animation-play-state: running;
 }
 
-/* In Arabic and Persian the eye travels the other way, and so does the rail. */
-[dir="rtl"] .marquee {
-  animation-direction: reverse;
-}
-
+/*
+ * In Arabic and Persian the eye travels the other way, and so does the rail.
+ *
+ * The mirror is a second keyframe, not `animation-direction: reverse`. Reverse
+ * plays the same track backwards, which means it *starts* at the far end of a
+ * leftward travel — and in a right-to-left flex row that end is off the leading
+ * edge, so the firms took most of a minute to walk back into view. A rail that
+ * travels the other way starts where it should: at rest, with the first firms
+ * on screen.
+ */
 @keyframes partners-drift {
   to {
     transform: translateX(-50%);
   }
+}
+
+@keyframes partners-drift-rtl {
+  to {
+    transform: translateX(50%);
+  }
+}
+
+[dir="rtl"] .marquee {
+  animation-name: partners-drift-rtl;
 }
 
 .run {

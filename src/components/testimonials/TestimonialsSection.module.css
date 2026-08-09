@@ -102,7 +102,7 @@
 .rule::after {
   content: "";
   position: absolute;
-  inset-inline-start: 50%;
+  left: 50%;
   inset-block-start: 50%;
   inline-size: var(--node-size);
   block-size: var(--node-size);
