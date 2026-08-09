@@ -108,14 +108,15 @@
     ]
   },
   "dark": {
-    "eyebrow": "Section 7",
+    "eyebrow": "Section 6",
     "headline": [
-      "Section Seven",
-      "Copy to Come."
+      "Meet the AI Trading Journal",
+      "That Learns From You."
     ],
     "body": [
-      "The motion for this section is finished.",
-      "The words are waiting on the comp."
+      "Journal your trades, decisions, and emotions —",
+      "while AI learns your behavior and helps you",
+      "become a more disciplined trader."
     ]
   },
   "a11y": {

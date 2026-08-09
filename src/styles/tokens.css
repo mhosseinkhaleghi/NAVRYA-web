@@ -109,9 +109,14 @@
   /* ── Section 7 — the black ground, and the orb ──────────────────────────── */
   /* Centred over nothing, so it is set like section 5's statement rather than
    * like a railed panel. */
-  --fs-s7-display: clamp(2.1rem, min(5.7vw, 9.74vh), 8rem);
+  /* Set so the comp's two lines stay two lines: "Meet the AI Trading Journal"
+   * is 27 characters and has to hold one line at the measure below. */
+  --fs-s7-display: clamp(1.85rem, min(4.5vw, 7.69vh), 6.5rem);
   --fs-s7-body: clamp(1rem, min(1.5vw, 2.56vh), 1.75rem);
-  --s7-measure: clamp(20rem, 54vw, 60rem);
+  --s7-measure: clamp(20rem, 66vw, 74rem);
+  --s7-rule: clamp(8rem, 15.2vw, 17rem);
+  --s7-rule-wide: clamp(13rem, 26vw, 29rem);
+  --s7-flourish: clamp(3.5rem, 6vw, 6.5rem);
 
   /* ── Scroll indicator ───────────────────────────────────────────────────── */
   --scroll-bottom: clamp(1.5rem, min(3.8vw, 6.76vh), 4.5rem);
@@ -252,6 +257,9 @@
     --fs-s6-display: clamp(1.9rem, min(9vw, 16vh), 4rem);
     --fs-s6-sub: clamp(0.9375rem, min(3.8vw, 6.76vh), 1.2rem);
     --fs-s6-trait: clamp(1.4rem, min(6.4vw, 11.38vh), 2.6rem);
+    --s7-rule: clamp(6rem, 30vw, 9rem);
+    --s7-rule-wide: clamp(9rem, 46vw, 14rem);
+    --s7-flourish: clamp(3rem, 14vw, 4.5rem);
     --s6-measure: 100%;
     --s6-rule: clamp(5rem, 24vw, 8rem);
     --s6-notch: clamp(4.5rem, 22vw, 7rem);

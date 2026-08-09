@@ -108,14 +108,15 @@
     ]
   },
   "dark": {
-    "eyebrow": "Bölüm 7",
+    "eyebrow": "Bölüm 6",
     "headline": [
-      "Yedinci Bölüm",
-      "Metin Yolda."
+      "Sizden Öğrenen",
+      "Yapay Zekâ İşlem Günlüğü."
     ],
     "body": [
-      "Bu bölümün hareketi tamamlandı.",
-      "Metinler tasarımı bekliyor."
+      "İşlemlerinizi, kararlarınızı ve duygularınızı kaydedin —",
+      "yapay zekâ davranışınızı öğrenirken",
+      "daha disiplinli bir yatırımcı olun."
     ]
   },
   "a11y": {

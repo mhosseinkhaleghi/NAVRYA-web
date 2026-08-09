@@ -599,7 +599,12 @@ export const stageScript = `
         traitEls[t].style.setProperty('--in', into);
         traitEls[t].style.setProperty('--out', away);
         // The dots are the carousel, not a readout of it.
-        if (dotEls[t]) dotEls[t].style.setProperty('--in', into * (1 - away));
+        if (dotEls[t]) {
+          var fill = into * (1 - away);
+          dotEls[t].style.setProperty('--in', fill);
+          if (fill > 0.5) dotEls[t].setAttribute('aria-current', 'true');
+          else dotEls[t].removeAttribute('aria-current');
+        }
       }
       miss.style.setProperty('--traits', tp > 0 ? 1 : 0);
     }
@@ -688,6 +693,24 @@ export const stageScript = `
         if (!marks[m]) return;
         marks[m].addEventListener('click', function () { goTo(railAt[m]); });
       })(i);
+    }
+
+    // Section 6's dots drive the deck as well as read it. Each lands where its
+    // own slide is fully in, which is the inverse of the reach the carousel is
+    // painted from: reach = (tp / TRAIT_LEAD) * (n - 1 + hold), and a slide is
+    // whole at reach = t + hold. Same travelled jump as the rail, so the deck
+    // runs to the slide instead of cutting to it.
+    if (dotEls.length) {
+      var tb = edge.traits, tw = tb[1] - tb[0];
+      var reachAll = (dotEls.length - 1) + TRAIT_HOLD;
+      for (i = 0; i < dotEls.length; i++) {
+        (function (t) {
+          var tp = TRAIT_LEAD * (t + TRAIT_HOLD) / reachAll;
+          dotEls[t].addEventListener('click', function () {
+            goTo(tb[0] + tp * tw);
+          });
+        })(i);
+      }
     }
 
     // The wheel always wins. A jump in flight is abandoned the moment the

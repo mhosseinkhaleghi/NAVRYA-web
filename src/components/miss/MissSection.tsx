@@ -78,9 +78,23 @@ export function MissSection({ miss }: { miss: Dictionary["miss"] }) {
             ))}
           </div>
 
+          {/*
+           * The dots are the carousel, and they drive it as well as read it.
+           * Each one scrolls to the point in the beat where its own feature is
+           * fully in — the same travelled jump the section rail makes, so the
+           * deck runs to the slide rather than cutting to it. The controller
+           * wires the clicks; these are plain buttons.
+           */}
           <ul className={styles.dots}>
             {miss.traits.map((trait, index) => (
-              <li key={trait.index} className={styles.dot} data-dot={index} />
+              <li key={trait.index} className={styles.dotItem}>
+                <button
+                  type="button"
+                  className={styles.dot}
+                  data-dot={index}
+                  aria-label={trait.title}
+                />
+              </li>
             ))}
           </ul>
         </div>

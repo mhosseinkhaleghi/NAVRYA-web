@@ -261,12 +261,51 @@
   list-style: none;
 }
 
+.dotItem {
+  display: flex;
+}
+
+/*
+ * A control, not a readout. The ring is the mark and the button around it is
+ * the target — a 10px circle is unusable, and a target big enough to use would
+ * be a row of blobs under the copy.
+ */
 .dot {
+  position: relative;
+  display: block;
   inline-size: clamp(0.6rem, 0.96vw, 1.1rem);
   block-size: clamp(0.6rem, 0.96vw, 1.1rem);
+  margin: 0;
+  padding: 0;
   border: var(--hairline) solid var(--c-gold);
   border-radius: 50%;
-  position: relative;
+  background: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  /* The section itself takes no pointer events, so these have to ask for them. */
+  pointer-events: auto;
+  transition: transform 320ms var(--ease-cine);
+}
+
+/* The hit area, reaching past the ring on every side without drawing anything. */
+.dot::before {
+  content: "";
+  position: absolute;
+  inset: calc(clamp(0.5rem, 0.8vw, 0.9rem) * -1);
+}
+
+.dot:hover {
+  transform: scale(1.18);
+}
+
+.dot:active {
+  transform: scale(0.94);
+}
+
+.dot:focus-visible {
+  outline: var(--hairline) solid var(--c-gold);
+  outline-offset: 0.3rem;
 }
 
 /* The filled centre is the slide's own progress, so the dots are the carousel

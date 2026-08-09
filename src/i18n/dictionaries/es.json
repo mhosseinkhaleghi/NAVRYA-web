@@ -108,14 +108,15 @@
     ]
   },
   "dark": {
-    "eyebrow": "Sección 7",
+    "eyebrow": "Sección 6",
     "headline": [
-      "Sección Siete",
-      "Texto Pendiente."
+      "El Diario de Trading con IA",
+      "Que Aprende de Ti."
     ],
     "body": [
-      "El movimiento de esta sección está terminado.",
-      "El texto espera al diseño."
+      "Registra tus operaciones, decisiones y emociones —",
+      "mientras la IA aprende tu comportamiento y te ayuda",
+      "a ser un trader más disciplinado."
     ]
   },
   "a11y": {

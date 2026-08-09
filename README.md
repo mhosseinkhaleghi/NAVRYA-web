@@ -113,6 +113,13 @@ the same grid cell, so the deck is as tall as the tallest of them and nothing
 reflows as they change. The dots read the same two properties, which makes them
 the carousel rather than a readout of it.
 
+They also **drive** it: each dot is a button that scrolls to the point in the
+beat where its own slide is fully in. That point is the inverse of the reach the
+deck is painted from — `reach = (tp / TRAIT_LEAD) * (n - 1 + hold)`, and a slide
+is whole at `reach = t + hold` — so the two can never disagree. It is the same
+travelled jump the section rail makes, which means the deck *runs* to the slide
+rather than cutting to it, and the plate behind it never moves.
+
 The plate does not fade under them: the features are read against the shot's own
 last frame, held. That puts the busiest, highest-contrast area in the sequence —
 the tree trunk — directly behind a block of type, so this block alone carries
@@ -131,10 +138,16 @@ property**, which is the whole of "the backdrop fades in as the words come up":
 one number, written once per frame, read by both. The paragraph follows on its
 own beat, `--body`.
 
-> **The copy in the `dark` block of every dictionary is provisional.** Section
-> 7's comp had not landed when this was built, so the motion is finished and the
-> words are placeholders. Replacing those three keys per locale is all that is
-> outstanding; nothing else in the section depends on them.
+The block carries the comp's own ornament: a hairline with a pair of facing
+scrolls around a centred diamond, and a second, longer one below the headline
+stopped with a dot at each end. Heavier than the rule the panels use and heavier
+than section 6's star, which is the point — this block is the only thing on a
+black frame.
+
+`--s7-measure` and `--fs-s7-display` are set together so the comp's two lines
+stay two lines: "Meet the AI Trading Journal" is 27 characters and has to hold
+one line. The frame's side columns are symmetric rather than gutter-then-lane,
+because the words are centred on the frame and so is the orb behind them.
 
 #### The orb
 
