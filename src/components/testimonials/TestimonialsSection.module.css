@@ -2,30 +2,24 @@
  * Section 9 — what the traders say.
  *
  * The third and last of the sections below the film. Same construction as 7 and
- * 8: an ordinary section of a page, one screen tall, on the page's own ground,
- * stacked directly under the one above it with nothing between them.
+ * 8: an ordinary section of a page, as tall as what is in it, on the page's own
+ * ground, stacked directly under the one above it with only its padding between
+ * them.
  * -------------------------------------------------------------------------- */
 
 .testimonials {
   position: relative;
   display: grid;
   align-content: center;
-  gap: clamp(2rem, 5vh, 4rem);
-  min-block-size: 100dvh;
-  /* The bar is fixed over this section as it is over every other one, and this
-   * is the only section whose head starts with a chip rather than a line of
-   * micro type — a chip is tall enough to reach the bar, so the bar's row is
-   * reserved outright rather than approximated with a round number. */
-  padding-block-start: calc(
-    var(--header-h) + env(safe-area-inset-top, 0px) + clamp(0.5rem, 2vh, 1.5rem)
-  );
-  padding-block-end: clamp(2rem, 6vh, 4rem);
+  gap: var(--s9-stack);
+  /* Its content's height, not the frame's — see section 7. */
+  padding-block: var(--s9-pad);
   padding-inline: var(--rail-lane);
   background: var(--c-bg);
   overflow: hidden;
 
-  /* Written by the controller from each block's own position in the frame and
-   * kept at its high-water mark, exactly as in sections 7 and 8. */
+  /* Written by the controller from how far the section has climbed into the
+   * frame, kept at a high-water mark, exactly as in sections 7 and 8. */
   --head: 0;
   --body: 0;
 }
@@ -212,7 +206,7 @@
   display: grid;
   justify-items: start;
   margin: 0;
-  padding: var(--s9-pad);
+  padding: var(--s9-card-pad);
   border: var(--hairline) solid var(--c-gold-line-faint);
   border-radius: var(--s9-radius);
   background:
@@ -365,7 +359,6 @@
 @media (max-width: 1023px) {
   .testimonials {
     padding-inline: var(--gutter);
-    gap: clamp(1.75rem, 4vh, 3rem);
   }
 
   .columns {

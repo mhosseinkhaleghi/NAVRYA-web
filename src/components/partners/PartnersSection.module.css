@@ -13,9 +13,11 @@
   --body: 0;
   display: grid;
   align-content: center;
-  gap: clamp(2.5rem, 6vh, 5rem);
-  min-block-size: 100dvh;
-  padding-block: clamp(4rem, 12vh, 9rem);
+  gap: var(--s8-stack);
+  /* Its content's height, not the frame's — see section 7. A screen-tall
+   * section here put most of a screen of black between this heading and the
+   * one above it. */
+  padding-block: var(--s8-pad);
   padding-inline: var(--rail-lane);
   background: var(--c-bg);
   overflow: hidden;

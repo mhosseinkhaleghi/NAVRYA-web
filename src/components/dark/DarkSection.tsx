@@ -65,7 +65,7 @@ export function DarkSection({ dark }: { dark: Dictionary["dark"] }) {
           <p className={styles.eyebrow}>{dark.eyebrow}</p>
           <Flourish />
 
-          <h2 className={styles.headline} data-rise="head">
+          <h2 className={styles.headline}>
             {dark.headline.map((line) => (
               <span key={line} className={styles.headlineLine}>
                 {line}
@@ -75,7 +75,7 @@ export function DarkSection({ dark }: { dark: Dictionary["dark"] }) {
 
           <Flourish wide />
 
-          <p className={styles.body} data-rise="body">
+          <p className={styles.body}>
             {dark.body.map((line) => (
               <span key={line} className={styles.bodyLine}>
                 {line}

@@ -7,21 +7,30 @@
  * -------------------------------------------------------------------------- */
 
 /*
- * An ordinary section of a page: its own screen, stacked below the film and
- * above section 8, scrolled like anything else. Nothing pins and nothing is
- * held back — what happens on the way in is the reveal, and once it has
- * happened the section simply stays and the page keeps moving.
+ * An ordinary section of a page: stacked below the film and above section 8,
+ * scrolled like anything else. Nothing pins and nothing is held back.
+ *
+ * Its height is its content's, not the frame's. A screen-tall section centres
+ * a few hundred pixels of type in a thousand and leaves the rest black, and
+ * three of those in a row put two-thirds of a screen of nothing between every
+ * heading and the next — which is what made this stretch read as broken rather
+ * than as a page. The only floor here is the orb's own diameter, because the
+ * orb has to be whole.
  */
 .dark {
   position: relative;
-  min-block-size: 100dvh;
+  display: grid;
+  place-items: center;
+  min-block-size: calc(var(--s7-orb) + var(--s7-pad) * 2);
+  padding-block: var(--s7-pad);
+  padding-inline: var(--rail-lane);
   background: var(--c-bg);
   overflow: hidden;
 
-  /* Written by the controller from each block's own position in the frame,
-   * kept at its high-water mark so scrolling back does not unbuild it. */
+  /* Written by the controller from how far the section has climbed into the
+   * frame, kept at a high-water mark so scrolling back does not unbuild it. */
   --head: 0; /* the headline rises, and the orb comes up with it */
-  --body: 0; /* the paragraph follows, because it is lower down */
+  --body: 0; /* the paragraph follows, on the next part of the scroll */
 }
 
 /*
@@ -29,8 +38,12 @@
  *
  * Square and centred: the shader works in a square UV space and takes the
  * smaller side, so a full-bleed box would put the orb's own margin off screen
- * on a wide frame. Sized against the shorter axis instead, which keeps it whole
- * at every aspect.
+ * on a wide frame.
+ *
+ * Sized off the frame's width alone, never its height — the section is no
+ * longer a screen tall, so a diameter measured against the viewport's shorter
+ * axis would be a diameter the section has no room for. The section reserves
+ * this instead, so the two can never disagree.
  *
  * It shares `--head` with the headline — that is the whole of "the orb fades in
  * as the words rise". No second timeline, no transition, no state.
@@ -39,8 +52,8 @@
   position: absolute;
   inset-block-start: 50%;
   inset-inline-start: 50%;
-  inline-size: min(92vmin, 54rem);
-  block-size: min(92vmin, 54rem);
+  inline-size: var(--s7-orb);
+  block-size: var(--s7-orb);
   transform: translate(-50%, -50%);
   opacity: var(--head);
   pointer-events: none;
@@ -54,25 +67,16 @@
   block-size: 100%;
 }
 
+/* The words sit on the orb's own centre, which is the section's centre — so
+ * this is one centred column and nothing else. */
 .frame {
   position: relative;
-  min-block-size: 100dvh;
   display: grid;
-  grid-template-rows:
-    calc(var(--header-h) + env(safe-area-inset-top, 0px))
-    minmax(0, 1fr)
-    clamp(2rem, 6vh, 5rem);
-  /* Symmetric, not gutter-then-lane: this block is centred on the frame and the
-   * orb behind it is centred on the frame, so insetting only the trailing side
-   * would set the words off-centre from their own backdrop. */
-  grid-template-columns: var(--rail-lane) minmax(0, 1fr) var(--rail-lane);
   justify-items: center;
+  inline-size: 100%;
 }
 
 .block {
-  grid-column: 2;
-  grid-row: 2;
-  align-self: center;
   display: grid;
   justify-items: center;
   inline-size: 100%;
@@ -218,22 +222,12 @@
  *
  * Nothing structural changes here any more — this is a section of a page, not a
  * scene in a pinned frame, so it is already laid out the way a page lays out.
- * Only the reserved bands and the orb's size come down.
+ * Only the trailing lane goes, since the rail is not there to make room for.
  * -------------------------------------------------------------------------- */
 
 @media (max-width: 1023px) {
-  .frame {
-    grid-template-rows: minmax(0, 1fr) clamp(1.5rem, 4vh, 3rem);
-    grid-template-columns: var(--gutter) minmax(0, 1fr) var(--gutter);
-  }
-
-  .block {
-    grid-row: 1;
-  }
-
-  .orb {
-    inline-size: min(96vmin, 30rem);
-    block-size: min(96vmin, 30rem);
+  .dark {
+    padding-inline: var(--gutter);
   }
 }
 

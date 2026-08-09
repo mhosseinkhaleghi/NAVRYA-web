@@ -235,23 +235,28 @@ const TRAIT_LEAD = 0.96;
  * `FALL_TEXT` is section 6 lifting away, `FALL_PLATE` the forest going down
  * behind it; the text leads, so the words are gone before the picture is. Both
  * are windows inside the `fall` beat.
- *
- * `HEAD_IN` is the one that matters to the composition: the orb comes up on the
- * *same* window as the headline, not after it, so the backdrop arrives with the
- * words rather than announcing them. The paragraph then follows on its own beat.
  */
 const FALL_TEXT = [0, 0.5];
 const FALL_PLATE = [0.16, 0.78];
+
 /**
- * Where a block of a document section is on its way in, as fractions of the
- * frame's height: nothing at `RISE[0]` down the frame, whole at `RISE[1]`.
+ * How a section below the film arrives, as windows on its own entry.
  *
- * This is what makes the sections below the film read as a page rather than a
- * reel. Each block answers for itself, from its own position — so the headline
- * arrives, and then the paragraph does, because the paragraph is lower down and
- * reaches the mark later. No beats, no thresholds, no stagger written by hand.
+ * `0` is the moment its top edge touches the bottom of the frame; `1` is the
+ * moment it is as far in as it can get — the whole of it in view for a section
+ * shorter than the frame, its top edge at the top for one that is taller.
+ *
+ * Two steps, in this order, and the order is the point: the head — the title,
+ * and in section 7 the orb behind it, which shares the same number — comes up
+ * on the first part of the entry, and the body follows on the second. One
+ * scroll brings the title and its backdrop, the next brings the words under it.
+ *
+ * Both finish before `1` so a section is composed a little before it is as far
+ * in as it will ever get; the last section on the page has nothing past it to
+ * scroll into, and would otherwise only complete at the final pixel.
  */
-const RISE = [0.9, 0.55];
+const HEAD_IN = [0, 0.45];
+const BODY_IN = [0.45, 0.88];
 
 /**
  * The section rail — one mark per section, in the order the frame reaches them.
@@ -365,7 +370,8 @@ export const stageScript = `
   var TRAIT_HOLD = ${TRAIT_HOLD}, TRAIT_LEAD = ${TRAIT_LEAD};
   var FALL_TEXT = ${JSON.stringify(FALL_TEXT)};
   var FALL_PLATE = ${JSON.stringify(FALL_PLATE)};
-  var RISE = ${JSON.stringify(RISE)};
+  var HEAD_IN = ${JSON.stringify(HEAD_IN)};
+  var BODY_IN = ${JSON.stringify(BODY_IN)};
   var RAIL = ${JSON.stringify(RAIL)};
   var FLOW_SECTIONS = ${JSON.stringify(FLOW_SECTIONS)};
   var GLIDE_MS = ${JSON.stringify(GLIDE_MS)};
@@ -638,28 +644,47 @@ export const stageScript = `
     // like anything else, and their content arrives *on the way in* and then
     // stays. Two mechanisms, and both are needed.
     //
-    // The first is the arrival. Every block that rises carries a data-rise and
-    // names the property it feeds — the controller measures where the block is
-    // in the frame and writes that progress onto its section, so the CSS is the
-    // same --head / --body the film used and looks identical. It is scrubbed
-    // by scroll, so it comes in with the wheel rather than playing at the
-    // viewer, and it is kept at its high-water mark, so scrolling back up does
-    // not unbuild a section that has already arrived. Past that point the page
-    // simply moves, which is the whole of what was asked for.
-    var risers = [];
-    each('[data-rise]', function (el) {
-      var owner = el.closest(FLOW_SECTIONS);
-      if (owner) risers.push({ el: el, owner: owner, prop: '--' + el.getAttribute('data-rise'), high: 0 });
+    // The first is the arrival, and it is two steps in a fixed order: the head
+    // — the title, and in section 7 the orb behind it — comes up on the first
+    // part of the section's entry, and the body follows on the rest. Scrubbed
+    // by the wheel rather than played at the viewer, and kept at a high-water
+    // mark, so once a section has arrived scrolling back through it is only
+    // scrolling.
+    //
+    // The measure is how far the section has climbed, over a screen of scroll —
+    // *less whatever screen this particular section does not have*. Every
+    // section but the last can travel a full screen from the moment its top
+    // edge touches the bottom of the frame; the last one runs out of document
+    // first, and how much sooner is exactly how far past the end of the scroll
+    // its top edge would have to go. Taking that off the travel is what lets
+    // one rule give every section the same unhurried two-step and still finish
+    // the last one at the foot of the page. A fixed screen leaves the last
+    // section permanently half-built; the section's own height instead makes
+    // the entry as short as the section is, which on a phone is no entry at all.
+    var flows = [];
+    each(FLOW_SECTIONS, function (el) {
+      flows.push({ el: el, head: 0, body: 0 });
     });
 
-    function paintRisers() {
+    function stage(win, v) { return clamp01((v - win[0]) / (win[1] - win[0])); }
+
+    function paintFlow() {
       var h = window.innerHeight;
-      for (var r = 0; r < risers.length; r++) {
-        var it = risers[r];
-        var top = it.el.getBoundingClientRect().top;
-        var v = ease(clamp01((h * RISE[0] - top) / (h * (RISE[0] - RISE[1]))));
-        if (v > it.high) it.high = v;
-        it.owner.style.setProperty(it.prop, it.high);
+      var end = document.documentElement.scrollHeight - h;
+      for (var i = 0; i < flows.length; i++) {
+        var f = flows[i];
+        var box = f.el.getBoundingClientRect();
+        // How far above the frame's bottom edge this section's top can ever
+        // get: a screen, unless the document runs out before it does.
+        var travel = h - Math.max(0, box.top + window.scrollY - end);
+        if (travel < 1) travel = 1;
+        var shown = clamp01((h - box.top) / travel);
+        var head = ease(stage(HEAD_IN, shown));
+        var body = ease(stage(BODY_IN, shown));
+        if (head > f.head) f.head = head;
+        if (body > f.body) f.body = body;
+        f.el.style.setProperty('--head', f.head);
+        f.el.style.setProperty('--body', f.body);
       }
     }
 
@@ -933,7 +958,7 @@ export const stageScript = `
         shown ? span(p, edge.fall[0], edge.fall[1]) : 0
       );
 
-      paintRisers();
+      paintFlow();
       paintRail();
 
       // Past the film the site is a page, and a page's content scrolls *under*

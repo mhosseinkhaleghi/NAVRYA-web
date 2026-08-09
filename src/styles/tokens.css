@@ -117,6 +117,16 @@
   --s7-rule: clamp(8rem, 15.2vw, 17rem);
   --s7-rule-wide: clamp(13rem, 26vw, 29rem);
   --s7-flourish: clamp(3.5rem, 6vw, 6.5rem);
+  /*
+   * The orb's diameter, and with it the only floor on section 7's height.
+   *
+   * Measured against the frame's width and nothing else. The sections below the
+   * film are as tall as what is in them, so a diameter taken from the viewport's
+   * height — or its shorter axis — would be a diameter the section has no room
+   * for on a tall frame, and the orb would be cut off by its own section.
+   */
+  --s7-orb: clamp(17rem, 46vw, 50rem);
+  --s7-pad: clamp(2.5rem, 4vw, 5rem);
 
   /* ── Section 8 — the prop firms ─────────────────────────────────────────── */
   --fs-s8-display: clamp(1.75rem, min(4.1vw, 7vh), 5.5rem);
@@ -128,6 +138,8 @@
   --s8-firm: clamp(9rem, 14vw, 15rem);
   --s8-gap: clamp(1.5rem, 3.4vw, 4rem);
   --s8-cap: clamp(0.7rem, 1.1vw, 1.1rem);
+  --s8-pad: clamp(2.5rem, 4vw, 5rem);
+  --s8-stack: clamp(2rem, 3.4vw, 3.5rem);
   /* Slow on purpose — atmosphere behind a row of names, not a ticker. */
   --s8-drift: 110s;
 
@@ -145,13 +157,15 @@
   /*
    * How much of the wall is on screen.
    *
-   * Capped well under the height of one column's run of three cards, because
-   * the loop only stays seamless while the run is taller than the window it is
-   * seen through — at the far end of the travel the run's own bottom edge is
-   * what fills the last of the frame.
+   * Taken from the frame's width, like everything else in these three sections,
+   * so the wall cannot grow a section past what its own scroll can reveal. It
+   * also stays well under the height of one column's run, because the loop is
+   * only seamless while the run is taller than the window it is seen through.
    */
-  --s9-height: clamp(19rem, 48vh, 31rem);
-  --s9-pad: clamp(1.1rem, 1.6vw, 1.9rem);
+  --s9-height: clamp(17rem, 30vw, 29rem);
+  --s9-pad: clamp(2.5rem, 4vw, 5rem);
+  --s9-stack: clamp(1.75rem, 3vw, 3rem);
+  --s9-card-pad: clamp(1.1rem, 1.6vw, 1.9rem);
   --s9-radius: clamp(0.65rem, 0.9vw, 1.1rem);
   --s9-mark: clamp(1.5rem, 2.1vw, 2.4rem);
   --s9-avatar: clamp(2.15rem, 2.9vw, 3.1rem);
@@ -317,9 +331,6 @@
     --s9-measure: 100%;
     --s9-sub-measure: 100%;
     --s9-wall: 100%;
-    /* Two columns, then one — so the window can be deeper without the run
-     * running short of it. */
-    --s9-height: clamp(19rem, 48vh, 28rem);
     --s9-drift-a: 52s;
     --s9-drift-b: 64s;
     --s9-drift-c: 45s;

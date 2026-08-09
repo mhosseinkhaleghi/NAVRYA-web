@@ -54,9 +54,9 @@ function Card({ quote }: { quote: Quote }) {
  * Section 9 — what the traders say.
  *
  * The last of the three sections below the film, and built exactly like the two
- * above it: an ordinary section of a page, its own screen tall, sitting
- * directly under section 8 with nothing between them. Its heading rises on the
- * way in and its columns follow, both scrubbed by scroll and both kept at their
+ * above it: an ordinary section of a page, as tall as what is in it, sitting
+ * directly under section 8. Its heading rises on the way in and its columns
+ * follow on the next part of the scroll, both scrubbed and both kept at their
  * high-water mark, so once it has arrived scrolling back up is only scrolling.
  *
  * Three columns, travelling at three different speeds, the middle one against
@@ -87,14 +87,14 @@ export function TestimonialsSection({
 
   return (
     <section className={styles.testimonials} data-testimonials="" data-reveal="">
-      <div className={styles.head} data-rise="head">
+      <div className={styles.head}>
         <p className={styles.pill}>{testimonials.eyebrow}</p>
         <h2 className={styles.headline}>{testimonials.headline}</h2>
         <p className={styles.subline}>{testimonials.subline}</p>
         <div className={styles.rule} />
       </div>
 
-      <div className={styles.columns} data-rise="body">
+      <div className={styles.columns}>
         {columns.map((column, index) => (
           <div key={index} className={styles.column} data-column={index}>
             <div className={styles.stream}>
