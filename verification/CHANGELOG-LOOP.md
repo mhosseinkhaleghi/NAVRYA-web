@@ -57,6 +57,25 @@ black rectangle before — renders headline, subline and feature card.
 
 ## Loop exit
 
-Two iterations of fixes, three verification runs, 45 locale/breakpoint runs and
-450 section visits in total. Exited green on both targets rather than on the
+Two iterations of fixes, four verification runs, 60 locale/breakpoint runs and
+600 section visits in total. Exited green on both targets rather than on the
 iteration limit.
+
+## Final acceptance pass — `https://navrya.com`
+
+Run against the deployed HEAD (`4830a5f`), after all three workflow runs went
+green:
+
+```
+PASS — 15 locale/breakpoint runs, no failures.
+runs: 15 | failures: 0
+page errors total: 0
+console errors total: 0
+failed requests total: 0
+videos per page: 7
+first error on load: none, in any run
+load ms  min/median/max: 896 / 1164 / 1517
+```
+
+Console is clean, no request fails, all seven plates are present on every page,
+and nothing throws on load in any of the fifteen runs.
