@@ -1,3 +1,4 @@
+import { APP_URL } from "@/config/site";
 import type { Dictionary } from "@/i18n/dictionaries";
 
 import styles from "./ArchetypesSection.module.css";
@@ -87,6 +88,9 @@ function Compass() {
  * With no JavaScript the panel marked open in the markup stays open and the
  * other three stay legible, so the section is complete before a line of script
  * runs — which is also why `data-on` is rendered here rather than set on boot.
+ * The panels are links for the same reason: choosing an archetype takes a
+ * reader into the product, and that has to work whether or not the controller
+ * ever boots. Opening a panel is decoration on top of a plain address.
  *
  * The plates live in the stylesheet rather than on `<img>` tags on purpose: the
  * preview inlines every asset as base64 and repeats the markup once per locale,
@@ -139,14 +143,13 @@ export function ArchetypesSection({
           aria-label={archetypes.explore}
         >
           {archetypes.cast.map((member, index) => (
-            <button
+            <a
               key={member.id}
-              type="button"
               className={styles.panel}
+              href={APP_URL}
               data-cast-panel={index}
               data-art={member.id}
               {...(index === 0 ? { "data-on": "" } : {})}
-              aria-pressed={index === 0}
             >
               <span className={styles.art} aria-hidden="true" />
               <span className={styles.veil} aria-hidden="true" />
@@ -167,14 +170,16 @@ export function ArchetypesSection({
                   ))}
                 </span>
               </span>
-            </button>
+            </a>
           ))}
         </div>
       </div>
 
       <p className={styles.foot}>
         <span className={styles.footRule} aria-hidden="true" />
-        {archetypes.explore}
+        <a className={styles.footLink} href={APP_URL} data-explore="">
+          {archetypes.explore}
+        </a>
         <span className={styles.footRule} aria-hidden="true" />
       </p>
     </section>

@@ -788,20 +788,52 @@ export const stageScript = `
       // panel the finger is only passing over.
       var fine = window.matchMedia ? window.matchMedia('(hover: hover) and (pointer: fine)') : null;
 
+      // The panels are links now, so open/closed is presentation and not a
+      // pressed state — \`aria-pressed\` on a link would announce a toggle that
+      // does not exist. What each one announces is its own caption and where it
+      // goes, which is true of all four whether or not they are open.
       var openPanel = function (i) {
         gallery.setAttribute('data-open', i);
         for (var p = 0; p < pads.length; p++) {
           if (p === i) pads[p].setAttribute('data-on', '');
           else pads[p].removeAttribute('data-on');
-          pads[p].setAttribute('aria-pressed', p === i ? 'true' : 'false');
         }
       };
+
+      // Below the stack breakpoint the gallery is not an accordion: every panel
+      // is open and every caption is already readable, so there is nothing a
+      // tap could usefully reveal.
+      var stacked = window.matchMedia ? window.matchMedia('(max-width: 767px)') : null;
 
       var bind = function (i, el) {
         el.addEventListener('pointerenter', function (e) {
           if (e.pointerType === 'mouse' && (!fine || fine.matches)) openPanel(i);
         });
-        el.addEventListener('click', function () { openPanel(i); });
+        // Whether the panel was open *before the finger landed* — which is not
+        // the same question as whether it is open now. A tap focuses the link
+        // before it clicks it, focus opens the panel, so by the time the click
+        // arrives every panel looks open and a guard reading it then would
+        // never hold. Read at pointerdown, used at click.
+        //
+        // It starts true so that Enter on a focused panel, which arrives with
+        // no pointerdown at all, follows the link: a reader who tabbed here has
+        // had the caption open in front of them since the moment they arrived.
+        var wasOpen = true;
+        el.addEventListener('pointerdown', function (e) {
+          wasOpen = e.pointerType === 'mouse' || el.hasAttribute('data-on');
+        });
+        el.addEventListener('click', function (e) {
+          // A mouse has already opened this panel by hovering it, so its click
+          // means the link. A finger has not: the panel under it may still be a
+          // sliver with its caption cropped, and following the link from there
+          // would send a reader into the product before they could read who
+          // they were choosing. So the first tap opens, and the next one goes.
+          var needsALook =
+            !wasOpen && !(fine && fine.matches) && !(stacked && stacked.matches);
+          if (needsALook) e.preventDefault();
+          wasOpen = true;
+          openPanel(i);
+        });
         el.addEventListener('focus', function () { openPanel(i); });
         el.addEventListener('keydown', function (e) {
           var k = e.key;

@@ -112,9 +112,19 @@ For every `<video>` in the document:
   on outside click.
 - **Section rail**: present, correct number of marks, clicking a mark moves the
   document and lands on that section.
-- **Section 10 accordion**: hover and click each of the four panels; the
-  clicked one must expand (its width must grow) and the others contract.
-  Arrow keys must move the selection, mirrored under RTL.
+- **Section 10 accordion**: hovering a panel must expand it (its width must
+  grow) and contract the others, with a real mouse move so `pointerenter`
+  carries `pointerType: "mouse"`. Hover must not navigate. Arrow keys must move
+  the selection, mirrored under RTL.
+- **Links out to the product**: the header's login, all four archetype panels
+  and the invitation under them must each be an `<a>` whose `href` is exactly
+  `https://app.navrya.com/` — read off the built page, not from the constant the
+  page was built from. Six links per locale, at every breakpoint.
+
+  A panel is a link, so pressing one leaves the site by design; expansion is
+  asserted through hover instead. This replaces a click assertion with a hover
+  assertion of the same strength and adds six link assertions per run — the
+  accordion is still covered, and the count of checks goes up, not down.
 - **Scroll the full timeline**: real wheel events, not `scrollTo` — a
   synthesised jump hides exactly the class of bug reported here. Confirm the
   document actually advances and never stalls.

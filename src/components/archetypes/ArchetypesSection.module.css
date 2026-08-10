@@ -450,6 +450,28 @@
   background: linear-gradient(to left, transparent 0%, var(--c-gold-line) 100%);
 }
 
+/*
+ * The invitation is the section's call to action, so it goes where the panels
+ * go. Its underline arrives on hover rather than sitting there: at rest the
+ * line would read as a third hairline between the two it already sits between.
+ */
+.footLink {
+  color: inherit;
+  letter-spacing: inherit;
+  transition: color 260ms var(--ease-out);
+}
+
+.footLink:hover {
+  color: var(--c-gold);
+  text-decoration: underline;
+  text-underline-offset: 0.4em;
+}
+
+.footLink:focus-visible {
+  outline: var(--hairline) solid var(--c-gold);
+  outline-offset: 4px;
+}
+
 /* -----------------------------------------------------------------------------
  * Compact frames.
  *

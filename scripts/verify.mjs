@@ -52,6 +52,12 @@ const BASE =
 const ITERATION = String(args.iteration ?? "1");
 const OUT = join(process.cwd(), "verification", ITERATION, TARGET);
 
+// Mirrors `src/config/site.ts`. Deliberately a second copy rather than an
+// import: the point of the check is that the built page carries this exact
+// address, and importing the same constant the page was built from would make
+// the assertion agree with itself no matter what shipped.
+const APP_URL = "https://app.navrya.com/";
+
 const ALL_LOCALES = [
   { code: "en", dir: "ltr" },
   { code: "tr", dir: "ltr" },
@@ -481,16 +487,45 @@ async function runOne(browser, locale, bp) {
   else if (menu.links.length < 5)
     fail(where, "interaction", `language menu lists ${menu.links.length} locales, expected 5`);
 
-  where.at = "accordion";
-  const accordion = await page.evaluate(() => {
-    const panels = [...document.querySelectorAll("[data-cast-panel]")];
-    if (panels.length !== 4) return { count: panels.length };
-    const before = panels.map((p) => Math.round(p.getBoundingClientRect().width));
-    panels[2].click();
-    return { count: 4, before };
+  // Every way out of this site to the product. These are links, so what has to
+  // hold is the address itself — not that something happens when you press it.
+  where.at = "app-links";
+  const appLinks = await page.evaluate(() => {
+    const read = (sel) =>
+      [...document.querySelectorAll(sel)].map((a) => ({
+        tag: a.tagName,
+        href: a.getAttribute("href"),
+      }));
+    return {
+      login: read("[data-login]"),
+      panels: read("[data-cast-panel]"),
+      foot: read("[data-explore]"),
+    };
   });
-  if (accordion.count !== 4) {
-    fail(where, "interaction", `section 10 has ${accordion.count} panels, expected 4`);
+  const expectLinks = [
+    ["header login", appLinks.login, 1],
+    ["archetype panel", appLinks.panels, 4],
+    ["section 10 invitation", appLinks.foot, 1],
+  ];
+  for (const [label, found, want] of expectLinks) {
+    if (found.length !== want) {
+      fail(where, "interaction", `${found.length} ${label} link(s), expected ${want}`);
+      continue;
+    }
+    for (const link of found) {
+      if (link.tag !== "A")
+        fail(where, "interaction", `${label} is a <${link.tag.toLowerCase()}>, expected <a>`);
+      else if (link.href !== APP_URL)
+        fail(where, "interaction", `${label} points at ${link.href}, expected ${APP_URL}`);
+    }
+  }
+
+  where.at = "accordion";
+  const panelCount = await page.evaluate(
+    () => document.querySelectorAll("[data-cast-panel]").length,
+  );
+  if (panelCount !== 4) {
+    fail(where, "interaction", `section 10 has ${panelCount} panels, expected 4`);
   } else if (bp.width < 768) {
     // Under 768px the gallery is not an accordion at all: it stacks into a
     // column and every archetype is open at once. Nothing widens on click, and
@@ -511,18 +546,29 @@ async function runOne(browser, locale, bp) {
       );
     }
   } else {
+    // The panels are links, so a click leaves the page — that is the point of
+    // this change, not a regression. Hover is what opens one, and hover is what
+    // gets asserted: a real mouse move, so `pointerenter` arrives with
+    // `pointerType: "mouse"` the way the controller requires.
+    const widths = () =>
+      page.evaluate(() =>
+        [...document.querySelectorAll("[data-cast-panel]")].map((p) =>
+          Math.round(p.getBoundingClientRect().width),
+        ),
+      );
+    const before = await widths();
+    await page.hover("[data-cast-panel='2']");
     await page.waitForTimeout(1400);
-    const after = await page.evaluate(() =>
-      [...document.querySelectorAll("[data-cast-panel]")].map((p) =>
-        Math.round(p.getBoundingClientRect().width),
-      ),
-    );
-    if (!(after[2] > accordion.before[2])) {
+    const after = await widths();
+    if (!(after[2] > before[2])) {
       fail(
         where,
         "interaction",
-        `clicking panel 3 did not expand it (${accordion.before[2]} → ${after[2]})`,
+        `hovering panel 3 did not expand it (${before[2]} → ${after[2]})`,
       );
+    }
+    if (page.url() !== url) {
+      fail(where, "interaction", `hovering panel 3 navigated to ${page.url()}`);
     }
   }
 

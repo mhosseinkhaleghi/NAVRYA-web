@@ -1,3 +1,4 @@
+import { APP_URL } from "@/config/site";
 import { type Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
 
@@ -56,9 +57,12 @@ export function SiteHeader({
 
         <LanguageMenu locale={locale} dictionary={dictionary} />
 
-        <button type="button" className={styles.login}>
+        {/* Login leaves this site for the product, so it is a link and not a
+          * button: it should middle-click, ctrl-click and copy-link like every
+          * other address on the web. */}
+        <a className={styles.login} href={APP_URL} data-login="">
           {actions.login}
-        </button>
+        </a>
       </div>
 
       <span className={styles.rule} aria-hidden="true" />

@@ -441,7 +441,7 @@ src/
     frame/Stage          the sticky screen + the block that gives it its run
     frame/Scene          the seven plates — played raw, no overlay
     frame/stage-script   the opening beat, the scroll timeline, the rail
-    site/SiteHeader      wordmark, nav, language menu, Login
+    site/SiteHeader      wordmark, nav, language menu, Login → the product
     site/BrandMark       the compass-and-arrow mark, drawn as SVG
     site/LanguageMenu    <details>-based, works without JavaScript
     hero/Hero            section 1 — headline, rule, sub-headline, cue
@@ -451,9 +451,11 @@ src/
     dark/DarkSection     section 7 — the journal, inside the orb
     partners/…           section 8 — the prop-firm rail
     testimonials/…       section 9 — three columns of quotes
-    archetypes/…         section 10 — the four-way cast accordion
+    archetypes/…         section 10 — the four-way cast accordion, each a
+                         link into the product
     rail/SectionRail     one mark per section, down the trailing edge
     icons/               globe, chevron, and one per panel
+  config/site.ts         the product's address, named once
   i18n/
     config.ts            locale list, text direction, short labels
     dictionaries/*.json  one file per language
