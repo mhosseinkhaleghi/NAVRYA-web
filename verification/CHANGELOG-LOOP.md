@@ -38,8 +38,25 @@ below 768px where it is a stacked list. Detail in `1/FINDINGS.md`.
 
 **Result after fixes**
 
-- local: 15/15 runs pass, 0 failures.
-- live: still failing — the fix is not deployed yet. Re-verified after deploy.
+- local (iteration 2): 15/15 runs pass, 0 failures.
+- live (iteration 3, after deploy): 15/15 runs pass, 0 failures.
 
-**Still open at the end of the iteration:** nothing on local; live pending the
-push.
+**Deploy.** Run `31348684221` on `44b44d1` — verify and deploy both green. This
+was the first push since the pipeline was added that changed the Docker build
+context, so it was the first real image build; the run before it changed only
+`.github/`, which `.dockerignore` excludes, so it was a full cache hit and never
+exercised the `COPY .next/standalone` that would have failed.
+
+Confirmed on the live origin afterwards: `body{…overflow-x:clip}` in
+`/_next/static/chunks/23c1-ff-tnlc_.css`, and section 3 at `en/desktop` — a
+black rectangle before — renders headline, subline and feature card.
+
+**Still open at the end of the iteration:** nothing. Both targets green.
+
+---
+
+## Loop exit
+
+Two iterations of fixes, three verification runs, 45 locale/breakpoint runs and
+450 section visits in total. Exited green on both targets rather than on the
+iteration limit.
