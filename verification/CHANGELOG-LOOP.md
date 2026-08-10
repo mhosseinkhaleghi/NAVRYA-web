@@ -79,3 +79,25 @@ load ms  min/median/max: 896 / 1164 / 1517
 
 Console is clean, no request fails, all seven plates are present on every page,
 and nothing throws on load in any of the fifteen runs.
+
+## Independent re-check — same URL, later, cold
+
+Re-run from a fresh container with a freshly installed browser, well after the
+deploy settled, to catch anything the first pass could have seen only because it
+ran minutes behind its own push — a warm CDN edge, a still-running old
+container, a cached asset:
+
+```
+PASS — 15 locale/breakpoint runs, no failures.
+runs: 15 | failures: 0
+page errors: 0 | console errors: 0 | failed requests: 0 | firstError runs: 0
+videos per page: 7
+load ms  min/median/max: 1081 / 1163 / 1627
+```
+
+`screenTop` is `0` with `position: sticky` at every one of the six film markers,
+in all five locales — the fix is holding, not merely passing. Origin still
+serves `body{…overflow-x:clip}` from `/_next/static/chunks/23c1-ff-tnlc_.css`.
+Screenshots reviewed: `en/desktop/03-panel2` (the black rectangle of iteration
+1) renders headline, subline, feature card and plate; `fa/desktop/01-hero`
+mirrors correctly — nav right, rail left, RTL copy, plate playing.
