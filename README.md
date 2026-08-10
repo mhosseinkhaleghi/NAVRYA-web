@@ -1,6 +1,6 @@
 # Navrya — web
 
-A premium cinematic marketing site. **Current scope: sections 1–8.**
+A premium cinematic marketing site. **Current scope: sections 1–10.**
 
 ```bash
 npm install
@@ -9,20 +9,49 @@ npm run build
 npm start
 ```
 
+Deployment is documented in [`DEPLOYMENT.md`](DEPLOYMENT.md); what has to hold
+before a deploy, and the harness that proves it, are in
+[`VERIFY_PLAN.md`](VERIFY_PLAN.md) and `scripts/verify.mjs`.
+
 ---
 
 ## The frame model
 
-Navrya is not a scrolling document. The viewport is a **fixed, full-screen
-cinematic frame** that never translates. Everything renders inside
-`components/frame/Stage` (`position: fixed; inset: 0; overflow: hidden`).
+Navrya is not a scrolling document. The viewport is a **full-screen cinematic
+frame** that never translates while the film runs. Everything renders inside
+`components/frame/Stage`, whose screen is `position: sticky; inset-block-start:
+0` inside a block as tall as the timeline.
+
+Sticky rather than fixed, and the distinction is load-bearing. A fixed screen
+needs a spacer to stand in for the height it no longer occupies and a z-index
+stack to sit under the document that follows it; sticky needs neither, because
+the block *is* the height and the screen simply stops pinning when its block
+ends. The handover to section 7 is then a fact of layout instead of something
+kept in step by hand.
+
+It comes with one sharp edge, and the site has been bitten by it: **a sticky
+element pins to its nearest scroll container, not necessarily the viewport.**
+Give `html` or `body` an `overflow` of anything but `visible` on either axis and
+the spec forces the other axis to `auto`, body becomes that scroll container,
+and the screen pins to a scrollport that never scrolls — which is to say it does
+not pin at all, and every panel positioned against it leaves the top of the
+page. That is why `globals.css` sets `overflow-x: **clip**` and not `hidden`:
+clip cuts the overflow without creating a scroll container. Do not change it
+back.
 
 The *document*, however, does scroll — and that scroll is the timeline. Native
 scroll rather than synthesised wheel events, because it comes with momentum,
 trackpads, touch, keyboard and the scrollbar already working, and because a
 position is inherently reversible in a way an event stream is not. The
-scrollbar is hidden and overscroll chaining switched off, so nothing about the
-frame reads as a scrolling page.
+scrollbar is hidden, so nothing about the frame reads as a scrolling page.
+
+Overscroll chaining is switched off **sideways only**. On the vertical axis
+`overscroll-behavior: none` does not mean "no rubber-banding" — it means "this
+document does not hand a scroll to whatever contains it", and embedded in an
+iframe that is exactly the wrong promise: when the frame's own scroll runs out
+the only way onward is to chain to the parent. With it on both axes the wheel
+died at the bottom of an embed while the rail, which scrolls by script, kept
+working. Hence `overscroll-behavior-x`.
 
 Scroll input feeds scene changes *inside* the frame. `Stage` renders a track
 below itself whose only job is to give the document height to scroll through;
@@ -409,13 +438,21 @@ component stylesheets.
 src/
   app/[locale]/          route shell — sets <html lang dir> per locale
   components/
-    frame/Stage          the fixed frame + the scroll track behind it
-    frame/Scene          the five plates — played raw, no overlay
-    frame/stage-script   the opening beat and the scroll timeline
+    frame/Stage          the sticky screen + the block that gives it its run
+    frame/Scene          the seven plates — played raw, no overlay
+    frame/stage-script   the opening beat, the scroll timeline, the rail
     site/SiteHeader      wordmark, nav, language menu, Login
+    site/BrandMark       the compass-and-arrow mark, drawn as SVG
     site/LanguageMenu    <details>-based, works without JavaScript
     hero/Hero            section 1 — headline, rule, sub-headline, cue
     panel/PanelSection   sections 2-4 — one component, three sets of copy
+    arrow/ArrowSection   section 5 — the closing line, word by word
+    miss/MissSection     section 6 — the shot that missed
+    dark/DarkSection     section 7 — the journal, inside the orb
+    partners/…           section 8 — the prop-firm rail
+    testimonials/…       section 9 — three columns of quotes
+    archetypes/…         section 10 — the four-way cast accordion
+    rail/SectionRail     one mark per section, down the trailing edge
     icons/               globe, chevron, and one per panel
   i18n/
     config.ts            locale list, text direction, short labels
