@@ -80,6 +80,45 @@ load ms  min/median/max: 896 / 1164 / 1517
 Console is clean, no request fails, all seven plates are present on every page,
 and nothing throws on load in any of the fifteen runs.
 
+## Change — the login and the archetypes link to the product
+
+Requested, not a defect. The header's Login, section 10's four archetypes and
+the invitation under them now point at `https://app.navrya.com/`.
+
+| File | Change |
+|------|--------|
+| `src/config/site.ts` | new — the product's address, named once |
+| `src/components/site/SiteHeader.tsx` | Login `<button>` → `<a href>` |
+| `src/components/archetypes/ArchetypesSection.tsx` | panels `<button>` → `<a href>`, `aria-pressed` dropped, foot text wrapped in a link |
+| `src/components/archetypes/ArchetypesSection.module.css` | `.footLink` |
+| `src/components/frame/stage-script.ts` | open state read at `pointerdown`, used at `click`; no more `aria-pressed` |
+| `scripts/verify.mjs` | six link assertions per run; accordion asserted through hover |
+| `VERIFY_PLAN.md` | the contract for both |
+
+**Two traps worth recording.**
+
+A tap focuses a link before it clicks it, and focus opens a panel — so a guard
+that reads "is this panel open?" at click time reads `true` every time and never
+holds. The state has to be read at `pointerdown`. The first version of this
+change was wrong in exactly that way and the touch test caught it.
+
+The sandbox then hid the failure: with no route stub, a tap *did* navigate, the
+request to the product died on the egress gateway's TLS reset, and the page
+stayed put — which looks identical to a guard that worked. Stubbing the app host
+inside the browser is what made the difference visible.
+
+**Also:** a build served on a port that already had a stale server bound to it
+returned the old page while the new build sat correct on disk. `ps` could not
+see the old process. Worth knowing before trusting a local check.
+
+**Verified.** Local standalone server 15/15, live 15/15 after deploy, 6 links in
+all five locales. Eleven navigation behaviours tested directly against
+`https://navrya.com` — hover opens without navigating, mouse click goes, first
+tap on a coarse pointer opens and the second goes, a stacked-layout tap goes,
+and every panel is still a working link with JavaScript switched off. The new
+link assertion was confirmed to fail six times when pointed at a wrong address,
+so it is a check and not decoration.
+
 ## Independent re-check — same URL, later, cold
 
 Re-run from a fresh container with a freshly installed browser, well after the
