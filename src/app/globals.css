@@ -27,7 +27,21 @@ html,
 body {
   margin: 0;
   padding: 0;
-  overflow-x: hidden;
+  /*
+   * `clip`, not `hidden`.
+   *
+   * `overflow-x: hidden` makes the box a scroll container on both axes — the
+   * other axis is forced to `auto` — and a `position: sticky` descendant then
+   * sticks to *that* container's scrollport rather than the viewport. Body's
+   * scrollport never scrolls, so the film's screen never stuck: it scrolled
+   * away with its own block and took every panel positioned against it off the
+   * top of the page. Sections 2 to 6 rendered and were thousands of pixels
+   * above the frame.
+   *
+   * `clip` cuts the overflow without creating a scroll container, which is the
+   * whole reason it exists.
+   */
+  overflow-x: clip;
   /*
    * Sideways only.
    *

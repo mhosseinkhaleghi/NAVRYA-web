@@ -42,3 +42,7 @@ next-env.d.ts
 
 # generated preview build (scripts/build-preview.mjs)
 /preview/
+# verification runs (scripts/verify.mjs): the write-ups are worth keeping, the
+# thousand screenshots and the raw reports are not
+/verification/**/*.png
+/verification/**/report.json
