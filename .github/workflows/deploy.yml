@@ -44,8 +44,7 @@ jobs:
       - name: Deploy the website
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
-          SERVER_PORT: ${{ secrets.SERVER_PORT }}
           SERVER_USER: ${{ secrets.SERVER_USER }}
         run: |
-          ssh -p "${SERVER_PORT:-22}" "$SERVER_USER@$SERVER_HOST" \
+          ssh -p 22 "$SERVER_USER@$SERVER_HOST" \
             'set -eu; cd /opt/navrya-web; git fetch --prune origin claude/navrya-hero-section-n3tkxr; git checkout claude/navrya-hero-section-n3tkxr; git reset --hard origin/claude/navrya-hero-section-n3tkxr; docker compose -f docker-compose.production.yml build; docker compose -f docker-compose.production.yml up -d --remove-orphans; docker image prune -f'
