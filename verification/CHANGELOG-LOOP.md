@@ -85,7 +85,7 @@ and nothing throws on load in any of the fifteen runs.
 Briefly, the film stepped: one gesture glided to the next section and waited,
 and a later change made each glide last as long as the footage it scrubbed.
 Both were reverted at the owner's request. `61d1531` and `71111b4`, undone in
-`b0d7c96`; the tree is byte-identical to what it was before them.
+`30b3993`; the tree is byte-identical to what it was before them.
 
 Scroll is native again — a wheel moves the page by its own delta, momentum,
 trackpad, touch, keyboard and scrollbar all untouched, and every frame of the
