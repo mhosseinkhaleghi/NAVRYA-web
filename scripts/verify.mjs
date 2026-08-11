@@ -196,7 +196,10 @@ const LAYOUT_PROBE = () => {
 /* ── the walk ────────────────────────────────────────────────────────────── */
 
 /** Waits for the document to stop moving, and returns where it came to rest. */
-async function settled(page, { quiet = 3, tick = 90, max = 60 } = {}) {
+// The budget has to outlast the longest step. Playing at footage speed, the
+// stretch from section 4 to section 5 is about fifteen seconds of film — a
+// shorter deadline would return a mid-glide position and read it as a landing.
+async function settled(page, { quiet = 3, tick = 90, max = 400 } = {}) {
   let prev = null;
   let still = 0;
   for (let i = 0; i < max; i++) {
@@ -226,6 +229,12 @@ async function wheelUntil(page, predicate, { step = 600, max = 60 } = {}) {
   for (let i = 0; i < max; i++) {
     if (await page.evaluate(predicate)) return true;
     const before = await page.evaluate(() => Math.round(window.scrollY));
+    await page.mouse.wheel(0, step);
+    // Inside the film a step plays for as long as its footage — the whole
+    // sequence runs fifty seconds. The second wheel, after the deaf window, is
+    // the site's own way to end a shot early, and it lands on the same stop.
+    // Watching the film out at 1x is asserted separately, in `stepped-scroll`.
+    await page.waitForTimeout(500);
     await page.mouse.wheel(0, step);
     const after = await settled(page);
     // A heavy frame can drop a wheel; only a run of them is a stall.
@@ -554,10 +563,18 @@ async function runOne(browser, locale, bp) {
       // Re-walking the same gestures from the top must land on the same pixels.
       // A stepped scroll is deterministic; free scrolling dressed up as one is
       // not, and this is what tells them apart.
+      //
+      // Walked with the skip: a wheel, a pause past the deaf window, then a
+      // second wheel that lands the shot early. That is a second real check —
+      // ending a shot early has to arrive at the same stop as watching it out,
+      // or the escape hatch quietly puts the viewer somewhere else — and it
+      // replays the film in seconds rather than the fifty it now runs for.
       await page.evaluate(() => window.scrollTo(0, 0));
       await page.waitForTimeout(300);
       const again = [];
       for (let i = 0; i < landings.length; i++) {
+        await page.mouse.wheel(0, 120);
+        await page.waitForTimeout(500);
         await page.mouse.wheel(0, 120);
         again.push(await settled(page));
       }
@@ -568,7 +585,8 @@ async function runOne(browser, locale, bp) {
         fail(
           where,
           "scroll",
-          `step ${drifted[0].i + 1} landed at ${drifted[0].y}, was ${drifted[0].want} — steps are not deterministic`,
+          `step ${drifted[0].i + 1} landed at ${drifted[0].y} when cut short, ` +
+            `${drifted[0].want} when played out — the two do not agree`,
         );
       }
     }

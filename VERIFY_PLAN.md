@@ -139,6 +139,15 @@ For every `<video>` in the document:
 
   Below the film a 120px wheel must move roughly 120px: stepping must not leak
   into the document. Asserted per locale and per breakpoint.
+- **A step runs at the footage's speed**: the glide must last the difference
+  between the film's playhead at its two ends — the beat table's real seconds,
+  `ffprobe`'d off the assets — within 25%. Measured per step across the whole
+  film, so a shot played at 6× fails.
+- **Ending a shot early lands in the same place**: a second gesture past the
+  400ms deaf window must arrive at exactly the stop the step was heading for,
+  not somewhere between. Checked on every step of the determinism re-walk.
+- **One flick is one step**: twelve wheel events 16ms apart — a trackpad's
+  momentum tail — must land on the same pixel as a single gesture.
 
 ## Exit criteria
 

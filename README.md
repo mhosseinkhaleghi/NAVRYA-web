@@ -54,6 +54,24 @@ headline assembling, the panel arriving — and then stops and waits, instead of
 asking the viewer to keep feeding the wheel through six sections of animation
 that was always going to run to the same place.
 
+**A step lasts exactly as long as the film it is scrubbing.** The beat table
+carries each beat's duration in seconds beside its length in vh — for the six
+beats that scrub footage those are the files' real durations, read off the
+assets with `ffprobe`; the five without footage of their own take the 78vh per
+second the plate beats average. A step's glide is the difference between the
+playhead at its two ends, so the plate runs at 1× and the text arrives at the
+pace it was timed to. The glide is linear for the same reason: an eased curve
+would have every shot start slow, run fast through the middle and slow again.
+The whole film is 49 seconds, and the longest single step — section 4 to
+section 5, the draw and the release — is about fourteen of them.
+
+Which is long enough that it must be escapable, so a gesture 400ms or more into
+a step lands it immediately on the stop it was heading for. Before 400ms nothing
+gets through, and no event that is part of the same flick ever acts: a wheel
+only counts as a new gesture if 150ms have passed since the last one. Without
+that, one trackpad flick — which keeps emitting for a second or more after the
+fingers lift — would land a shot and start the next, and cross three sections.
+
 The stops are not new numbers. They are the rail's own targets, the ones its
 marks already travel to, plus one per feature in section 6's deck. So a step
 lands exactly where clicking the rail lands, and retiming a beat moves both
@@ -61,12 +79,10 @@ together. The last step of the film does *not* stop on the track's final frame �
 that frame is deliberately empty, section 6 lifted away and the forest gone down
 with it — it carries through to section 7.
 
-Three things this is careful about. A step owns the wheel until it lands plus
-140ms, or a trackpad's momentum reads as several more gestures and skips whole
-sections. Going back up, the film reaches as far as section 7, or the way in
-costs a screen's worth of 120px nudges while the way out is one flick. And
-`preventDefault` never fires below the film, never on a pinch, and never on a
-key that belongs to whatever is focused.
+Two more things this is careful about. Going back up, the film reaches as far as
+section 7, or the way in costs a screen's worth of 120px nudges while the way
+out is one flick. And `preventDefault` never fires below the film, never on a
+pinch, and never on a key that belongs to whatever is focused.
 
 Past `filmMax` none of this applies: the document scrolls like a document, with
 momentum, trackpad, touch, keyboard and scrollbar all native and untouched.

@@ -80,6 +80,66 @@ load ms  min/median/max: 896 / 1164 / 1517
 Console is clean, no request fails, all seven plates are present on every page,
 and nothing throws on load in any of the fifteen runs.
 
+## Change — a step now runs at the film's own speed
+
+The steps below were right about *where* they landed and wrong about *how
+fast*. The glide duration came from a distance heuristic — 620ms plus up to
+1400ms keyed to how far the jump was — so a beat holding five seconds of
+footage was flung past in under a second. Roughly 6× too quick to see.
+
+Fixed at the source: the beat table now carries seconds beside vh. For the six
+beats that scrub footage those are the files' real durations, `ffprobe`'d off
+the assets rather than estimated:
+
+```
+hunter-turn 3.041667   valley-prey 5.041667   hunter-draw 5.041667
+hunter-strike 7.041667  arrow-learns 6.7      forest-miss 4.4
+```
+
+The five beats with no footage of their own — a plate held on its closing frame
+while text leaves, the dip through black, the feature deck — take the 77.7vh per
+second the plate beats average, so the pace never changes at a seam. The film
+runs 49.15 seconds end to end.
+
+A step's glide is now the difference between the playhead at its two ends, and
+runs **linearly** — an eased curve would have every shot start slow, run fast
+through the middle and slow again, which is not what "the same speed as the
+video" means. Measured on `en/desktop`:
+
+| step | from → to | footage | measured | ratio |
+|---|---|---|---|---|
+| 1 | 0 → 4938 | 7.73s | 8.02s | 1.04 |
+| 2 | 4938 → 8002 | 4.64s | 4.92s | 1.06 |
+| 3 | 8002 → 12512 | 6.95s | 7.24s | 1.04 |
+| 4 | 12512 → 21969 | 13.94s | 14.54s | 1.04 |
+| 5 | 21969 → 24565 | 3.47s | 3.82s | 1.10 |
+| 6 | 24565 → 27536 | 3.70s | 3.93s | 1.06 |
+| 7 | 27536 → 29621 | 3.06s | 3.29s | 1.07 |
+| 8 | 29621 → 31706 | 3.06s | 3.29s | 1.07 |
+
+The 4–10% excess is the harness's own settle detection, not the page.
+
+**Two consequences that had to be handled, not ignored.**
+
+*The longest step is fourteen seconds.* Section 4 to section 5 is the draw, the
+release and the arrow's flight — and at 1× that is a long time to be unable to
+do anything. A gesture 400ms or more into a step now lands it immediately on the
+stop it was heading for. Verified: the 13.9s step cut short at 2.0s, landing at
+21969, the same pixel as watching it out.
+
+*One flick stopped being one step.* The old 400ms deaf window was longer than
+the old glide, so it happened to swallow a whole trackpad momentum tail. Against
+a fifteen-second shot the tail outlives the window, and every straggler landed
+the shot and started the next — one flick crossing three sections. Found by the
+burst test, which went from 4938 to 11664. A wheel now only counts as a new
+gesture if 150ms have passed since the last one; inside a flick the events never
+stop for that long, between two deliberate flicks they always do. Back to 4938.
+
+**Verified.** 15/15 local, 15/15 live. Timing measured per step across the whole
+film. Touch, keyboard, reduced motion and the momentum burst re-run and all
+passing. The suite now asserts the footage speed itself, and that ending a shot
+early arrives at the same stop as watching it out.
+
 ## Change — one gesture plays one shot
 
 Requested. Inside the film the wheel no longer scrolls by its own delta: a

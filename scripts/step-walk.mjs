@@ -39,8 +39,9 @@ if (!view) throw new Error(`unknown breakpoint ${BP}`);
 const OUT = join(process.cwd(), "verification", ITERATION, "steps", LOCALE, BP);
 mkdirSync(OUT, { recursive: true });
 
-/** Waits for the document to stop moving. */
-async function settled(page, { quiet = 3, tick = 90, max = 60 } = {}) {
+/** Waits for the document to stop moving. The budget outlasts the longest step,
+ * which at footage speed is about fifteen seconds. */
+async function settled(page, { quiet = 3, tick = 90, max = 400 } = {}) {
   let prev = null;
   let still = 0;
   for (let i = 0; i < max; i++) {
