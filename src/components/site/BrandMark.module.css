@@ -17,11 +17,14 @@
   transform: none;
 }
 
+/* Both are filled outlines now, not a stroked circle and a triangle: the
+ * geometry is the brand's own vector, and its ring is a shape with two edges
+ * rather than a line with a width. Nothing here sets a colour the design system
+ * does not already name — the SVG itself carries none, so this file is the only
+ * place the mark's colour is decided. */
 .ring {
-  fill: none;
-  stroke: var(--c-gold);
-  stroke-width: 5.6;
-  stroke-linecap: round;
+  fill: var(--c-gold);
+  stroke: none;
   filter: drop-shadow(0 0 10px rgb(216 166 75 / 0.28));
 }
 
