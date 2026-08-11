@@ -80,6 +80,53 @@ load ms  min/median/max: 896 / 1164 / 1517
 Console is clean, no request fails, all seven plates are present on every page,
 and nothing throws on load in any of the fifteen runs.
 
+## Change — one gesture plays one shot
+
+Requested. Inside the film the wheel no longer scrolls by its own delta: a
+gesture glides to the next resting point and ignores everything until it lands.
+
+The stops are the rail's own targets plus section 6's three features, so a step
+lands exactly where clicking the rail lands. `en/desktop`, one gesture each:
+
+| # | y | rail | deck |
+|---|------|------|------|
+| 0 | 0 | 1 | — |
+| 1 | 4938 | 2 | — |
+| 2 | 8002 | 3 | — |
+| 3 | 12512 | 4 | — |
+| 4 | 21969 | 5 | — |
+| 5 | 24565 | 6 | — |
+| 6 | 27536 | 6 | 1 of 3 |
+| 7 | 29621 | 6 | 2 of 3 |
+| 8 | 31706 | 6 | 3 of 3 |
+| 9 | 34380 | 7 | — |
+
+Nine gestures from the top of the film to section 7, and three back up the way
+they came — 31706, 29621, 27536, the same pixels in reverse.
+
+**Two things found by looking rather than by reasoning.**
+
+The film's last frame is deliberately black: section 6 has lifted away and the
+forest has gone down with it. Free scrolling passed through that in motion. As a
+*stop* it is a screen of nothing, and the first version of this change left the
+viewer sitting on it. The last step now carries through to section 7.
+
+Going back up had the mirror of the same problem — the film's reach ended at the
+track, so the way in from section 7 cost a screen's worth of 120px nudges while
+the way out was one flick. The upward reach now ends where the downward step
+landed.
+
+**Verified.** 15/15 locale and breakpoint runs local, 15/15 live. Nine gestures
+walked and screenshotted at `en/desktop`, `es/desktop`, `fa/mobile` and
+`ar/tablet` — identical shape in all four, 0 console errors. Touch, keyboard,
+reduced motion and a 12-wheel burst tested separately: a swipe steps and a tap
+does not, PageDown/PageUp/ArrowDown/Space step, reduced motion still steps
+(instantly), and twelve wheels in 240ms land on exactly the same pixel as one.
+
+The new assertion was run against the pre-stepping build still on live and
+failed there — "one gesture moved only 120px — not a step" — so it is a check
+and not decoration.
+
 ## Change — the login and the archetypes link to the product
 
 Requested, not a defect. The header's Login, section 10's four archetypes and

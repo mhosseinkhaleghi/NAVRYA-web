@@ -918,28 +918,42 @@ export const stageScript = `
       }
     }
 
-    var glide = null;
+    var glide = null, glideDone = null;
+
+    // Whoever asked for the jump is told when it is over — including when it is
+    // abandoned. A caller that holds something open for the duration has to be
+    // released either way, or one interrupted jump wedges it forever.
+    function settle() {
+      var d = glideDone;
+      glideDone = null;
+      if (d) d();
+    }
+
     function stopGlide() {
       if (glide === null) return;
       cancelAnimationFrame(glide);
       glide = null;
+      settle();
     }
 
-    // The argument is a document offset in pixels.
-    function goTo(where) {
+    // The first argument is a document offset in pixels.
+    function goTo(where, done) {
       var max = document.documentElement.scrollHeight - window.innerHeight;
       var to = Math.round(Math.max(0, Math.min(where, max)));
       var from = window.scrollY;
       var dist = Math.abs(to - from);
       stopGlide();
-      if (reduced || dist < 2) { window.scrollTo(0, to); return; }
+      if (reduced || dist < 2) { window.scrollTo(0, to); if (done) done(); return; }
 
+      glideDone = done || null;
       var ms = GLIDE_MS[0] + clamp01(dist / (max || 1)) * GLIDE_MS[1];
       var t0 = performance.now();
       (function step(now) {
         var t = clamp01((now - t0) / ms);
         window.scrollTo(0, from + (to - from) * ease(t));
-        glide = t < 1 ? requestAnimationFrame(step) : null;
+        if (t < 1) { glide = requestAnimationFrame(step); return; }
+        glide = null;
+        settle();
       })(t0);
     }
 
@@ -968,11 +982,194 @@ export const stageScript = `
       }
     }
 
-    // The wheel always wins. A jump in flight is abandoned the moment the
-    // viewer takes the scroll back, rather than fighting them for it.
+    // ── the film is stepped, the document is not ─────────────────────────────
+    //
+    // Above the flow sections this page is a film, and a film is watched a shot
+    // at a time. One gesture plays the whole of the next shot and then stops,
+    // rather than asking the viewer to keep feeding the wheel through six
+    // sections of animation that was always going to run to the same place.
+    //
+    // Only the film. Past \`filmMax\` the site is a document and scrolls like
+    // one — nothing below that line is ever intercepted.
+
+    // Where a step is allowed to come to rest, in document pixels.
+    //
+    // These are not new numbers. They are the rail's own resting points, the
+    // ones its marks already travel to — each section built, not mid-assembly —
+    // plus one per feature in section 6's deck, which the dots already treat as
+    // places to be. So a step lands exactly where clicking the rail lands, and
+    // retiming a beat moves both together.
+    //
+    // Rebuilt per gesture rather than cached: \`filmMax\` moves with the viewport,
+    // and a stop list measured at boot is wrong the first time the frame resizes.
+    function stops() {
+      var out = [0], s;
+      for (s = 1; s < railAt.length; s++) {
+        if (railAt[s] !== null) out.push(Math.round(railAt[s] * filmMax));
+      }
+      if (dotEls.length) {
+        var b = edge.traits, w = b[1] - b[0];
+        var reach = (dotEls.length - 1) + TRAIT_HOLD;
+        for (s = 0; s < dotEls.length; s++) {
+          var tp = TRAIT_LEAD * (s + TRAIT_HOLD) / reach;
+          out.push(Math.round((b[0] + tp * w) * filmMax));
+        }
+      }
+      // Not the film's last frame. That frame is deliberately empty — section 6
+      // has lifted away and the forest has gone down with it, leaving the frame
+      // black on the page's own ground — which is a fine thing to travel
+      // through and a poor thing to be left sitting on. The last step of the
+      // film carries through to the first section under it, so the sequence
+      // hands over to the document on something worth looking at.
+      var landing = null;
+      for (s = 0; s < railFlow.length; s++) {
+        if (railFlow[s]) { landing = railTarget(s); break; }
+      }
+      out.push(Math.round(landing === null ? filmMax : landing));
+      out.sort(function (x, y) { return x - y; });
+
+      // Two stops a few pixels apart are one stop. A gesture that moves the page
+      // by nothing at all reads as a dead wheel, not as a step.
+      var keep = [];
+      for (s = 0; s < out.length; s++) {
+        if (!keep.length || out[s] - keep[keep.length - 1] > 40) keep.push(out[s]);
+      }
+      return keep;
+    }
+
+    // The scroll is held until the opening plate reaches its last frame, and
+    // stepping has nothing to say before then — the wheel is already going
+    // nowhere. Below the film it has nothing to say either.
+    //
+    // Which edge counts depends on which way the gesture goes. Coming *down*,
+    // the film ends at its last frame and the document takes over. Going back
+    // *up*, that same last frame is still the film — otherwise the first
+    // gesture out of section 7 spends itself as an ordinary 120px nudge before
+    // stepping resumes, and the way back in feels broken in a way the way out
+    // does not.
+    function inFilm(dir) {
+      if (root.dataset.timeline !== 'live') return false;
+      var y = window.scrollY;
+      if (dir >= 0) return y < filmMax - 2;
+      // Going back up, the film reaches as far as the place its last step
+      // landed — the first flow section. Stopping the reach at the track's own
+      // end would leave a viewer in section 7 nudging 120px at a time across
+      // the frame's height before stepping picked them up again.
+      var list = stops();
+      return y > 2 && y <= list[list.length - 1] + 2;
+    }
+
+    // A step owns the wheel until it lands, plus a beat. Without the tail a
+    // trackpad's momentum — which keeps firing for a while after the fingers
+    // lift — would read as several more gestures and skip whole sections.
+    var STEP_TAIL_MS = 140;
+    var stepLock = false;
+    var stepSeq = 0;
+
+    function stepTo(dir) {
+      var list = stops();
+      var y = window.scrollY;
+      var to = null, s;
+      if (dir > 0) {
+        for (s = 0; s < list.length; s++) {
+          if (list[s] > y + 8) { to = list[s]; break; }
+        }
+      } else {
+        for (s = list.length - 1; s >= 0; s--) {
+          if (list[s] < y - 8) { to = list[s]; break; }
+        }
+      }
+      if (to === null) return false;
+
+      var mine = ++stepSeq;
+      stepLock = true;
+      goTo(to, function () {
+        setTimeout(function () { if (mine === stepSeq) stepLock = false; }, STEP_TAIL_MS);
+      });
+      return true;
+    }
+
+    function onWheel(e) {
+      // A pinch is a zoom, not a scroll, and taking it would break the page for
+      // anyone who magnifies.
+      if (e.ctrlKey) return;
+      var dy = e.deltaY;
+      if (e.deltaMode === 1) dy *= 16;
+      else if (e.deltaMode === 2) dy *= window.innerHeight;
+      if (Math.abs(dy) < 2) return;
+      var dir = dy > 0 ? 1 : -1;
+      if (!inFilm(dir)) return;
+      e.preventDefault();
+      if (stepLock) return;
+      stepTo(dir);
+    }
+    window.addEventListener('wheel', onWheel, { passive: false });
+
+    // One finger is a scroll and is stepped. Two are a pinch and are left alone.
+    var swipeFrom = null;
+    window.addEventListener('touchstart', function (e) {
+      swipeFrom = e.touches.length === 1 ? e.touches[0].clientY : null;
+    }, { passive: true });
+    window.addEventListener('touchmove', function (e) {
+      if (swipeFrom === null || e.touches.length !== 1) return;
+      var dy = swipeFrom - e.touches[0].clientY;
+      if (!inFilm(dy >= 0 ? 1 : -1)) return;
+      e.preventDefault();
+    }, { passive: false });
+    window.addEventListener('touchend', function (e) {
+      var from = swipeFrom;
+      swipeFrom = null;
+      if (from === null) return;
+      var t = e.changedTouches && e.changedTouches[0];
+      var dy = t ? from - t.clientY : 0;
+      // Short of this it is a tap, or a finger that came to rest.
+      if (Math.abs(dy) < 24) return;
+      var dir = dy > 0 ? 1 : -1;
+      if (!inFilm(dir) || stepLock) return;
+      stepTo(dir);
+    }, { passive: false });
+
+    window.addEventListener('keydown', function (e) {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (!inFilm(1) && !inFilm(-1)) return;
+      var t = e.target;
+      var typing = t && (t.isContentEditable
+        || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
+      if (typing) return;
+      var k = e.key;
+      var space = k === ' ' || k === 'Spacebar';
+      // Space belongs to whatever is focused if that thing does something with
+      // it — a rail mark, a link, the language menu's summary.
+      if (space && t && /^(BUTTON|A|SUMMARY)$/.test(t.tagName)) return;
+
+      var dir = 0;
+      if (k === 'PageDown' || k === 'ArrowDown' || (space && !e.shiftKey)) dir = 1;
+      else if (k === 'PageUp' || k === 'ArrowUp' || (space && e.shiftKey)) dir = -1;
+      else if (k === 'Home' || k === 'End') {
+        e.preventDefault();
+        if (stepLock) return;
+        var mine = ++stepSeq;
+        stepLock = true;
+        goTo(k === 'Home' ? 0 : document.documentElement.scrollHeight, function () {
+          setTimeout(function () { if (mine === stepSeq) stepLock = false; }, STEP_TAIL_MS);
+        });
+        return;
+      }
+      if (!dir || !inFilm(dir)) return;
+      e.preventDefault();
+      if (stepLock) return;
+      stepTo(dir);
+    }, { passive: false });
+
+    // The wheel always wins — below the film. A jump in flight is abandoned the
+    // moment the viewer takes the scroll back, rather than fighting them for it.
+    // Inside the film the gesture *is* the step, and cancelling on it would
+    // strand the viewer between two shots with the sequence half-played.
     var takeover = ['wheel', 'touchstart', 'keydown'];
     for (i = 0; i < takeover.length; i++) {
-      window.addEventListener(takeover[i], stopGlide, { passive: true });
+      window.addEventListener(takeover[i], function () {
+        if (!stepLock) stopGlide();
+      }, { passive: true });
     }
 
     function apply() {

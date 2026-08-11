@@ -128,6 +128,17 @@ For every `<video>` in the document:
 - **Scroll the full timeline**: real wheel events, not `scrollTo` — a
   synthesised jump hides exactly the class of bug reported here. Confirm the
   document actually advances and never stalls.
+- **Stepped scroll through the film**: a single wheel gesture must
+  1. advance the page (never stall),
+  2. travel at least 200px — a step that inches is free scrolling wearing a hat,
+  3. come to rest on a resting point the *site itself* names, collected by
+     clicking each of the film's rail marks and each of section 6's dots rather
+     than recomputed here, and
+  4. land on the same pixel when the same gestures are repeated from the top —
+     a stepped scroll is deterministic and a free one is not.
+
+  Below the film a 120px wheel must move roughly 120px: stepping must not leak
+  into the document. Asserted per locale and per breakpoint.
 
 ## Exit criteria
 
