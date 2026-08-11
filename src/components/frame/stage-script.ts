@@ -24,44 +24,32 @@
 export const INTRO_REVEAL_AT = 4.33;
 
 /**
- * The timeline: one beat per plate, in vh of scroll and in seconds. Must add up
- * to the `--timeline-vh` token, which is what actually creates the scrollable
- * height.
- *
- * The seconds are the film's own clock, and they exist so a stepped gesture can
- * play a shot at the speed it was shot at. For a beat that scrubs footage the
- * number is that file's real duration, read off the asset with `ffprobe`, not
- * estimated:
- *
- *     hunter-turn 3.041667 · valley-prey 5.041667 · hunter-draw 5.041667
- *     hunter-strike 7.041667 · arrow-learns 6.7 · forest-miss 4.4
- *
- * The five beats with no footage of their own — a plate held on its closing
- * frame while text leaves, a dip through black, the feature deck — are given
- * the same 78vh per second the plate beats average, so the sequence never
- * changes pace at a seam. That average is the "roughly 70vh per second" the
- * allocation below was designed to, measured rather than guessed.
+ * The timeline: one beat per plate, in vh of scroll. Must add up to the
+ * `--timeline-vh` token, which is what actually creates the scrollable height.
  *
  * There are no holds. Earlier the picture froze on a plate's closing frame
  * while its panel scrolled out, and every one of those pauses ended in a lurch
  * as the next plate took over — a still image and then sudden motion reads as a
  * jump however well the frames match. Now each plate runs straight into the
  * next and the text leaves *over* the plate that is already moving.
+ *
+ * Scroll is allocated at roughly 70vh per second of footage, so every plate
+ * scrubs at the same rate and the sequence never changes pace at a seam.
  */
 const BEATS = [
-  ["turn", 210, 3.041667], // hunter-turn — he turns back to the valley
-  ["prey", 380, 5.041667], // valley-prey — the deer walks in and grazes
-  ["draw", 380, 5.041667], // hunter-draw — he raises the bow and draws
-  ["strike", 520, 7.041667], // hunter-strike — the camera pushes in to the draw
+  ["turn", 210], // hunter-turn   · 3.0s — he turns back to the valley
+  ["prey", 380], // valley-prey   · 5.0s — the deer walks in and grazes
+  ["draw", 380], // hunter-draw   · 5.0s — he raises the bow and draws
+  ["strike", 520], // hunter-strike · 7.0s — the camera pushes in to the draw
   // Section 4 leaves here, over the plate's closing frame and nothing else.
   // The release is the loudest moment in the sequence and the text must be off
   // the screen before it, not sliding out across it.
-  ["clear", 160, 2.058674],
-  ["arrow", 520, 6.7], // arrow-learns — the release, and the world goes dark
+  ["clear", 160],
+  ["arrow", 520], // arrow-learns  · 6.7s — the release, and the world goes dark
   // The last word going white is the end of the section, not the middle of it —
   // both the paragraph and the ring finish within a hair of the beat's end, so
   // there is no stretch of scroll left over once the sentence is complete.
-  ["learn", 340, 4.374782],
+  ["learn", 340],
   // Section 5 leaves, the arrow goes with it, and the frame dips through black
   // before the next morning fades up. The one handover that is not a cut.
   //
@@ -69,16 +57,16 @@ const BEATS = [
   // arrives — which is why it can be this short. What made the old 240 feel
   // long was not the handover but the 100vh of nothing in front of it, before
   // `LEARN_LEAD` was taken to the end of its own beat.
-  ["depart", 150, 1.929992],
-  ["miss", 420, 4.4], // forest-miss — the arrow is in the tree, the deer runs
+  ["depart", 150],
+  ["miss", 420], // forest-miss   · 4.4s — the arrow is in the tree, the deer runs
   // The psychology features, one per stretch of scroll. The deck finishes with
   // the beat — see `TRAIT_LEAD` — so there is no stretch left over once the
   // last feature is up.
-  ["traits", 560, 7.205470],
+  ["traits", 560],
   // Section 6 lifts away and the forest goes with it, leaving the frame black.
   // The last plate of the sequence has nothing after it to cut to, so this one
   // ends on the page's own ground rather than on another shot.
-  ["fall", 180, 2.315990],
+  ["fall", 180],
   // The film ends here. Everything below is ordinary document — see `Stage`'s
   // `after` — vertical sections one after another, scrolled like any page.
 ] as const;
@@ -930,50 +918,28 @@ export const stageScript = `
       }
     }
 
-    var glide = null, glideDone = null;
-
-    // Whoever asked for the jump is told when it is over — including when it is
-    // abandoned. A caller that holds something open for the duration has to be
-    // released either way, or one interrupted jump wedges it forever.
-    function settle() {
-      var d = glideDone;
-      glideDone = null;
-      if (d) d();
-    }
-
+    var glide = null;
     function stopGlide() {
       if (glide === null) return;
       cancelAnimationFrame(glide);
       glide = null;
-      settle();
     }
 
-    // The first argument is a document offset in pixels.
-    //
-    // \`hold\` is an explicit duration in milliseconds. A jump that is *given* one
-    // runs it out linearly, because that caller is playing the footage at its
-    // own speed and an eased curve would have the film slow at both ends and
-    // run fast through the middle of every shot. A jump without one keeps the
-    // distance-keyed ease the rail has always used: a rail mark is a jump
-    // across the film, not a screening of it.
-    function goTo(where, done, hold) {
+    // The argument is a document offset in pixels.
+    function goTo(where) {
       var max = document.documentElement.scrollHeight - window.innerHeight;
       var to = Math.round(Math.max(0, Math.min(where, max)));
       var from = window.scrollY;
       var dist = Math.abs(to - from);
       stopGlide();
-      if (reduced || dist < 2) { window.scrollTo(0, to); if (done) done(); return; }
+      if (reduced || dist < 2) { window.scrollTo(0, to); return; }
 
-      glideDone = done || null;
-      var timed = hold > 0;
-      var ms = timed ? hold : GLIDE_MS[0] + clamp01(dist / (max || 1)) * GLIDE_MS[1];
+      var ms = GLIDE_MS[0] + clamp01(dist / (max || 1)) * GLIDE_MS[1];
       var t0 = performance.now();
       (function step(now) {
         var t = clamp01((now - t0) / ms);
-        window.scrollTo(0, from + (to - from) * (timed ? t : ease(t)));
-        if (t < 1) { glide = requestAnimationFrame(step); return; }
-        glide = null;
-        settle();
+        window.scrollTo(0, from + (to - from) * ease(t));
+        glide = t < 1 ? requestAnimationFrame(step) : null;
       })(t0);
     }
 
@@ -1002,286 +968,11 @@ export const stageScript = `
       }
     }
 
-    // ── the film is stepped, the document is not ─────────────────────────────
-    //
-    // Above the flow sections this page is a film, and a film is watched a shot
-    // at a time. One gesture plays the whole of the next shot and then stops,
-    // rather than asking the viewer to keep feeding the wheel through six
-    // sections of animation that was always going to run to the same place.
-    //
-    // Only the film. Past \`filmMax\` the site is a document and scrolls like
-    // one — nothing below that line is ever intercepted.
-
-    // Where a step is allowed to come to rest, in document pixels.
-    //
-    // These are not new numbers. They are the rail's own resting points, the
-    // ones its marks already travel to — each section built, not mid-assembly —
-    // plus one per feature in section 6's deck, which the dots already treat as
-    // places to be. So a step lands exactly where clicking the rail lands, and
-    // retiming a beat moves both together.
-    //
-    // Rebuilt per gesture rather than cached: \`filmMax\` moves with the viewport,
-    // and a stop list measured at boot is wrong the first time the frame resizes.
-    function stops() {
-      var out = [0], s;
-      for (s = 1; s < railAt.length; s++) {
-        if (railAt[s] !== null) out.push(Math.round(railAt[s] * filmMax));
-      }
-      if (dotEls.length) {
-        var b = edge.traits, w = b[1] - b[0];
-        var reach = (dotEls.length - 1) + TRAIT_HOLD;
-        for (s = 0; s < dotEls.length; s++) {
-          var tp = TRAIT_LEAD * (s + TRAIT_HOLD) / reach;
-          out.push(Math.round((b[0] + tp * w) * filmMax));
-        }
-      }
-      // Not the film's last frame. That frame is deliberately empty — section 6
-      // has lifted away and the forest has gone down with it, leaving the frame
-      // black on the page's own ground — which is a fine thing to travel
-      // through and a poor thing to be left sitting on. The last step of the
-      // film carries through to the first section under it, so the sequence
-      // hands over to the document on something worth looking at.
-      var landing = null;
-      for (s = 0; s < railFlow.length; s++) {
-        if (railFlow[s]) { landing = railTarget(s); break; }
-      }
-      out.push(Math.round(landing === null ? filmMax : landing));
-      out.sort(function (x, y) { return x - y; });
-
-      // Two stops a few pixels apart are one stop. A gesture that moves the page
-      // by nothing at all reads as a dead wheel, not as a step.
-      var keep = [];
-      for (s = 0; s < out.length; s++) {
-        if (!keep.length || out[s] - keep[keep.length - 1] > 40) keep.push(out[s]);
-      }
-      return keep;
-    }
-
-    // The scroll is held until the opening plate reaches its last frame, and
-    // stepping has nothing to say before then — the wheel is already going
-    // nowhere. Below the film it has nothing to say either.
-    //
-    // Which edge counts depends on which way the gesture goes. Coming *down*,
-    // the film ends at its last frame and the document takes over. Going back
-    // *up*, that same last frame is still the film — otherwise the first
-    // gesture out of section 7 spends itself as an ordinary 120px nudge before
-    // stepping resumes, and the way back in feels broken in a way the way out
-    // does not.
-    function inFilm(dir) {
-      if (root.dataset.timeline !== 'live') return false;
-      var y = window.scrollY;
-      if (dir >= 0) return y < filmMax - 2;
-      // Going back up, the film reaches as far as the place its last step
-      // landed — the first flow section. Stopping the reach at the track's own
-      // end would leave a viewer in section 7 nudging 120px at a time across
-      // the frame's height before stepping picked them up again.
-      var list = stops();
-      return y > 2 && y <= list[list.length - 1] + 2;
-    }
-
-    // How many seconds of film sit between the top of the track and a given
-    // pixel. The beat table carries each beat's real duration, so this is the
-    // playhead: interpolate inside whichever beat the position falls in and add
-    // up the ones before it.
-    var beatSecs = [];
-    for (i = 0; i < BEATS.length; i++) beatSecs.push(BEATS[i][2]);
-
-    function secondsAt(px) {
-      var p = clamp01(filmMax > 0 ? px / filmMax : 0);
-      var acc = 0;
-      for (var b = 0; b < BEATS.length; b++) {
-        var e = edge[BEATS[b][0]];
-        var w = e[1] - e[0];
-        if (p <= e[1] || b === BEATS.length - 1) {
-          return acc + (w > 0 ? clamp01((p - e[0]) / w) : 0) * beatSecs[b];
-        }
-        acc += beatSecs[b];
-      }
-      return acc;
-    }
-
-    // A step owns the wheel while it plays, in two windows.
-    //
-    //   the first 400ms   nothing gets through at all. A trackpad's momentum
-    //                     keeps firing long after the fingers have lifted, and
-    //                     every one of those events would read as "next".
-    //   after that        a gesture ends the shot early and lands on the stop.
-    //                     Playing at the footage's own speed means the longest
-    //                     step runs about fifteen seconds, and someone who has
-    //                     already watched it has to be able to get past it.
-    //
-    // Plus a short tail once it lands, for the same momentum reason.
-    var STEP_DEAF_MS = 400;
-    var STEP_TAIL_MS = 140;
-    var stepLock = false;
-    var stepSeq = 0;
-    var stepStart = 0;
-    var stepTarget = null;
-
-    // Land the shot in flight right now, without starting another.
-    function finishStep() {
-      var to = stepTarget;
-      stepSeq++;
-      stopGlide();
-      if (to !== null) window.scrollTo(0, to);
-      stepLock = false;
-    }
-
-    function stepTo(dir) {
-      var list = stops();
-      var y = window.scrollY;
-      var to = null, s;
-      if (dir > 0) {
-        for (s = 0; s < list.length; s++) {
-          if (list[s] > y + 8) { to = list[s]; break; }
-        }
-      } else {
-        for (s = list.length - 1; s >= 0; s--) {
-          if (list[s] < y - 8) { to = list[s]; break; }
-        }
-      }
-      if (to === null) return false;
-
-      // The whole point: the glide lasts exactly as long as the film it is
-      // scrubbing. A step across five seconds of footage takes five seconds, so
-      // the plate plays at 1x and the text arrives at the pace it was timed to,
-      // rather than the sequence being flung past at six times speed because
-      // the duration came from a distance heuristic.
-      var ms = Math.abs(secondsAt(to) - secondsAt(y)) * 1000;
-
-      var mine = ++stepSeq;
-      stepLock = true;
-      stepStart = performance.now();
-      stepTarget = to;
-      goTo(to, function () {
-        setTimeout(function () { if (mine === stepSeq) stepLock = false; }, STEP_TAIL_MS);
-      }, ms);
-      return true;
-    }
-
-    // What a gesture does while a step is already playing.
-    // Returns true when the gesture has been spent and must not step.
-    function heldByStep() {
-      if (!stepLock) return false;
-      if (performance.now() - stepStart >= STEP_DEAF_MS) finishStep();
-      return true;
-    }
-
-    // Where one flick ends and the next begins.
-    //
-    // A wheel is not a gesture. One flick of a trackpad emits a stream of
-    // events a frame or two apart and keeps emitting for a second or more after
-    // the fingers have lifted, so "an event arrived" says nothing about whether
-    // a person asked for anything. What separates two flicks is the *gap*
-    // between them: inside a flick the events never stop for this long, and
-    // between two deliberate ones they always do.
-    //
-    // This matters far more now that a step runs for as long as its footage.
-    // The old 400ms deaf window was longer than a short glide, so it happened to
-    // swallow a whole tail; against a fifteen-second shot the tail outlives the
-    // window and every straggler would land the shot and start the next, which
-    // is one flick crossing three sections.
-    var GESTURE_GAP_MS = 150;
-    var lastWheelAt = -1e9;
-    function freshFlick() {
-      var now = performance.now();
-      var fresh = now - lastWheelAt > GESTURE_GAP_MS;
-      lastWheelAt = now;
-      return fresh;
-    }
-
-    function onWheel(e) {
-      // A pinch is a zoom, not a scroll, and taking it would break the page for
-      // anyone who magnifies.
-      if (e.ctrlKey) return;
-      var dy = e.deltaY;
-      if (e.deltaMode === 1) dy *= 16;
-      else if (e.deltaMode === 2) dy *= window.innerHeight;
-      if (Math.abs(dy) < 2) return;
-      var dir = dy > 0 ? 1 : -1;
-      if (!inFilm(dir)) return;
-      e.preventDefault();
-      // Always consumed, but only the first event of a flick may act. The rest
-      // of the stream, and the momentum after it, are the same gesture.
-      if (!freshFlick()) return;
-      if (heldByStep()) return;
-      stepTo(dir);
-    }
-    window.addEventListener('wheel', onWheel, { passive: false });
-
-    // One finger is a scroll and is stepped. Two are a pinch and are left alone.
-    var swipeFrom = null;
-    window.addEventListener('touchstart', function (e) {
-      swipeFrom = e.touches.length === 1 ? e.touches[0].clientY : null;
-    }, { passive: true });
-    window.addEventListener('touchmove', function (e) {
-      if (swipeFrom === null || e.touches.length !== 1) return;
-      var dy = swipeFrom - e.touches[0].clientY;
-      if (!inFilm(dy >= 0 ? 1 : -1)) return;
-      e.preventDefault();
-    }, { passive: false });
-    window.addEventListener('touchend', function (e) {
-      var from = swipeFrom;
-      swipeFrom = null;
-      if (from === null) return;
-      var t = e.changedTouches && e.changedTouches[0];
-      var dy = t ? from - t.clientY : 0;
-      // Short of this it is a tap, or a finger that came to rest.
-      if (Math.abs(dy) < 24) return;
-      var dir = dy > 0 ? 1 : -1;
-      if (!inFilm(dir) || heldByStep()) return;
-      stepTo(dir);
-    }, { passive: false });
-
-    window.addEventListener('keydown', function (e) {
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
-      if (!inFilm(1) && !inFilm(-1)) return;
-      var t = e.target;
-      var typing = t && (t.isContentEditable
-        || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
-      if (typing) return;
-      var k = e.key;
-      var space = k === ' ' || k === 'Spacebar';
-      // Space belongs to whatever is focused if that thing does something with
-      // it — a rail mark, a link, the language menu's summary.
-      if (space && t && /^(BUTTON|A|SUMMARY)$/.test(t.tagName)) return;
-
-      var dir = 0;
-      if (k === 'PageDown' || k === 'ArrowDown' || (space && !e.shiftKey)) dir = 1;
-      else if (k === 'PageUp' || k === 'ArrowUp' || (space && e.shiftKey)) dir = -1;
-      else if (k === 'Home' || k === 'End') {
-        // Not a step: Home and End are asked for the ends of the document, not
-        // for the next shot, so they travel at the rail's pace rather than the
-        // film's. Fifty seconds to reach the bottom of the page would not be
-        // answering the key that was pressed.
-        e.preventDefault();
-        if (heldByStep()) return;
-        var max = document.documentElement.scrollHeight - window.innerHeight;
-        var end = k === 'Home' ? 0 : max;
-        var mine = ++stepSeq;
-        stepLock = true;
-        stepStart = performance.now();
-        stepTarget = end;
-        goTo(end, function () {
-          setTimeout(function () { if (mine === stepSeq) stepLock = false; }, STEP_TAIL_MS);
-        });
-        return;
-      }
-      if (!dir || !inFilm(dir)) return;
-      e.preventDefault();
-      if (heldByStep()) return;
-      stepTo(dir);
-    }, { passive: false });
-
-    // The wheel always wins — below the film. A jump in flight is abandoned the
-    // moment the viewer takes the scroll back, rather than fighting them for it.
-    // Inside the film the gesture *is* the step, and cancelling on it would
-    // strand the viewer between two shots with the sequence half-played.
+    // The wheel always wins. A jump in flight is abandoned the moment the
+    // viewer takes the scroll back, rather than fighting them for it.
     var takeover = ['wheel', 'touchstart', 'keydown'];
     for (i = 0; i < takeover.length; i++) {
-      window.addEventListener(takeover[i], function () {
-        if (!stepLock) stopGlide();
-      }, { passive: true });
+      window.addEventListener(takeover[i], stopGlide, { passive: true });
     }
 
     function apply() {

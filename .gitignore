@@ -46,4 +46,3 @@ next-env.d.ts
 # thousand screenshots and the raw reports are not
 /verification/**/*.png
 /verification/**/report.json
-/verification/**/steps.json

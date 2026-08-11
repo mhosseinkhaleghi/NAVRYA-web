@@ -195,54 +195,22 @@ const LAYOUT_PROBE = () => {
 
 /* ── the walk ────────────────────────────────────────────────────────────── */
 
-/** Waits for the document to stop moving, and returns where it came to rest. */
-// The budget has to outlast the longest step. Playing at footage speed, the
-// stretch from section 4 to section 5 is about fifteen seconds of film — a
-// shorter deadline would return a mid-glide position and read it as a landing.
-async function settled(page, { quiet = 3, tick = 90, max = 400 } = {}) {
-  let prev = null;
-  let still = 0;
-  for (let i = 0; i < max; i++) {
-    const y = await page.evaluate(() => Math.round(window.scrollY));
-    if (y === prev) {
-      if (++still >= quiet) return y;
-    } else {
-      still = 0;
-    }
-    prev = y;
-    await page.waitForTimeout(tick);
-  }
-  return prev;
-}
-
-/**
- * Wheels until the predicate holds or the budget runs out. Returns whether it did.
- *
- * One wheel, then wait for the page to come to rest, then the next. Inside the
- * film a gesture no longer scrolls by its own delta — it starts a glide to the
- * next stop and ignores everything until that lands — so wheeling on a fixed
- * cadence would spend most of its events being correctly swallowed and read the
- * lock as a stall. Below the film this is just a slower ordinary walk.
- */
-async function wheelUntil(page, predicate, { step = 600, max = 60 } = {}) {
+/** Wheels until the predicate holds or the budget runs out. Returns whether it moved. */
+async function wheelUntil(page, predicate, { step = 600, max = 400 } = {}) {
+  let last = -1;
   let stalls = 0;
   for (let i = 0; i < max; i++) {
     if (await page.evaluate(predicate)) return true;
-    const before = await page.evaluate(() => Math.round(window.scrollY));
     await page.mouse.wheel(0, step);
-    // Inside the film a step plays for as long as its footage — the whole
-    // sequence runs fifty seconds. The second wheel, after the deaf window, is
-    // the site's own way to end a shot early, and it lands on the same stop.
-    // Watching the film out at 1x is asserted separately, in `stepped-scroll`.
-    await page.waitForTimeout(500);
-    await page.mouse.wheel(0, step);
-    const after = await settled(page);
-    // A heavy frame can drop a wheel; only a run of them is a stall.
-    if (after === before) {
-      if (++stalls > 4) return await page.evaluate(predicate);
+    await page.waitForTimeout(28);
+    const y = await page.evaluate(() => window.scrollY);
+    if (y === last) {
+      // A heavy frame can drop a wheel; only a run of them is a stall.
+      if (++stalls > 12) return await page.evaluate(predicate);
     } else {
       stalls = 0;
     }
+    last = y;
   }
   return await page.evaluate(predicate);
 }
@@ -463,158 +431,7 @@ async function runOne(browser, locale, bp) {
     if (!peyda) fail({ ...where, at: "fonts" }, "font", "Peyda did not load for an RTL locale");
   }
 
-  /* Stepped scroll: one gesture inside the film plays one whole shot.
-   *
-   * Asserted from the top, before the walk moves anything. What has to hold is
-   * that a single wheel lands the page on one of the rail's own resting points
-   * rather than somewhere in the middle of a beat, that it keeps going forward,
-   * and that it covers real ground — a step that inches is the old free scroll
-   * wearing a hat.
-   */
-  where.at = "stepped-scroll";
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await page.waitForTimeout(300);
-
-  // The stops the controller itself would use, read off the page's own rail so
-  // the check cannot drift from the timing it is checking.
-  const railStops = await page.evaluate(() => {
-    const track = document.querySelector("[data-track]");
-    if (!track) return null;
-    const filmMax = Math.max(1, track.offsetHeight - window.innerHeight);
-    return { filmMax: Math.round(filmMax) };
-  });
-  if (!railStops) {
-    fail(where, "scroll", "no [data-track] to measure the film against");
-  } else {
-    const landings = [];
-    for (let i = 0; i < 8; i++) {
-      const before = await page.evaluate(() => Math.round(window.scrollY));
-      if (before >= railStops.filmMax - 2) break;
-      await page.mouse.wheel(0, 120);
-      const after = await settled(page);
-      landings.push({ before, after });
-      if (after <= before) break;
-    }
-
-    if (!landings.length) {
-      fail(where, "scroll", "the film never accepted a wheel");
-    } else {
-      const stalled = landings.filter((l) => l.after <= l.before);
-      if (stalled.length) {
-        fail(
-          where,
-          "scroll",
-          `a wheel inside the film did not advance (${stalled[0].before} → ${stalled[0].after})`,
-        );
-      }
-      // A single small wheel used to move the page by its own delta. If a step
-      // is really being taken, one 120px gesture has to travel far further than
-      // that — the shortest beat in the table is 150vh.
-      const short = landings.filter((l) => l.after - l.before < 200);
-      if (short.length) {
-        fail(
-          where,
-          "scroll",
-          `one gesture moved only ${short[0].after - short[0].before}px — not a step`,
-        );
-      }
-      // And it has to come to rest *on a section*, not between two.
-      //
-      // The expected stops are collected from the site's own controls rather
-      // than recomputed here: click each of the film's six rail marks and each
-      // of section 6's feature dots, and note where the page settles. Those are
-      // the places the site itself calls resting points, so a step that lands
-      // anywhere else is a step that stops mid-beat.
-      // Marks 0-5 are the film's sections; mark 6 is the first flow section,
-      // which is where the film's last step hands over rather than stopping on
-      // the deliberately black frame at the very end of the track.
-      const known = [0, railStops.filmMax];
-      for (let m = 0; m < 7; m++) {
-        const ok = await page.evaluate((i) => {
-          const mark = document.querySelector(`[data-rail-mark="${i}"]`);
-          if (!mark) return false;
-          mark.click();
-          return true;
-        }, m);
-        if (ok) known.push(await settled(page));
-      }
-      const dots = await page.evaluate(
-        () => document.querySelectorAll("[data-miss] [data-dot]").length,
-      );
-      for (let d = 0; d < dots; d++) {
-        await page.evaluate((i) => {
-          document.querySelectorAll("[data-miss] [data-dot]")[i]?.click();
-        }, d);
-        known.push(await settled(page));
-      }
-
-      const adrift = landings
-        .map((l) => l.after)
-        .filter((y) => !known.some((k) => Math.abs(k - y) <= 4));
-      if (adrift.length) {
-        fail(
-          where,
-          "scroll",
-          `a step came to rest at ${adrift[0]}, which is not a section ` +
-            `(stops: ${[...known].sort((a, b) => a - b).join(", ")})`,
-        );
-      }
-
-      // Re-walking the same gestures from the top must land on the same pixels.
-      // A stepped scroll is deterministic; free scrolling dressed up as one is
-      // not, and this is what tells them apart.
-      //
-      // Walked with the skip: a wheel, a pause past the deaf window, then a
-      // second wheel that lands the shot early. That is a second real check —
-      // ending a shot early has to arrive at the same stop as watching it out,
-      // or the escape hatch quietly puts the viewer somewhere else — and it
-      // replays the film in seconds rather than the fifty it now runs for.
-      await page.evaluate(() => window.scrollTo(0, 0));
-      await page.waitForTimeout(300);
-      const again = [];
-      for (let i = 0; i < landings.length; i++) {
-        await page.mouse.wheel(0, 120);
-        await page.waitForTimeout(500);
-        await page.mouse.wheel(0, 120);
-        again.push(await settled(page));
-      }
-      const drifted = again
-        .map((y, i) => ({ i, y, want: landings[i].after }))
-        .filter((r) => Math.abs(r.y - r.want) > 2);
-      if (drifted.length) {
-        fail(
-          where,
-          "scroll",
-          `step ${drifted[0].i + 1} landed at ${drifted[0].y} when cut short, ` +
-            `${drifted[0].want} when played out — the two do not agree`,
-        );
-      }
-    }
-
-    // Stepping must not escape the film. Below it the page is a document and a
-    // wheel has to move by roughly its own delta, not jump a section.
-    await page.evaluate(() => {
-      const track = document.querySelector("[data-track]");
-      window.scrollTo(0, track.offsetHeight + 200);
-    });
-    await page.waitForTimeout(300);
-    const flowBefore = await page.evaluate(() => Math.round(window.scrollY));
-    await page.mouse.wheel(0, 120);
-    await page.waitForTimeout(250);
-    const flowAfter = await page.evaluate(() => Math.round(window.scrollY));
-    const moved = flowAfter - flowBefore;
-    if (moved > 400) {
-      fail(
-        where,
-        "scroll",
-        `a 120px wheel below the film moved ${moved}px — stepping is leaking into the document`,
-      );
-    }
-  }
-
   /* The wheel walk: prove the document really scrolls end to end. */
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await page.waitForTimeout(300);
   where.at = "wheel";
   const reachedBottom = await wheelUntil(
     page,
