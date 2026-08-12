@@ -8,11 +8,11 @@
  * attributes are ever set, so the CSS holding rules never match and the page is
  * simply, statically visible.
  *
- * Everything after the intro is a pure function of scroll position. Nothing
- * latches, nothing is one-shot: scroll back and the plates rewind, the text
- * comes down, the panels take themselves apart. That is why the beats are
- * driven by `--r` / `--exit` / `--o` custom properties instead of CSS
- * transitions or keyframes — the scroll wheel is the clock.
+ * Everything after the intro is a pure function of scroll position. The
+ * controller moves that position between complete story states, one at a time,
+ * so the wheel is an intent rather than a scrubber. The beats are still driven
+ * by `--r` / `--exit` / `--o` custom properties instead of CSS transitions or
+ * keyframes, which keeps every existing composition and cue intact.
  *
  * The one exception is the closing plate. The arrow is released and *plays*, in
  * its own time, because a loosed arrow that waits on the wheel is not a loosed
@@ -326,6 +326,11 @@ const FLOW_SECTIONS = RAIL.filter((s) => "flow" in s)
  */
 const GLIDE_MS = [620, 1400];
 
+/** One intentional scroll travels to one complete story state. */
+const STORY_GLIDE_MS = [1800, 4200];
+const STORY_HEAVY_MULTIPLIER = 2;
+const STORY_INPUT_HOLD_MS = 180;
+
 /**
  * The opening plate is never started until it can run without stalling.
  *
@@ -376,6 +381,9 @@ export const stageScript = `
   var RAIL = ${JSON.stringify(RAIL)};
   var FLOW_SECTIONS = ${JSON.stringify(FLOW_SECTIONS)};
   var GLIDE_MS = ${JSON.stringify(GLIDE_MS)};
+  var STORY_GLIDE_MS = ${JSON.stringify(STORY_GLIDE_MS)};
+  var STORY_HEAVY_MULTIPLIER = ${STORY_HEAVY_MULTIPLIER};
+  var STORY_INPUT_HOLD_MS = ${STORY_INPUT_HOLD_MS};
 
   var reduced = window.matchMedia
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -732,6 +740,50 @@ export const stageScript = `
       }
     }
 
+    // ── complete story states ──────────────────────────────────────────────
+    //
+    // The film stays continuous, but the reader never has to hold a wheel in
+    // the middle of it. These are the points where the existing choreography
+    // has finished a readable thought. Their positions come directly from the
+    // same cue and beat table used by apply, so retiming a scene cannot make
+    // the magnetic scroll stop on an unfinished payload.
+    function filmPoint(beat, progress) {
+      var b = edge[beat];
+      return (b[0] + (b[1] - b[0]) * progress) * filmMax;
+    }
+
+    function filmStates() {
+      var states = [{ at: 0, heavy: false }];
+      var state = function (at, heavy) { states.push({ at: at, heavy: heavy }); };
+      var panelRest = function (beat, cue, rest) {
+        return filmPoint(beat, Math.min(1, cue + rest));
+      };
+      state(panelRest('prey', ${DEER_GRAZES}, REST_SPAN), true);
+      state(panelRest('draw', ${BOW_SET} + 0.02, REST_SPAN), true);
+      state(panelRest('strike', ${AIM_HELD} + 0.02, REST_SPAN), true);
+      state(filmPoint('arrow', ARROW_AT + ARROW_SPAN), true);
+      state(filmPoint('arrow', BODY_AT + BODY_SPAN), false);
+      state(filmPoint('learn', 0.99), true);
+      state(filmPoint('miss', Math.min(1, MISS_STRUCK + MISS_SPAN)), true);
+
+      var n = traitEls.length;
+      if (n) {
+        var reachAll = (n - 1) + TRAIT_HOLD;
+        for (var t = 0; t < n; t++) {
+          state(filmPoint('traits', TRAIT_LEAD * (t + TRAIT_HOLD) / reachAll), false);
+        }
+      }
+      // The fall belongs to the handover, not to a readable chapter. The next
+      // stop is Section 7 once its complete payload has arrived.
+      return states;
+    }
+
+    function sectionSevenStop() {
+      if (!flows.length) return null;
+      var top = flows[0].el.getBoundingClientRect().top + window.scrollY;
+      return { at: top - window.innerHeight + window.innerHeight * BODY_IN[1], heavy: true };
+    }
+
     // The second is the drift in section 8, which is an animation rather than a
     // reveal — it only needs to know whether to run at all.
     var REVEAL_IN = 0.3;
@@ -918,28 +970,38 @@ export const stageScript = `
       }
     }
 
-    var glide = null;
+    var glide = null, handoffGlide = false;
     function stopGlide() {
+      if (handoffGlide) return;
       if (glide === null) return;
       cancelAnimationFrame(glide);
       glide = null;
     }
 
     // The argument is a document offset in pixels.
-    function goTo(where) {
+    function goTo(where, done) {
       var max = document.documentElement.scrollHeight - window.innerHeight;
       var to = Math.round(Math.max(0, Math.min(where, max)));
       var from = window.scrollY;
       var dist = Math.abs(to - from);
       stopGlide();
-      if (reduced || dist < 2) { window.scrollTo(0, to); return; }
+      if (reduced || dist < 2) {
+        window.scrollTo(0, to);
+        if (done) done();
+        return;
+      }
 
       var ms = GLIDE_MS[0] + clamp01(dist / (max || 1)) * GLIDE_MS[1];
       var t0 = performance.now();
       (function step(now) {
         var t = clamp01((now - t0) / ms);
         window.scrollTo(0, from + (to - from) * ease(t));
-        glide = t < 1 ? requestAnimationFrame(step) : null;
+        if (t < 1) {
+          glide = requestAnimationFrame(step);
+          return;
+        }
+        glide = null;
+        if (done) done();
       })(t0);
     }
 
@@ -968,8 +1030,161 @@ export const stageScript = `
       }
     }
 
-    // The wheel always wins. A jump in flight is abandoned the moment the
-    // viewer takes the scroll back, rather than fighting them for it.
+    // ── magnetic story navigation ─────────────────────────────────────────
+    //
+    // Native scroll is still the rendering clock. Input no longer writes that
+    // clock directly: one wheel, touch or keyboard intent picks the adjacent
+    // complete state and this tween carries the playhead there. While it runs,
+    // input merely marks the gesture as active. When a state completes, an
+    // active gesture advances one further state. When input stops, the last
+    // completed state remains the magnetic resting point.
+    var storyGlide = null, storyLocked = false, touchY = null;
+    var storyStarted = 0, storyDuration = 0;
+    var storyFrom = 0, storyTo = 0;
+    var storyDirection = 0, storyInputUntil = 0;
+
+    function storyStops() {
+      var max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      var raw = filmStates();
+      var sectionSeven = sectionSevenStop();
+      if (sectionSeven) raw.push(sectionSeven);
+      raw.sort(function (a, b) { return a.at - b.at; });
+
+      var stops = [];
+      for (var s = 0; s < raw.length; s++) {
+        var point = Math.round(Math.max(0, Math.min(raw[s].at, max)));
+        if (!stops.length || Math.abs(point - stops[stops.length - 1].at) > 2) {
+          stops.push({ at: point, heavy: raw[s].heavy });
+        }
+      }
+      return stops;
+    }
+
+    function nearestStop(stops, at) {
+      var nearest = 0;
+      for (var s = 1; s < stops.length; s++) {
+        if (Math.abs(stops[s].at - at) < Math.abs(stops[nearest].at - at)) nearest = s;
+      }
+      return nearest;
+    }
+
+    function handoffToSectionSeven() {
+      // RAIL's first flow mark is the real Section 7 button target. Reuse it
+      // so the final film scroll and the rail button land identically.
+      var darkMark = RAIL.findIndex(function (section) { return section.name === 'dark'; });
+      if (darkMark < 0) return;
+      storyDirection = 0;
+      handoffGlide = true;
+      goTo(railTarget(darkMark), function () { handoffGlide = false; });
+    }
+
+    function travelStory(direction) {
+      if (storyLocked || root.dataset.timeline !== 'live' || !direction) return;
+      var stops = storyStops();
+      var current = nearestStop(stops, window.scrollY);
+      var next = Math.max(0, Math.min(stops.length - 1, current + direction));
+      if (next === current) return;
+
+      // The last stop is the final Section 6 card. Its forward action is the
+      // Section 7 rail button, after which the document scrolls natively.
+      if (direction > 0 && current === stops.length - 2 && next === stops.length - 1) {
+        handoffToSectionSeven();
+        return;
+      }
+
+      var from = window.scrollY, to = stops[next].at, distance = Math.abs(to - from);
+      storyLocked = true;
+      if (reduced || distance < 2) {
+        window.scrollTo(0, to);
+        storyLocked = false;
+        return;
+      }
+
+      var max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+      var ms = STORY_GLIDE_MS[0]
+        + clamp01(distance / max) * (STORY_GLIDE_MS[1] - STORY_GLIDE_MS[0]);
+      if (stops[next].heavy) ms *= STORY_HEAVY_MULTIPLIER;
+      storyStarted = performance.now();
+      storyDuration = ms;
+      storyFrom = from;
+      storyTo = to;
+      (function step(now) {
+        var progress = clamp01((now - storyStarted) / storyDuration);
+        window.scrollTo(0, storyFrom + (storyTo - storyFrom) * ease(progress));
+        if (progress < 1) {
+          storyGlide = requestAnimationFrame(step);
+          return;
+        }
+        storyGlide = null;
+        storyLocked = false;
+        // Continue only when scrolling is genuinely still in progress. The
+        // timeout is renewed by each wheel/touch/key event, so momentum glides
+        // through one complete state at a time and a stopped gesture rests here.
+        if (storyDirection && performance.now() < storyInputUntil) {
+          var direction = storyDirection;
+          storyDirection = 0;
+          travelStory(direction);
+          return;
+        }
+        storyDirection = 0;
+      })(storyStarted);
+    }
+
+    function noteStoryInput(direction) {
+      storyDirection = direction;
+      storyInputUntil = performance.now() + STORY_INPUT_HOLD_MS;
+    }
+
+    function storyWheel(e) {
+      if (root.dataset.timeline !== 'live' || !e.deltaY) return;
+      if (handoffGlide) { e.preventDefault(); return; }
+      if (window.scrollY >= filmMax && e.deltaY > 0) return;
+      e.preventDefault();
+      var direction = e.deltaY > 0 ? 1 : -1;
+      noteStoryInput(direction);
+      if (storyLocked) return;
+      travelStory(direction);
+    }
+
+    function storyKey(e) {
+      if (root.dataset.timeline !== 'live' || e.defaultPrevented
+        || e.metaKey || e.ctrlKey || e.altKey
+        || /^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '')) return;
+      var down = e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ';
+      var up = e.key === 'ArrowUp' || e.key === 'PageUp';
+      if (!down && !up) return;
+      if (handoffGlide) { e.preventDefault(); return; }
+      if (window.scrollY >= filmMax && down) return;
+      e.preventDefault();
+      var direction = down ? 1 : -1;
+      noteStoryInput(direction);
+      if (storyLocked) return;
+      travelStory(direction);
+    }
+
+    window.addEventListener('wheel', storyWheel, { passive: false, capture: true });
+    window.addEventListener('keydown', storyKey, { passive: false, capture: true });
+    window.addEventListener('touchstart', function (e) {
+      touchY = e.touches.length ? e.touches[0].clientY : null;
+    }, { passive: true, capture: true });
+    window.addEventListener('touchmove', function (e) {
+      if (root.dataset.timeline !== 'live' || touchY === null || !e.touches.length) return;
+      var y = e.touches[0].clientY, delta = touchY - y;
+      if (Math.abs(delta) < 8) return;
+      if (handoffGlide) { e.preventDefault(); return; }
+      if (window.scrollY >= filmMax && delta > 0) return;
+      e.preventDefault();
+      touchY = y;
+      var direction = delta > 0 ? 1 : -1;
+      noteStoryInput(direction);
+      if (storyLocked) return;
+      travelStory(direction);
+    }, { passive: false, capture: true });
+    window.addEventListener('touchend', function () { touchY = null; }, { passive: true, capture: true });
+
+    // Rail and trait-dot jumps remain directly addressable. Wheel input does
+    // not interrupt a magnetic story transition, but it may still cancel one
+    // of those explicit navigation jumps before its next story intent starts.
     var takeover = ['wheel', 'touchstart', 'keydown'];
     for (i = 0; i < takeover.length; i++) {
       window.addEventListener(takeover[i], stopGlide, { passive: true });
