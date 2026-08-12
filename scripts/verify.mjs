@@ -382,6 +382,26 @@ async function runOne(browser, locale, bp) {
   if (!videos.length) {
     fail(where, "D2-video", "no <video> elements in the document");
   }
+
+  // The scene ships in two tiers: seven shipping plates and six light copies
+  // that stand in until each shipping plate arrives. The light tier is what
+  // keeps the film running under a magnetic step, which crosses a whole beat in
+  // about a second — far less than a several-megabyte plate takes to land. If
+  // it ever goes missing the film does not break loudly, it just freezes on
+  // stills again, so its presence is asserted rather than assumed.
+  const tiers = await page.evaluate(() => ({
+    full: document.querySelectorAll("[data-scene-video]").length,
+    proxy: document.querySelectorAll("[data-scene-proxy]").length,
+    unmatched: [...document.querySelectorAll("[data-scene-proxy]")].filter(
+      (p) => !p.closest("[data-plate-id]")?.querySelector("[data-scene-video]"),
+    ).length,
+  }));
+  if (tiers.full !== 7)
+    fail(where, "D2-video", `${tiers.full} shipping plates, expected 7`);
+  if (tiers.proxy !== 6)
+    fail(where, "D2-video", `${tiers.proxy} light copies, expected 6 (one per scrubbed plate)`);
+  if (tiers.unmatched)
+    fail(where, "D2-video", `${tiers.unmatched} light copies are not paired with a plate`);
   for (const [i, v] of videos.entries()) {
     if (v.error !== null) fail(where, "D2-video", `video ${i} MediaError code ${v.error}`);
     if (v.w === 0 || v.h === 0)
@@ -429,6 +449,87 @@ async function runOne(browser, locale, bp) {
       return document.fonts.check('400 16px "Peyda"');
     });
     if (!peyda) fail({ ...where, at: "fonts" }, "font", "Peyda did not load for an RTL locale");
+  }
+
+  /* The film keeps a picture while a person is actually watching it.
+   *
+   * This is the check for the fault that was reported: with a magnetic step
+   * crossing a whole beat in about a second, the shipping plates could not
+   * arrive in time and shot after shot landed on a frozen still.
+   *
+   * Gestured at a human cadence — flick, look, flick — not settled between,
+   * because waiting for the network is exactly what a viewer does not do.
+   * `readyState` is no use here: it drops to 1 for the length of a seek even
+   * when the whole file is in hand, so it reports a picture as missing when it
+   * is on screen. What is asked instead is whether either tier holds data at
+   * the time it has been asked to show.
+   */
+  where.at = "picture-while-stepping";
+  // Throttled on purpose, and this is the whole point of the check. On the
+  // line between this runner and the origin the shipping plates arrive fast
+  // enough to hide the fault entirely — it was only ever visible to someone on
+  // an ordinary connection. 12Mbps down, 40ms out, which is unremarkable.
+  let throttle = null;
+  try {
+    throttle = await page.context().newCDPSession(page);
+    await throttle.send("Network.enable");
+    await throttle.send("Network.emulateNetworkConditions", {
+      offline: false,
+      downloadThroughput: (12 * 1024 * 1024) / 8,
+      uploadThroughput: (3 * 1024 * 1024) / 8,
+      latency: 40,
+    });
+  } catch {
+    notes.push(`${locale.code}/${bp.name}: could not throttle; stepping check ran unthrottled`);
+    throttle = null;
+  }
+
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(400);
+  const blind = [];
+  for (let i = 0; i < 8; i++) {
+    await page.mouse.wheel(0, 120);
+    await page.waitForTimeout(1400);
+    const shot = await page.evaluate(() => {
+      const covers = (v) => {
+        if (!v || !v.duration) return false;
+        const t = v.currentTime;
+        for (let i = 0; i < v.buffered.length; i++) {
+          if (t >= v.buffered.start(i) - 0.25 && t <= v.buffered.end(i) + 0.25) return true;
+        }
+        return false;
+      };
+      return [...document.querySelectorAll("[data-plate-id]")]
+        .filter((p) => +(getComputedStyle(p).getPropertyValue("--o") || 0) > 0.01)
+        .map((p) => ({
+          id: p.getAttribute("data-plate-id"),
+          ok:
+            covers(p.querySelector("[data-scene-video]")) ||
+            covers(p.querySelector("[data-scene-proxy]")),
+        }))
+        .filter((r) => !r.ok)
+        .map((r) => r.id);
+    });
+    if (shot.length) blind.push(`step ${i + 1}: ${shot.join(",")}`);
+  }
+  if (blind.length) {
+    fail(
+      where,
+      "D2-video",
+      `plate on screen with no frames to draw — ${blind.slice(0, 3).join(" · ")}`,
+    );
+  }
+
+  // Back to full speed; the rest of the run is not about bandwidth.
+  if (throttle) {
+    await throttle
+      .send("Network.emulateNetworkConditions", {
+        offline: false,
+        downloadThroughput: -1,
+        uploadThroughput: -1,
+        latency: 0,
+      })
+      .catch(() => {});
   }
 
   /* The wheel walk: prove the document really scrolls end to end. */

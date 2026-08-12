@@ -128,6 +128,23 @@ For every `<video>` in the document:
 - **Scroll the full timeline**: real wheel events, not `scrollTo` — a
   synthesised jump hides exactly the class of bug reported here. Confirm the
   document actually advances and never stalls.
+- **A picture while stepping** — the guard for the reported fault. Gesture
+  through the film at a human cadence (flick, look, flick; no waiting for the
+  network) **on a throttled line**, 12Mbps down and 40ms out, and require every
+  plate that is on screen to hold data at the time it is being asked to show.
+
+  Two things this deliberately does not do. It does not settle between
+  gestures: waiting for the network is precisely what a viewer will not do, and
+  settling hid the fault completely. And it does not read `readyState`, which
+  drops to 1 for the length of a seek even when the whole file is in hand —
+  buffered coverage of the wanted time is the only honest question.
+
+  Throttled because the fault is invisible at datacentre speed: unthrottled,
+  the broken build passed this check.
+- **Both scene tiers are present**: seven shipping plates and six light copies,
+  each light copy paired with a plate. The light tier is what keeps the film
+  running under a magnetic step; if it disappears the film does not fail
+  loudly, it quietly freezes on stills again.
 
 ## Exit criteria
 

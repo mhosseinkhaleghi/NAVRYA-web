@@ -509,21 +509,102 @@ export const stageScript = `
   root.dataset.timeline = 'held';
   function live() { root.dataset.timeline = 'live'; }
 
+  // ── warming the plates ───────────────────────────────────────────────────
+  //
+  // Every plate is fetched, in scroll order, starting as soon as the opening
+  // beat is over. Not lazily, and not a beat ahead.
+  //
+  // A beat of lookahead was the right amount of warning when crossing a beat
+  // meant several seconds of wheeling. A magnetic step crosses one in about a
+  // second, and a five-megabyte plate does not arrive in a second, so the
+  // viewer landed on shot after shot with nothing behind it — metadata only, no
+  // frames. Measured on a 12Mbps line: eight of twelve stops had no picture.
+  //
+  // Sequential, not all at once, and that is the point. Seven parallel
+  // downloads share the line seven ways and the plate you need *next* arrives
+  // as slowly as the one you need last; one at a time means the next plate is
+  // always the one being paid for. \`want\` jumps the queue when the viewer
+  // reaches a plate the chain has not got to yet, so priority follows them.
   var loaded = {};
   function load(id) {
-    if (loaded[id]) return;
+    if (loaded[id]) return false;
     var v = document.querySelector('[data-scene-video="' + id + '"]');
-    if (!v) return;
+    if (!v) return false;
     loaded[id] = true;
+    // One \`load()\`, and only from \`none\`. Calling it on an element that has
+    // already fetched something restarts the resource selection algorithm and
+    // throws that away — measured at three times the bytes and five seconds
+    // added to the opening when every plate was reset this way.
     if (v.getAttribute('preload') === 'none') { v.preload = 'auto'; v.load(); }
+    return true;
+  }
+
+  // A plate is warm enough to hand on when it can play through, and a slow or
+  // dead one must not hold the queue, so the chain also moves on a timeout.
+  var WARM_STEP_MS = 8000;
+  function warmChain(order, i) {
+    while (i < order.length && loaded[order[i]]) i++;
+    if (i >= order.length) return;
+    var id = order[i];
+    var v = document.querySelector('[data-scene-video="' + id + '"]');
+    load(id);
+    if (!v) { warmChain(order, i + 1); return; }
+    var moved = false;
+    var next = function () {
+      if (moved) return;
+      moved = true;
+      clearTimeout(timer);
+      warmChain(order, i + 1);
+    };
+    var timer = setTimeout(next, WARM_STEP_MS);
+    v.addEventListener('canplaythrough', next);
+    v.addEventListener('error', next);
+  }
+
+  // The light tier is small enough to be finished before the scroll even
+  // unlocks, but only if it is not made to share the line with the heavy one.
+  // Started together, the 23MB of shipping plates starved the 1.3MB of proxies
+  // and neither was ready: measured, every proxy still at metadata by the time
+  // the viewer was three steps in.
+  var PROXY_WAIT_MS = 6000;
+  function whenProxiesReady(done) {
+    var proxies = [];
+    each('[data-scene-proxy]', function (el) { proxies.push(el); });
+    if (!proxies.length) { done(); return; }
+
+    var left = proxies.length, fired = false;
+    function finish() { if (fired) return; fired = true; clearTimeout(cap); done(); }
+    function tick() { if (--left <= 0) finish(); }
+    // A parameter, so each element gets its own binding — see bindPlate.
+    function watch(el) {
+      if (el.readyState >= 3) { tick(); return; }
+      var once = false;
+      var go = function () {
+        if (once) return;
+        once = true;
+        tick();
+      };
+      el.addEventListener('canplaythrough', go);
+      el.addEventListener('error', go);
+    }
+    for (var i = 0; i < proxies.length; i++) watch(proxies[i]);
+    // A stalled proxy must not hold the shipping plates back for ever.
+    var cap = setTimeout(finish, PROXY_WAIT_MS);
   }
 
   function reveal() {
     if (root.dataset.intro === 'shown') return;
     root.dataset.intro = 'shown';
-    // Only the next plate. The rest arrive a beat ahead of the viewer, so
-    // nothing competes with the plate that is actually on screen.
-    ready(function () { load(SCENES[0].plate); });
+    // The whole sequence, in the order it is watched. The light copies first —
+    // they are what make the film run from the first gesture — and the shipping
+    // plates behind them, one at a time, upgrading each shot as it arrives.
+    ready(function () {
+      var order = [];
+      for (var q = 0; q < PLATES.length; q++) {
+        if (PLATES[q] !== 'dawn') order.push(PLATES[q]);
+      }
+      whenProxiesReady(function () { warmChain(order, 0); });
+    });
   }
 
   if (reduced) {
@@ -597,22 +678,62 @@ export const stageScript = `
   // without ever queueing seeks up behind each other.
   function scrubber(video) {
     if (!video) return function () {};
-    var want = null, busy = false;
+    // The wanted position is kept as a *fraction*, not as a time, and it is
+    // kept even when the plate has no duration yet.
+    //
+    // It used to be dropped on the floor in that case, and that is a second
+    // way the picture went missing: a magnetic step lands, the plate it landed
+    // on is still arriving, the seek is discarded — and because the step has
+    // finished there are no more scroll events to ask again, so the plate sat
+    // on its first frame until the viewer moved. Held here instead, and fired
+    // the moment the decoder can honour it.
+    var wantFraction = null, busy = false;
     function pump() {
-      if (busy || want === null || !video.duration) return;
-      var t = want; want = null;
+      if (busy || wantFraction === null || !video.duration) return;
+      var t = clamp01(wantFraction) * (video.duration - 0.02);
       if (Math.abs(video.currentTime - t) < 0.01) return;
       busy = true;
       try { video.currentTime = t; } catch (e) { busy = false; }
     }
     video.addEventListener('seeked', function () { busy = false; pump(); });
     video.addEventListener('error', function () { busy = false; });
+    // Every point at which the answer to "can you place a frame yet?" changes.
     video.addEventListener('loadedmetadata', pump);
+    video.addEventListener('durationchange', pump);
+    video.addEventListener('loadeddata', pump);
+    video.addEventListener('canplay', pump);
     return function (fraction) {
-      if (!video.duration) return;
-      want = clamp01(fraction) * (video.duration - 0.02);
+      wantFraction = fraction;
       pump();
     };
+  }
+
+  /*
+   * One plate, both tiers, as one seek.
+   *
+   * A function rather than inline in the loop, and that is not style. The loop
+   * declares its locals with \`var\`, which is scoped to the whole function, so a
+   * closure written inside it does not capture the plate of that turn — it
+   * captures the one variable every turn shares, and reads whatever the last
+   * turn left in it. Written inline, all six plates seeked the sixth. The
+   * parameters here are a fresh binding per call, which is the fix.
+   *
+   * The proxy carries the motion from the first gesture. The full plate stays
+   * transparent until it can honour the position it is being given, and
+   * \`data-plate-ready\` is what the stylesheet fades in on.
+   */
+  function bindPlate(full, proxy) {
+    var seekFull = scrubber(full);
+    var seekProxy = scrubber(proxy);
+    if (full) {
+      var markReady = function () {
+        if (full.readyState >= 3) full.setAttribute('data-plate-ready', '');
+      };
+      full.addEventListener('canplay', markReady);
+      full.addEventListener('canplaythrough', markReady);
+      full.addEventListener('seeked', markReady);
+    }
+    return function (fraction) { seekProxy(fraction); seekFull(fraction); };
   }
 
   // ── the sequence ─────────────────────────────────────────────────────────
@@ -642,7 +763,12 @@ export const stageScript = `
           return (+a.getAttribute('data-reveal-step')) - (+b.getAttribute('data-reveal-step'));
         });
       }
-      scenes.push({ cfg: cfg, seek: scrubber(video), panel: panel, groups: groups });
+      scenes.push({
+        cfg: cfg,
+        seek: bindPlate(video, document.querySelector('[data-scene-proxy="' + cfg.plate + '"]')),
+        panel: panel,
+        groups: groups,
+      });
     }
 
     // ── section 5 ──────────────────────────────────────────────────────────
@@ -1343,8 +1469,11 @@ export const stageScript = `
         var plateP = span(p, beat[0], beat[1]);
         sc.seek(plateP);
 
-        // One beat of lookahead: the next plate starts fetching as this one
-        // begins, which is a whole beat of scrolling before it is needed.
+        // The warming chain is walking the plates in order in the background.
+        // If the viewer has got somewhere it has not reached yet — a rail jump,
+        // a fast run of steps, a slow line — the plate under them takes the
+        // line now rather than waiting its turn behind ones already passed.
+        if (plateP > 0) load(cfg.plate);
         if (plateP > 0 && s + 1 < scenes.length) load(scenes[s + 1].cfg.plate);
 
         if (!sc.panel) continue;

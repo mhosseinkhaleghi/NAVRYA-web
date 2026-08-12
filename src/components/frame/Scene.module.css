@@ -64,10 +64,43 @@
   object-position: center;
 }
 
+/*
+ * The light copy, between the still and the shipping rendition, placed on
+ * exactly the same rules as both so the two handovers either side of it are
+ * invisible: still to proxy, proxy to full.
+ */
+.proxy {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+/*
+ * The full plate is transparent until it can actually carry the frame it is
+ * being asked for. Without this it paints its own first frame over a proxy that
+ * is already in the right place, and the picture jumps backwards to the top of
+ * the shot before catching up.
+ *
+ * The fade is long enough not to read as a cut and short enough not to read as
+ * a dissolve — what should be visible is the sharpening, not the transition.
+ */
+.video:not([data-plate-ready]) {
+  opacity: 0;
+}
+
+.video[data-plate-ready] {
+  opacity: 1;
+  transition: opacity 420ms var(--ease-out);
+}
+
 /* RTL moves the text block to the other side of the frame, so the footage
  * mirrors with it — the figure keeps the closed side and the text keeps the
  * open valley, exactly as the composition intends in either direction. */
 [dir="rtl"] .video,
+[dir="rtl"] .proxy,
 [dir="rtl"] .still {
   transform: scaleX(-1);
 }
@@ -104,7 +137,12 @@
  * -------------------------------------------------------------------------- */
 
 @media (max-aspect-ratio: 1 / 1) {
-  .video {
+  /* The proxy is placed by the same rule as the plate it stands in for. It is
+   * the same shot at a lower resolution, so any difference here would be a jump
+   * of the whole image at the moment the full plate fades in — which is the
+   * exact fault the note above is about. */
+  .video,
+  .proxy {
     object-fit: cover;
     object-position: 14% center;
   }

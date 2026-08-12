@@ -80,6 +80,64 @@ load ms  min/median/max: 896 / 1164 / 1517
 Console is clean, no request fails, all seven plates are present on every page,
 and nothing throws on load in any of the fifteen runs.
 
+## Fixed — the film froze on stills under the magnetic scroll
+
+Reported: videos not playing since the scroll changed, and the site slow.
+
+**The cause is arithmetic, not a bug in the scroll.** The plates were
+`preload="none"` and fetched one beat ahead of the viewer. A beat of warning was
+plenty when crossing one meant several seconds of wheeling; a magnetic step
+crosses a whole beat in about a second, and a five-megabyte plate does not
+arrive in a second. So the viewer landed on shot after shot with nothing behind
+it and saw the still frame — the sequence looked frozen, not black.
+
+Measured on a 12Mbps line, gesturing at a human cadence: **eight stops out of
+twelve had no picture.**
+
+Ordering the downloads better cannot fix it. The whole set is 23MB on desktop,
+which is fifteen seconds at that speed; the scroll unlocks at six and the viewer
+steps every second and a half. They are always ahead of it. Tried and measured:
+warming every plate in scroll order still left eight stops blind.
+
+**What fixed it was weight.** The repository already carried a proxy tier from
+the preview pipeline — the same shots at 854×480, the whole film in 1.3MB — with
+durations identical to the frame. Each scrubbed plate now renders two videos:
+the light copy, which is in hand before the scroll even unlocks, and the
+shipping plate behind it, which fades in when it can honour the position it is
+being given. Both answer the same scrub fraction, so the handover lands on the
+same picture, softer to sharper, in the same place.
+
+| | before | after |
+|---|---|---|
+| stops with no picture (12Mbps, 12 steps) | 8 | **0** |
+| scroll unlocks | 6.3s | 5.8s |
+
+**Three faults found on the way, all mine, all found by measuring:**
+
+*`preload="metadata"` on the plates made it worse* — seven metadata requests
+sharing the line with the plate being watched. Bytes went 32MB → 78MB and the
+unlock 6.3s → 11.3s. Back to `none`.
+
+*`.load()` on an element that has already fetched something restarts resource
+selection and throws it away.* That is where most of those bytes went. It is now
+called only from `none`.
+
+*Six plates all seeked the sixth.* The scene loop declares its locals with
+`var`, which is function-scoped, so closures written inside it captured the one
+shared binding rather than that turn's plate. Every plate but the last sat at
+time zero. Fixed by binding through function parameters (`bindPlate`).
+
+*And the scrubber threw away the position it was asked for* when the plate had
+no duration yet — so after a step finished there were no further scroll events
+to ask again, and the plate stayed on its first frame. It now holds the wanted
+fraction and fires the moment the decoder can honour it.
+
+**Verified.** 15/15 local. The new check reproduces the original fault against
+the unfixed build still on production — "plate on screen with no frames to draw
+— step 3: draw · step 4: strike" — and passes against the fix, so it is a check
+and not decoration. It runs throttled on purpose: unthrottled, the broken build
+passed it.
+
 ## Reverted — stepped scrolling through the film
 
 Briefly, the film stepped: one gesture glided to the next section and waited,

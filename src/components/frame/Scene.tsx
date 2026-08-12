@@ -77,9 +77,60 @@ export function Scene() {
             }
           />
 
+          {/*
+           * The proxy: the same shot at 854×480, and the whole film in 1.3MB
+           * against the shipping renditions' 23.
+           *
+           * It exists because of arithmetic that no amount of load ordering
+           * gets around. The scroll unlocks about six seconds in and a viewer
+           * steps roughly every second and a half; the full plates are 23MB,
+           * which on a 12Mbps line is fifteen seconds. They will always be
+           * ahead of it, and they were — measured, eight stops out of twelve
+           * with a frozen still where the shot should have been running.
+           *
+           * So the light copy carries the motion from the first gesture and the
+           * heavy one takes over the moment it can. Durations are identical to
+           * the frame, so both answer the same scrub fraction and the handover
+           * lands on the same picture, softer to sharper, in the same place.
+           *
+           * Not rendered for the lead plate: that one is played rather than
+           * scrubbed, it is the only thing downloading at the time, and it is
+           * already the lightest of the set.
+           */}
+          {lead ? null : (
+            <video
+              className={styles.proxy}
+              data-scene-proxy={id}
+              preload="auto"
+              muted
+              playsInline
+              tabIndex={-1}
+              aria-hidden="true"
+            >
+              <source
+                src={`/scene/${slug}-proxy.webm`}
+                type="video/webm"
+                media="(prefers-reduced-motion: no-preference)"
+              />
+            </video>
+          )}
+
           <video
             className={styles.video}
             data-scene-video={id}
+            /*
+             * The lead plate plays, so it is fetched outright. The rest stay at
+             * `none` here and are pulled by the controller, in scroll order,
+             * the moment the opening beat is over — see the warming chain.
+             *
+             * `none` rather than `metadata`, and that was measured: seven
+             * metadata requests at page load share the line with the plate the
+             * viewer is actually watching, and the opening took five seconds
+             * longer to become scrollable for it. The duration those requests
+             * would have bought is not needed early — the scrubber holds the
+             * position it wants as a fraction and places the frame the moment
+             * the plate can carry one.
+             */
             preload={lead ? "auto" : "none"}
             muted
             playsInline
