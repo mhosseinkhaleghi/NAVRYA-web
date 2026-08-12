@@ -350,7 +350,7 @@ const GLIDE_MS = [620, 1400];
 /** One intentional scroll travels to one complete story state. */
 const STORY_INPUT_HOLD_MS = 650;
 const STORY_ACCELERATE_AFTER = 0.3;
-const STORY_ACCELERATE_MULTIPLIER = 3;
+const STORY_ACCELERATE_MULTIPLIER = 3.5;
 
 /**
  * The opening plate is never started until it can run without stalling.
@@ -804,7 +804,8 @@ export const stageScript = `
       state(panelRest('prey', ${DEER_GRAZES}, REST_SPAN), true);
       state(panelRest('draw', ${BOW_SET} + 0.02, REST_SPAN), true);
       state(panelRest('strike', ${AIM_HELD} + 0.02, REST_SPAN), true);
-      state(filmPoint('arrow', ARROW_AT + ARROW_SPAN), true);
+      // The headline appears during the release. It is not a resting chapter:
+      // the fired arrow continues through to the completed payload below.
       state(filmPoint('arrow', BODY_AT + BODY_SPAN), false);
       state(filmPoint('learn', 0.99), true);
       state(filmPoint('miss', Math.min(1, MISS_STRUCK + MISS_SPAN)), true);
@@ -1084,8 +1085,8 @@ export const stageScript = `
     var storyGlide = null, storyLocked = false, touchY = null;
     var storyStarted = 0, storyDuration = 0;
     var storyFrom = 0, storyTo = 0, storyStartStop = 0, storyEndStop = 0;
-    var storyDirection = 0, storyInputUntil = 0;
-    var storyTravelDirection = 0, storyAccelerated = false;
+    var storyDirection = 0, storyInputUntil = 0, storyContinuousUntil = 0;
+    var storyTravelDirection = 0, storySpeed = 1;
 
     function storyStops() {
       var max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
@@ -1143,7 +1144,8 @@ export const stageScript = `
       var from = window.scrollY, to = target, distance = Math.abs(to - from);
       storyLocked = true;
       storyTravelDirection = direction;
-      storyAccelerated = false;
+      storySpeed = 1;
+      storyContinuousUntil = 0;
       storyStartStop = typeof origin === 'number' ? origin : from;
       storyEndStop = to;
       if (reduced || distance < 2) {
@@ -1158,6 +1160,11 @@ export const stageScript = `
       storyFrom = from;
       storyTo = to;
       (function step(now) {
+        var travelled = Math.abs(window.scrollY - storyStartStop);
+        var totalTravel = Math.abs(storyEndStop - storyStartStop);
+        var pastAccelerationPoint = totalTravel && travelled / totalTravel >= STORY_ACCELERATE_AFTER;
+        var continuous = now < storyContinuousUntil;
+        setStorySpeed(continuous && pastAccelerationPoint ? STORY_ACCELERATE_MULTIPLIER : 1, now);
         var progress = clamp01((now - storyStarted) / storyDuration);
         window.scrollTo(0, storyFrom + (storyTo - storyFrom) * ease(progress));
         if (progress < 1) {
@@ -1179,24 +1186,26 @@ export const stageScript = `
       })(storyStarted);
     }
 
-    function noteStoryInput(direction) {
+    function noteStoryInput(direction, allowAcceleration) {
+      var now = performance.now();
+      if (allowAcceleration && storyLocked && direction === storyTravelDirection) {
+        storyContinuousUntil = now + STORY_INPUT_HOLD_MS;
+      }
       storyDirection = direction;
-      storyInputUntil = performance.now() + STORY_INPUT_HOLD_MS;
+      storyInputUntil = now + STORY_INPUT_HOLD_MS;
     }
 
-    function accelerateStory() {
-      if (!storyLocked || storyAccelerated) return;
-      var now = performance.now();
-      var progress = clamp01((now - storyStarted) / storyDuration);
-      if (progress < STORY_ACCELERATE_AFTER) return;
+    function setStorySpeed(speed, now) {
+      if (!storyLocked || speed === storySpeed) return;
 
-      // One quantized follow-up input may finish the active state faster once
-      // it is visibly underway. Rebase from the current frame so it never
-      // jumps, then leave all later input to the next completed state.
+      // Rebase from the displayed frame. This makes sustained input play the
+      // remaining shot faster, then restores its normal rate on release with
+      // no snap or change to the completed endpoint.
       storyFrom = window.scrollY;
       storyStarted = now;
-      storyDuration = Math.max(1, (storyDuration * (1 - progress)) / STORY_ACCELERATE_MULTIPLIER);
-      storyAccelerated = true;
+      storyDuration = Math.max(1,
+        Math.abs(filmSecondsAt(storyTo) - filmSecondsAt(storyFrom)) * 1000 / speed);
+      storySpeed = speed;
     }
 
     function redirectStory(direction) {
@@ -1211,11 +1220,10 @@ export const stageScript = `
       travelStory(direction, true, target, origin);
     }
 
-    function handleStoryInput(direction) {
-      noteStoryInput(direction);
+    function handleStoryInput(direction, allowAcceleration) {
+      noteStoryInput(direction, allowAcceleration);
       if (!storyLocked) { travelStory(direction); return; }
       if (direction !== storyTravelDirection) { redirectStory(direction); return; }
-      accelerateStory();
     }
 
     function storyWheel(e) {
@@ -1224,7 +1232,9 @@ export const stageScript = `
       if (window.scrollY >= filmMax && e.deltaY > 0) return;
       e.preventDefault();
       var direction = e.deltaY > 0 ? 1 : -1;
-      handleStoryInput(direction);
+      // Trackpads emit a stream of pixel wheel events for one physical swipe.
+      // They still continue through endpoints, but never enable fast playback.
+      handleStoryInput(direction, e.deltaMode !== 0 || Math.abs(e.deltaY) >= 80);
     }
 
     function storyKey(e) {
@@ -1238,7 +1248,7 @@ export const stageScript = `
       if (window.scrollY >= filmMax && down) return;
       e.preventDefault();
       var direction = down ? 1 : -1;
-      handleStoryInput(direction);
+      handleStoryInput(direction, true);
     }
 
     window.addEventListener('wheel', storyWheel, { passive: false, capture: true });
@@ -1255,7 +1265,7 @@ export const stageScript = `
       e.preventDefault();
       touchY = y;
       var direction = delta > 0 ? 1 : -1;
-      handleStoryInput(direction);
+      handleStoryInput(direction, false);
     }, { passive: false, capture: true });
     window.addEventListener('touchend', function () { touchY = null; }, { passive: true, capture: true });
 

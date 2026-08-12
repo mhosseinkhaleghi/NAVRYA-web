@@ -8,6 +8,7 @@
 - Section 7 onward: restored native continuous scrolling; magnetic navigation is limited to the film and its Section 7 handover target.
 - Section 6→7 forward scroll now reuses the Section 7 rail button target and glide, then releases normal downward scrolling; upward scroll remains magnetic.
 - Continuous-scroll tuning: active input remains valid for 650ms, and consecutive states begin immediately when scrolling continues.
-- Continuous-scroll timing: after 30% of an active state, one same-direction follow-up input completes its remaining tail at 3× speed; reverse input smoothly retargets the adjacent magnetic state.
+- Continuous-scroll timing: continued input starts the next state immediately at its endpoint. Trackpad and touch input stay at normal speed; sustained coarse-wheel or keyboard input after 30% of a state plays its remaining tail at 3.5× speed, then restores normal speed on release.
 - Intro→Section 2 reverse: an opposing input now retargets directly to Intro, even before the transition midpoint.
+- Arrow release: removed the headline-only magnetic stop; the release now runs directly to the completed Section 5 payload.
 - Known issues: none.
