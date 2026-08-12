@@ -10,6 +10,7 @@ import { Stage } from "@/components/frame/Stage";
 import { PanelSection } from "@/components/panel/PanelSection";
 import { PartnersSection } from "@/components/partners/PartnersSection";
 import { SectionRail } from "@/components/rail/SectionRail";
+import { SiteFooter } from "@/components/footer/SiteFooter";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { TestimonialsSection } from "@/components/testimonials/TestimonialsSection";
 import { isLocale } from "@/i18n/config";
@@ -39,6 +40,7 @@ export default async function HomePage({
           <PartnersSection partners={dictionary.partners} />
           <TestimonialsSection testimonials={dictionary.testimonials} />
           <ArchetypesSection archetypes={dictionary.archetypes} />
+          <SiteFooter locale={locale} dictionary={dictionary} />
         </>
       }
     >

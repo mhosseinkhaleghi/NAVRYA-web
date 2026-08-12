@@ -266,6 +266,50 @@
   },
   "a11y": {
     "primaryNav": "Navegación principal",
-    "sectionNav": "Navegación por secciones"
+    "sectionNav": "Navegación por secciones",
+    "footerNav": "Navegación del pie",
+    "newsletter": "Suscripción al boletín",
+    "social": "Enlaces sociales"
+  },
+  "footer": {
+    "cta": {
+      "headline": "Entra Preparado en lo Salvaje.",
+      "subline": [
+        "Afila tu mente de trader. Construye disciplina, registra con propósito,",
+        "y gana el autoconocimiento que convierte la intuición en ventaja."
+      ],
+      "primary": "Comienza Tu Viaje",
+      "secondary": "Explorar Arquetipos"
+    },
+    "blurb": "Navrya es el compañero de los traders que buscan algo más que beneficio. Unimos psicología, registro y disciplina para forjar claridad, control y convicción en cada movimiento.",
+    "motto": "Conócete a Ti Mismo. Domina los Mercados.",
+    "navTitle": "Navegación",
+    "navExtra": [
+      "Arquetipos",
+      "Hoja de Ruta"
+    ],
+    "resourcesTitle": "Recursos",
+    "resources": [
+      "Base de Conocimiento",
+      "Guía del Diario de Trading",
+      "Artículos de Psicología",
+      "Gestión del Riesgo",
+      "Comunidad",
+      "Centro de Ayuda",
+      "Afiliados"
+    ],
+    "stayTitle": "Mantente Afilado",
+    "stayBody": "Únete al círculo. Recibe ideas, herramientas y reflexiones que mantienen viva tu ventaja.",
+    "emailPlaceholder": "Introduce tu correo electrónico",
+    "subscribe": "Suscribirse",
+    "socialTitle": "Sigue el Camino",
+    "backToTop": "Volver Arriba",
+    "copyright": "© {year} Navrya. Todos los derechos reservados.",
+    "legal": [
+      "Términos del Servicio",
+      "Política de Privacidad",
+      "Política de Reembolso",
+      "Seguridad"
+    ]
   }
 }

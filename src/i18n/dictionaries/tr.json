@@ -266,6 +266,50 @@
   },
   "a11y": {
     "primaryNav": "Ana gezinme",
-    "sectionNav": "Bölüm gezinmesi"
+    "sectionNav": "Bölüm gezinmesi",
+    "footerNav": "Alt bilgi gezinmesi",
+    "newsletter": "Bülten kaydı",
+    "social": "Sosyal bağlantılar"
+  },
+  "footer": {
+    "cta": {
+      "headline": "Vahşiye Hazırlıklı Gir.",
+      "subline": [
+        "Alım satım zihnini keskinleştir. Disiplin kur, amaçla günlük tut,",
+        "ve içgörüyü üstünlüğe çeviren öz bilgiye ulaş."
+      ],
+      "primary": "Yolculuğuna Başla",
+      "secondary": "Arketipleri Keşfet"
+    },
+    "blurb": "Navrya, kârdan fazlasını arayan yatırımcıların yoldaşıdır. Psikolojiyi, günlük tutmayı ve disiplini bir araya getirerek her hamlede netlik, kontrol ve inanç üretiriz.",
+    "motto": "Kendini Bil. Piyasalara Hükmet.",
+    "navTitle": "Gezinme",
+    "navExtra": [
+      "Arketipler",
+      "Yol Haritası"
+    ],
+    "resourcesTitle": "Kaynaklar",
+    "resources": [
+      "Bilgi Bankası",
+      "İşlem Günlüğü Rehberi",
+      "Psikoloji Yazıları",
+      "Risk Yönetimi",
+      "Topluluk",
+      "Yardım Merkezi",
+      "İş Ortaklığı"
+    ],
+    "stayTitle": "Keskin Kal",
+    "stayBody": "Çembere katıl. Üstünlüğünü canlı tutan içgörüleri, araçları ve düşünceleri al.",
+    "emailPlaceholder": "E-posta adresinizi girin",
+    "subscribe": "Abone Ol",
+    "socialTitle": "Yolu Takip Et",
+    "backToTop": "Başa Dön",
+    "copyright": "© {year} Navrya. Tüm hakları saklıdır.",
+    "legal": [
+      "Hizmet Şartları",
+      "Gizlilik Politikası",
+      "İade Politikası",
+      "Güvenlik"
+    ]
   }
 }

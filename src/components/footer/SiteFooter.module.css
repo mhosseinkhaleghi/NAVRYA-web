@@ -1,0 +1,752 @@
+/* -----------------------------------------------------------------------------
+ * The footer.
+ *
+ * Below everything, on the page's own ground. Nothing here is driven by the
+ * stage controller — no reveal, no scrub, no latch — so it is fully composed
+ * before a line of script runs and stays composed if none ever does.
+ *
+ * Written in logical properties throughout, so the whole thing mirrors in
+ * Persian and Arabic without a single direction-specific rule. The two places
+ * that cannot mirror by themselves are the chevrons and the subscribe arrow,
+ * and those are flipped explicitly at the bottom of this file.
+ * -------------------------------------------------------------------------- */
+
+.footer {
+  position: relative;
+  isolation: isolate;
+  padding-block: clamp(3rem, 6vw, 6.5rem) clamp(1.5rem, 3vw, 2.75rem);
+  padding-inline: var(--gutter);
+  background-color: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font-sans);
+
+  /* The background picture lands here. Until it does this resolves to nothing
+   * and the footer sits on the page's own black, which is what the comp has
+   * behind the artwork anyway — so dropping the image in is one declaration
+   * and changes no layout. */
+  background-image: var(--footer-bg, none);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* A scrim, so the copy keeps its contrast whatever the picture turns out to be.
+ * Inert until there is a picture to sit on. */
+.footer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    to bottom,
+    rgb(3 3 3 / 0.72) 0%,
+    rgb(3 3 3 / 0.86) 45%,
+    rgb(3 3 3 / 0.95) 100%
+  );
+  opacity: var(--footer-scrim, 0);
+  pointer-events: none;
+}
+
+/* ── shared ornaments ─────────────────────────────────────────────────────── */
+
+.diamond,
+.diamondLarge,
+.diamondSmall,
+.dividerNode {
+  flex: 0 0 auto;
+  inline-size: var(--node-size);
+  block-size: var(--node-size);
+  border: var(--hairline) solid var(--c-gold);
+  transform: rotate(45deg);
+}
+
+.diamondLarge {
+  inline-size: calc(var(--node-size) * 2.1);
+  block-size: calc(var(--node-size) * 2.1);
+}
+
+.diamondSmall {
+  inline-size: calc(var(--node-size) * 0.72);
+  block-size: calc(var(--node-size) * 0.72);
+  border-color: var(--c-gold-line);
+}
+
+.dividerNode {
+  border-color: var(--c-gold-line);
+}
+
+/* ── the call to action ───────────────────────────────────────────────────── */
+
+.cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.9rem, 1.6vw, 1.5rem);
+  max-inline-size: 60rem;
+  margin-inline: auto;
+  padding-block-end: clamp(2rem, 4vw, 4rem);
+  text-align: center;
+}
+
+/* The two brackets in the top corners of the comp. Drawn as two borders on an
+ * empty box rather than placed, so they take the gold with everything else. */
+.cornerStart,
+.cornerEnd {
+  position: absolute;
+  inset-block-start: clamp(1rem, 2vw, 2rem);
+  inline-size: clamp(2.2rem, 3.6vw, 3.6rem);
+  block-size: clamp(2.2rem, 3.6vw, 3.6rem);
+  border-block-start: var(--hairline) solid var(--c-gold-line-strong);
+  pointer-events: none;
+}
+
+.cornerStart {
+  inset-inline-start: var(--gutter);
+  border-inline-start: var(--hairline) solid var(--c-gold-line-strong);
+  border-start-start-radius: 0.5rem;
+}
+
+.cornerEnd {
+  inset-inline-end: var(--gutter);
+  border-inline-end: var(--hairline) solid var(--c-gold-line-strong);
+  border-start-end-radius: 0.5rem;
+}
+
+.ctaRule {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.6rem, 1.2vw, 1.1rem);
+  inline-size: min(100%, 22rem);
+}
+
+.ctaRuleLine {
+  flex: 1 1 auto;
+  block-size: var(--hairline);
+  background: linear-gradient(to right, transparent, var(--c-gold-line-strong));
+}
+
+.ctaRuleLine:last-child {
+  background: linear-gradient(to left, transparent, var(--c-gold-line-strong));
+}
+
+.ctaHeadline {
+  margin: 0;
+  color: var(--c-cream);
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 4.6vw, 4rem);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  text-wrap: balance;
+}
+
+.ctaSubline {
+  display: grid;
+  gap: 0.25em;
+  margin: 0;
+  color: rgb(232 230 224 / 0.78);
+  font-size: clamp(0.9rem, 1.25vw, 1.15rem);
+  font-weight: 300;
+  line-height: 1.6;
+}
+
+.ctaSublineLine {
+  display: block;
+}
+
+.ctaActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(0.75rem, 1.6vw, 1.4rem);
+  margin-block-start: clamp(0.5rem, 1.2vw, 1.1rem);
+}
+
+.ctaPrimary,
+.ctaSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7em;
+  padding: 0.95em 1.9em;
+  border: var(--hairline) solid var(--c-gold);
+  border-radius: 8px;
+  color: var(--c-gold);
+  font-family: var(--font-display);
+  font-size: clamp(0.9rem, 1.15vw, 1.15rem);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 260ms var(--ease-out),
+    color 260ms var(--ease-out),
+    box-shadow 260ms var(--ease-out);
+}
+
+/* The primary carries the comp's glow; the secondary is the same button
+ * without it, which is the whole difference between them. */
+.ctaPrimary {
+  box-shadow:
+    0 0 18px rgb(216 166 75 / 0.28),
+    inset 0 0 22px rgb(216 166 75 / 0.12);
+}
+
+.ctaPrimary:hover,
+.ctaSecondary:hover {
+  background-color: var(--c-gold);
+  color: var(--c-bg);
+}
+
+.ctaPrimary:focus-visible,
+.ctaSecondary:focus-visible,
+.colLink:focus-visible,
+.legalLink:focus-visible,
+.social:focus-visible,
+.backTop:focus-visible,
+.submit:focus-visible {
+  outline: var(--hairline) solid var(--c-gold);
+  outline-offset: 3px;
+}
+
+.ctaIcon {
+  inline-size: 1.15em;
+  block-size: 1.15em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ── the divider under the call to action ─────────────────────────────────── */
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.7rem, 1.4vw, 1.3rem);
+  margin-block: clamp(1.5rem, 3vw, 3rem);
+}
+
+.dividerLine {
+  flex: 1 1 auto;
+  block-size: var(--hairline);
+  background: var(--c-gold-line);
+}
+
+/* ── the four columns ─────────────────────────────────────────────────────── */
+
+.main {
+  display: grid;
+  grid-template-columns: 1.6fr 0.9fr 1fr 1.9fr;
+  gap: clamp(1.5rem, 3vw, 3.25rem);
+  align-items: start;
+  padding-block-end: clamp(2rem, 4vw, 3.5rem);
+}
+
+.brandCol {
+  display: grid;
+  gap: clamp(0.75rem, 1.4vw, 1.2rem);
+}
+
+.lockup {
+  display: flex;
+  align-items: center;
+  gap: var(--brand-gap);
+}
+
+.mark {
+  inline-size: clamp(2rem, 2.6vw, 2.9rem);
+  block-size: clamp(2rem, 2.6vw, 2.9rem);
+}
+
+.wordmark {
+  color: var(--c-gold);
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 2.1vw, 2.35rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+.brandRule {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  inline-size: min(100%, 9rem);
+}
+
+.brandRuleLine {
+  flex: 1 1 auto;
+  block-size: var(--hairline);
+  background: linear-gradient(to right, var(--c-gold-line), transparent);
+}
+
+.blurb {
+  margin: 0;
+  max-inline-size: 30ch;
+  color: rgb(232 230 224 / 0.7);
+  font-size: clamp(0.85rem, 1vw, 1rem);
+  font-weight: 300;
+  line-height: 1.75;
+}
+
+.motto {
+  margin: 0;
+  color: var(--c-gold-soft);
+  font-size: var(--fs-micro);
+  font-weight: 500;
+  letter-spacing: var(--tracking-micro);
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.col,
+.stay {
+  display: grid;
+  gap: clamp(0.75rem, 1.3vw, 1.15rem);
+  align-content: start;
+  /* The hairline between columns in the comp. */
+  border-inline-start: var(--hairline) solid var(--c-gold-line-faint);
+  padding-inline-start: clamp(1rem, 2.2vw, 2.5rem);
+}
+
+.colTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  margin: 0;
+  color: var(--c-gold);
+  font-family: var(--font-sans);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  letter-spacing: var(--tracking-micro);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.colList {
+  display: grid;
+  gap: clamp(0.45rem, 0.9vw, 0.75rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.colLink {
+  display: flex;
+  align-items: center;
+  gap: 0.55em;
+  padding: 0;
+  color: rgb(232 230 224 / 0.78);
+  font-size: clamp(0.85rem, 1vw, 1rem);
+  font-weight: 300;
+  line-height: 1.4;
+  text-align: start;
+  cursor: pointer;
+  transition: color 220ms var(--ease-out);
+}
+
+.colLink:hover {
+  color: var(--c-gold);
+}
+
+.chev {
+  flex: 0 0 auto;
+  inline-size: 0.85em;
+  block-size: 0.85em;
+  fill: none;
+  stroke: var(--c-gold);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 220ms var(--ease-out);
+}
+
+.colLink:hover .chev {
+  transform: translateX(2px);
+}
+
+/* ── the newsletter column ────────────────────────────────────────────────── */
+
+.stayBody {
+  margin: 0;
+  max-inline-size: 34ch;
+  color: rgb(232 230 224 / 0.7);
+  font-size: clamp(0.85rem, 1vw, 1rem);
+  font-weight: 300;
+  line-height: 1.7;
+}
+
+.form {
+  display: flex;
+  align-items: stretch;
+  border: var(--hairline) solid var(--c-gold-line-strong);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.field {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 0.65em;
+  min-inline-size: 0;
+  padding-inline: 0.95em;
+}
+
+.mail {
+  flex: 0 0 auto;
+  inline-size: 1.15em;
+  block-size: 1.15em;
+  fill: none;
+  stroke: var(--c-gold-soft);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.input {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  padding-block: 0.95em;
+  border: 0;
+  background: none;
+  color: var(--c-text);
+  font-family: inherit;
+  font-size: clamp(0.8rem, 0.9vw, 0.9rem);
+  font-weight: 300;
+  /* The placeholder is a full sentence and the column is not wide. If it ever
+   * does not fit, it must not be sliced mid-word with no sign that anything is
+   * missing. */
+  text-overflow: ellipsis;
+}
+
+.input::placeholder {
+  color: rgb(232 230 224 / 0.42);
+}
+
+.input:focus {
+  outline: none;
+}
+
+.form:focus-within {
+  border-color: var(--c-gold);
+}
+
+.submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  flex: 0 0 auto;
+  padding-inline: clamp(0.8em, 1.1vw, 1.2em);
+  border-inline-start: var(--hairline) solid var(--c-gold-line-strong);
+  color: var(--c-gold);
+  font-family: inherit;
+  font-size: clamp(0.82rem, 0.95vw, 0.95rem);
+  font-weight: 400;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 220ms var(--ease-out),
+    color 220ms var(--ease-out);
+}
+
+.submit:hover {
+  background-color: var(--c-gold);
+  color: var(--c-bg);
+}
+
+.submitArrow {
+  inline-size: 1em;
+  block-size: 1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.socialRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(0.5rem, 1vw, 0.85rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.social {
+  display: grid;
+  place-items: center;
+  inline-size: clamp(2.4rem, 3vw, 2.9rem);
+  block-size: clamp(2.4rem, 3vw, 2.9rem);
+  border: var(--hairline) solid var(--c-gold-line-strong);
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    background-color 220ms var(--ease-out),
+    border-color 220ms var(--ease-out);
+}
+
+.social svg {
+  inline-size: 55%;
+  block-size: 55%;
+  fill: none;
+  stroke: var(--c-gold);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 220ms var(--ease-out);
+}
+
+.social:hover {
+  background-color: var(--c-gold);
+  border-color: var(--c-gold);
+}
+
+.social:hover svg {
+  stroke: var(--c-bg);
+}
+
+/* ── the bottom bar ───────────────────────────────────────────────────────── */
+
+.bottom {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.9rem, 2vw, 2rem);
+  padding-block: clamp(1rem, 2vw, 1.75rem);
+}
+
+.bottomRule {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: clamp(0.5rem, 1.2vw, 1.1rem);
+  min-inline-size: 0;
+}
+
+.crest {
+  flex: 0 0 auto;
+  inline-size: clamp(2.6rem, 4vw, 3.9rem);
+  block-size: clamp(2.6rem, 4vw, 3.9rem);
+}
+
+.crest svg {
+  inline-size: 100%;
+  block-size: 100%;
+  fill: none;
+  stroke: var(--c-gold);
+  stroke-width: 1.15;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.backTop {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  flex: 0 0 auto;
+  padding: 0.7em 1.2em;
+  border: var(--hairline) solid var(--c-gold-line-strong);
+  border-radius: 8px;
+  color: var(--c-gold-soft);
+  font-size: clamp(0.8rem, 0.95vw, 0.95rem);
+  font-weight: 400;
+  white-space: nowrap;
+  transition:
+    color 220ms var(--ease-out),
+    border-color 220ms var(--ease-out);
+}
+
+.backTop:hover {
+  color: var(--c-gold);
+  border-color: var(--c-gold);
+}
+
+.backTopArrow {
+  inline-size: 1em;
+  block-size: 1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ── the legal line ───────────────────────────────────────────────────────── */
+
+.legal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.6rem, 1.6vw, 1.6rem);
+  padding-block-start: clamp(0.9rem, 1.8vw, 1.5rem);
+  border-block-start: var(--hairline) solid var(--c-gold-line-faint);
+  color: rgb(232 230 224 / 0.5);
+  font-size: clamp(0.75rem, 0.9vw, 0.9rem);
+  font-weight: 300;
+}
+
+.copyright {
+  margin: 0;
+}
+
+.legalList {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: clamp(0.6rem, 1.6vw, 1.6rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.legalItem {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.6rem, 1.6vw, 1.6rem);
+}
+
+.legalLink {
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: color 220ms var(--ease-out);
+}
+
+.legalLink:hover {
+  color: var(--c-gold);
+}
+
+/* -----------------------------------------------------------------------------
+ * Compact frames.
+ *
+ * Four columns need width to be four columns. Below the desktop band they fold
+ * to two and then to one, in reading order, and the hairline between them moves
+ * from the inline edge to the block edge so it still reads as a separation
+ * rather than as a stray rule down the side of a stacked list.
+ * -------------------------------------------------------------------------- */
+
+@media (max-width: 1199px) {
+  .main {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .brandCol {
+    grid-column: 1 / -1;
+  }
+
+  .stay {
+    grid-column: 1 / -1;
+    border-inline-start: 0;
+    border-block-start: var(--hairline) solid var(--c-gold-line-faint);
+    padding-inline-start: 0;
+    padding-block-start: clamp(1rem, 2vw, 1.75rem);
+  }
+
+  .blurb,
+  .stayBody {
+    max-inline-size: 46ch;
+  }
+}
+
+@media (max-width: 767px) {
+  .main {
+    grid-template-columns: 1fr;
+  }
+
+  .col {
+    border-inline-start: 0;
+    border-block-start: var(--hairline) solid var(--c-gold-line-faint);
+    padding-inline-start: 0;
+    padding-block-start: clamp(1rem, 4vw, 1.5rem);
+  }
+
+  /* The corner brackets have nothing to bracket at this width — the band is
+   * already the full frame — so they come off rather than clinging to the
+   * gutter. */
+  .cornerStart,
+  .cornerEnd {
+    display: none;
+  }
+
+  .form {
+    flex-wrap: wrap;
+  }
+
+  .field {
+    flex-basis: 100%;
+    padding-block: 0.15em;
+  }
+
+  .submit {
+    flex: 1 1 auto;
+    justify-content: center;
+    border-inline-start: 0;
+    border-block-start: var(--hairline) solid var(--c-gold-line-strong);
+    padding-block: 0.85em;
+  }
+
+  .bottom {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* The rule between the language menu and Back to Top has no room to be a
+   * rule on one line with them, so it takes a line of its own. */
+  .bottomRule {
+    order: 3;
+    flex-basis: 100%;
+  }
+
+  .legal {
+    flex-direction: column;
+    gap: 0.75rem;
+    text-align: center;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+ * Direction.
+ *
+ * Everything above mirrors on its own because it is written in logical
+ * properties. These three do not: an arrow drawn pointing right still points
+ * right when the page flips, and it has to point *along* the reading direction.
+ * -------------------------------------------------------------------------- */
+
+[dir="rtl"] .chev,
+[dir="rtl"] .submitArrow {
+  transform: scaleX(-1);
+}
+
+[dir="rtl"] .colLink:hover .chev {
+  transform: scaleX(-1) translateX(2px);
+}
+
+[dir="rtl"] .ctaRuleLine {
+  background: linear-gradient(to left, transparent, var(--c-gold-line-strong));
+}
+
+[dir="rtl"] .ctaRuleLine:last-child {
+  background: linear-gradient(to right, transparent, var(--c-gold-line-strong));
+}
+
+[dir="rtl"] .brandRuleLine {
+  background: linear-gradient(to left, var(--c-gold-line), transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ctaPrimary,
+  .ctaSecondary,
+  .colLink,
+  .chev,
+  .social,
+  .social svg,
+  .submit,
+  .backTop,
+  .legalLink {
+    transition: none;
+  }
+}

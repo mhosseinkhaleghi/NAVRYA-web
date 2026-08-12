@@ -266,6 +266,50 @@
   },
   "a11y": {
     "primaryNav": "Primary navigation",
-    "sectionNav": "Section navigation"
+    "sectionNav": "Section navigation",
+    "footerNav": "Footer navigation",
+    "newsletter": "Newsletter signup",
+    "social": "Social links"
+  },
+  "footer": {
+    "cta": {
+      "headline": "Enter the Wild Prepared.",
+      "subline": [
+        "Sharpen your trading mind. Build discipline, journal with purpose,",
+        "and gain the self-knowledge that turns insight into edge."
+      ],
+      "primary": "Start Your Journey",
+      "secondary": "Explore Archetypes"
+    },
+    "blurb": "Navrya is the companion for traders who seek more than profit. We unite psychology, journaling, and discipline to forge clarity, control, and conviction in every move.",
+    "motto": "Know Thyself. Master the Markets.",
+    "navTitle": "Navigation",
+    "navExtra": [
+      "Archetypes",
+      "Roadmap"
+    ],
+    "resourcesTitle": "Resources",
+    "resources": [
+      "Knowledge Base",
+      "Trading Journal Guide",
+      "Psychology Articles",
+      "Risk Management",
+      "Community",
+      "Help Center",
+      "Affiliates"
+    ],
+    "stayTitle": "Stay Sharp",
+    "stayBody": "Join the circle. Receive insights, tools, and reflections to keep your edge alive.",
+    "emailPlaceholder": "Enter your email address",
+    "subscribe": "Subscribe",
+    "socialTitle": "Follow the Path",
+    "backToTop": "Back to Top",
+    "copyright": "© {year} Navrya. All rights reserved.",
+    "legal": [
+      "Terms of Service",
+      "Privacy Policy",
+      "Refund Policy",
+      "Security"
+    ]
   }
 }
