@@ -7,4 +7,6 @@
 - Section 6→7: removed the fall and Section 7 heading-only magnetic stops; the final psychology card now transitions directly to the complete Section 7 payload.
 - Section 7 onward: restored native continuous scrolling; magnetic navigation is limited to the film and its Section 7 handover target.
 - Section 6→7 forward scroll now reuses the Section 7 rail button target and glide, then releases normal downward scrolling; upward scroll remains magnetic.
+- Continuous-scroll tuning: a 140ms state beat precedes each continuation; active input remains valid for 650ms to avoid long pauses between states.
+- Continuous-scroll acceleration: same-direction input doubles the remaining active animation speed from its current frame; reverse input smoothly retargets the adjacent magnetic state.
 - Known issues: none.

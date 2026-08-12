@@ -329,7 +329,9 @@ const GLIDE_MS = [620, 1400];
 /** One intentional scroll travels to one complete story state. */
 const STORY_GLIDE_MS = [1800, 4200];
 const STORY_HEAVY_MULTIPLIER = 2;
-const STORY_INPUT_HOLD_MS = 180;
+const STORY_INPUT_HOLD_MS = 650;
+const STORY_STATE_BEAT_MS = 140;
+const STORY_FAST_MULTIPLIER = 2;
 
 /**
  * The opening plate is never started until it can run without stalling.
@@ -384,6 +386,8 @@ export const stageScript = `
   var STORY_GLIDE_MS = ${JSON.stringify(STORY_GLIDE_MS)};
   var STORY_HEAVY_MULTIPLIER = ${STORY_HEAVY_MULTIPLIER};
   var STORY_INPUT_HOLD_MS = ${STORY_INPUT_HOLD_MS};
+  var STORY_STATE_BEAT_MS = ${STORY_STATE_BEAT_MS};
+  var STORY_FAST_MULTIPLIER = ${STORY_FAST_MULTIPLIER};
 
   var reduced = window.matchMedia
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1042,6 +1046,7 @@ export const stageScript = `
     var storyStarted = 0, storyDuration = 0;
     var storyFrom = 0, storyTo = 0;
     var storyDirection = 0, storyInputUntil = 0;
+    var storyTravelDirection = 0, storyAccelerated = false;
 
     function storyStops() {
       var max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
@@ -1078,8 +1083,8 @@ export const stageScript = `
       goTo(railTarget(darkMark), function () { handoffGlide = false; });
     }
 
-    function travelStory(direction) {
-      if (storyLocked || root.dataset.timeline !== 'live' || !direction) return;
+    function travelStory(direction, force) {
+      if ((!force && storyLocked) || root.dataset.timeline !== 'live' || !direction) return;
       var stops = storyStops();
       var current = nearestStop(stops, window.scrollY);
       var next = Math.max(0, Math.min(stops.length - 1, current + direction));
@@ -1094,6 +1099,8 @@ export const stageScript = `
 
       var from = window.scrollY, to = stops[next].at, distance = Math.abs(to - from);
       storyLocked = true;
+      storyTravelDirection = direction;
+      storyAccelerated = false;
       if (reduced || distance < 2) {
         window.scrollTo(0, to);
         storyLocked = false;
@@ -1117,13 +1124,17 @@ export const stageScript = `
         }
         storyGlide = null;
         storyLocked = false;
-        // Continue only when scrolling is genuinely still in progress. The
-        // timeout is renewed by each wheel/touch/key event, so momentum glides
-        // through one complete state at a time and a stopped gesture rests here.
+        storyTravelDirection = 0;
+        // Give every completed composition a visible beat. If the gesture is
+        // still active after it, continue to only the adjacent state.
         if (storyDirection && performance.now() < storyInputUntil) {
           var direction = storyDirection;
           storyDirection = 0;
-          travelStory(direction);
+          setTimeout(function () {
+            if (storyDirection || performance.now() < storyInputUntil) {
+              travelStory(storyDirection || direction);
+            }
+          }, STORY_STATE_BEAT_MS);
           return;
         }
         storyDirection = 0;
@@ -1135,15 +1146,40 @@ export const stageScript = `
       storyInputUntil = performance.now() + STORY_INPUT_HOLD_MS;
     }
 
+    function accelerateStory() {
+      if (!storyLocked || storyAccelerated) return;
+      var now = performance.now();
+      var progress = clamp01((now - storyStarted) / storyDuration);
+      storyFrom = window.scrollY;
+      storyStarted = now;
+      storyDuration = Math.max(1, (storyDuration * (1 - progress)) / STORY_FAST_MULTIPLIER);
+      storyAccelerated = true;
+    }
+
+    function redirectStory(direction) {
+      if (!storyLocked || direction === storyTravelDirection) return;
+      if (storyGlide !== null) cancelAnimationFrame(storyGlide);
+      storyGlide = null;
+      storyLocked = false;
+      // Recalculate from the exact current frame, then travel one adjacent
+      // state in the requested direction. No snap, no queued extra state.
+      travelStory(direction, true);
+    }
+
+    function handleStoryInput(direction) {
+      noteStoryInput(direction);
+      if (!storyLocked) { travelStory(direction); return; }
+      if (direction !== storyTravelDirection) { redirectStory(direction); return; }
+      accelerateStory();
+    }
+
     function storyWheel(e) {
       if (root.dataset.timeline !== 'live' || !e.deltaY) return;
       if (handoffGlide) { e.preventDefault(); return; }
       if (window.scrollY >= filmMax && e.deltaY > 0) return;
       e.preventDefault();
       var direction = e.deltaY > 0 ? 1 : -1;
-      noteStoryInput(direction);
-      if (storyLocked) return;
-      travelStory(direction);
+      handleStoryInput(direction);
     }
 
     function storyKey(e) {
@@ -1157,9 +1193,7 @@ export const stageScript = `
       if (window.scrollY >= filmMax && down) return;
       e.preventDefault();
       var direction = down ? 1 : -1;
-      noteStoryInput(direction);
-      if (storyLocked) return;
-      travelStory(direction);
+      handleStoryInput(direction);
     }
 
     window.addEventListener('wheel', storyWheel, { passive: false, capture: true });
@@ -1176,9 +1210,7 @@ export const stageScript = `
       e.preventDefault();
       touchY = y;
       var direction = delta > 0 ? 1 : -1;
-      noteStoryInput(direction);
-      if (storyLocked) return;
-      travelStory(direction);
+      handleStoryInput(direction);
     }, { passive: false, capture: true });
     window.addEventListener('touchend', function () { touchY = null; }, { passive: true, capture: true });
 
