@@ -11,18 +11,26 @@
 #   mode = scrub  the plate is driven by scroll position, so it needs keyframes
 #                 often enough that a seek never has far to decode.
 #
-#                 A keyframe every 12 frames rather than every 6: worst case the
-#                 decoder walks 11 frames, which is a few milliseconds and
-#                 nowhere near a dropped frame, and it costs 35% of the file.
-#                 Measured on the heaviest plate, at 1080p:
+#                 A keyframe every 24 frames rather than every 12 — one second
+#                 rather than half of one. Worst case the decoder walks 23
+#                 frames, which is tens of milliseconds against a scrub that
+#                 animates over one to fifteen seconds, and it is a third of the
+#                 file. Measured on the heaviest plate against the highest
+#                 fidelity copy that exists, SSIM over the whole clip:
 #
-#                   crf 23 · gop  6   5.33 MB   (what this used to ship)
-#                   crf 23 · gop 12   3.47 MB
-#                   crf 20 · gop 12   4.97 MB   ← better picture, fewer bytes
-#                   crf 18 · gop 12   6.36 MB
+#                   gop 12 · 1920 · crf 28   5.38 MB   0.95593   ← used to ship
+#                   gop 24 · 1920 · crf 28   4.14 MB   0.95656
+#                   gop 24 · 1920 · crf 30   3.68 MB   0.95576   ← ships now
+#                   gop 24 · 1920 · crf 31   3.41 MB   0.95521
+#                   gop 24 · 1792 · crf 29   3.64 MB   0.95500
+#                   gop 24 · 1600 · crf 28   3.42 MB   0.95452
 #
-#                 So the saving is spent on quality instead of bandwidth and the
-#                 plates come out sharper *and* slightly smaller than before.
+#                 A third smaller at a quality difference of 0.0002 SSIM, which
+#                 is not a difference. Note the last two rows: dropping
+#                 resolution and dropping the quantiser cost about the same
+#                 bytes, and the quantiser gives the better picture — so the
+#                 plates stay at full resolution and the saving is spent there.
+#                 Nothing is upscaled on any display.
 #
 #                 AV1 was measured here too and is not worth it: at gop 6 SVT-AV1
 #                 came out at 5.63 MB against H.264's 5.33 and VP9's 4.98. A GOP
@@ -62,7 +70,7 @@ mkdir -p "$OUT"
 
 case "$MODE" in
   play)  GOP=48; H_1080=23; H_720=25; V_1080=32; V_720=35 ;;
-  scrub) GOP=12; H_1080=20; H_720=23; V_1080=28; V_720=31 ;;
+  scrub) GOP=24; H_1080=21; H_720=24; V_1080=30; V_720=32 ;;
   *) echo "unknown mode: $MODE (want play or scrub)" >&2; exit 1 ;;
 esac
 

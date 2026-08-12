@@ -80,6 +80,51 @@ load ms  min/median/max: 896 / 1164 / 1517
 Console is clean, no request fails, all seven plates are present on every page,
 and nothing throws on load in any of the fifteen runs.
 
+## Re-encoded — a third off the film, at the same picture
+
+The two-tier fix stopped the freezing but left the weight: 23MB on desktop.
+Re-encoded from the highest fidelity copy that exists — there is no original in
+the repository, so every plate here is a second generation off the shipping
+1080 MP4, and that is stated rather than glossed.
+
+**Measured before choosing.** Six settings on the heaviest plate, SSIM over the
+whole clip against that source:
+
+| setting | size | SSIM |
+|---|---|---|
+| gop 12 · 1920 · crf 28 | 5.38 MB | 0.95593 ← used to ship |
+| gop 24 · 1920 · crf 28 | 4.14 MB | 0.95656 |
+| **gop 24 · 1920 · crf 30** | **3.68 MB** | **0.95576** ← ships now |
+| gop 24 · 1920 · crf 31 | 3.41 MB | 0.95521 |
+| gop 24 · 1792 · crf 29 | 3.64 MB | 0.95500 |
+| gop 24 · 1600 · crf 28 | 3.42 MB | 0.95452 |
+
+A third smaller at a quality difference of 0.0002 SSIM, which is not a
+difference. The keyframe interval was the whole story: one every twelve frames
+spent a third of the file on intra frames for no visible gain, and one every
+twenty-four still leaves a seek only twenty-three frames to walk — tens of
+milliseconds against a scrub that animates over one to fifteen seconds.
+
+The last two rows are why the plates stayed at full resolution. Dropping pixels
+and dropping the quantiser cost about the same bytes, and the quantiser gives
+the better picture. So nothing is upscaled on any display.
+
+| | before | after |
+|---|---|---|
+| desktop (1080 webm) | 23 MB | **15 MB** |
+| mobile (720 webm) | 13 MB | **7.9 MB** |
+| page total, throttled walk | 28.5 MB | **21.8 MB** |
+
+**Checked, not assumed.** Handover continuity — each plate's closing frame
+against the next plate's opening frame, which is what a second generation would
+damage first — is within 0.01 SSIM of the old encodes at every one of the five
+cuts. A 1:1 crop of the most detailed plate, old beside new, shows no visible
+softening in the scale armour, the fletching or the leather.
+
+And the thing that actually matters: on a throttled line at a human gesture
+cadence, **all twelve stops now carry the shipping plate**, not the light copy.
+Before the re-encode two of them still fell back to the proxy.
+
 ## Fixed — the film froze on stills under the magnetic scroll
 
 Reported: videos not playing since the scroll changed, and the site slow.
