@@ -72,6 +72,27 @@ const BEATS = [
 ] as const;
 
 /**
+ * The real duration of each beat, in seconds.
+ *
+ * Video beats use the source clip's duration. The composited beats between
+ * clips have no video clock, so they retain the existing 70vh-per-second
+ * pacing. This makes magnetic travel play every actual shot at normal speed.
+ */
+const BEAT_SECONDS = [
+  ["turn", 3],
+  ["prey", 5.041667],
+  ["draw", 5.041667],
+  ["strike", 7.041667],
+  ["clear", 160 / 70],
+  ["arrow", 6.7],
+  ["learn", 340 / 70],
+  ["depart", 150 / 70],
+  ["miss", 4.4],
+  ["traits", 560 / 70],
+  ["fall", 180 / 70],
+] as const;
+
+/**
  * Cue points, as a fraction of each plate's duration.
  *
  * Measured off the footage frame by frame. They are fractions rather than
@@ -327,11 +348,9 @@ const FLOW_SECTIONS = RAIL.filter((s) => "flow" in s)
 const GLIDE_MS = [620, 1400];
 
 /** One intentional scroll travels to one complete story state. */
-const STORY_GLIDE_MS = [1800, 4200];
-const STORY_HEAVY_MULTIPLIER = 2;
 const STORY_INPUT_HOLD_MS = 650;
-const STORY_STATE_BEAT_MS = 140;
-const STORY_FAST_MULTIPLIER = 2;
+const STORY_ACCELERATE_AFTER = 0.3;
+const STORY_ACCELERATE_MULTIPLIER = 3;
 
 /**
  * The opening plate is never started until it can run without stalling.
@@ -361,6 +380,7 @@ export const stageScript = `
 (function () {
   var root = document.documentElement;
   var BEATS = ${JSON.stringify(BEATS)};
+  var BEAT_SECONDS = ${JSON.stringify(BEAT_SECONDS)};
   var SCENES = ${JSON.stringify(SCENES)};
   var PLATES = ${JSON.stringify(PLATES)};
   var PLATE_BEAT = ${JSON.stringify(PLATE_BEAT)};
@@ -383,11 +403,9 @@ export const stageScript = `
   var RAIL = ${JSON.stringify(RAIL)};
   var FLOW_SECTIONS = ${JSON.stringify(FLOW_SECTIONS)};
   var GLIDE_MS = ${JSON.stringify(GLIDE_MS)};
-  var STORY_GLIDE_MS = ${JSON.stringify(STORY_GLIDE_MS)};
-  var STORY_HEAVY_MULTIPLIER = ${STORY_HEAVY_MULTIPLIER};
   var STORY_INPUT_HOLD_MS = ${STORY_INPUT_HOLD_MS};
-  var STORY_STATE_BEAT_MS = ${STORY_STATE_BEAT_MS};
-  var STORY_FAST_MULTIPLIER = ${STORY_FAST_MULTIPLIER};
+  var STORY_ACCELERATE_AFTER = ${STORY_ACCELERATE_AFTER};
+  var STORY_ACCELERATE_MULTIPLIER = ${STORY_ACCELERATE_MULTIPLIER};
 
   var reduced = window.matchMedia
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -432,6 +450,9 @@ export const stageScript = `
     edge[BEATS[i][0]] = [run / total, (run + BEATS[i][1]) / total];
     run += BEATS[i][1];
   }
+
+  var secondsByBeat = {};
+  for (i = 0; i < BEAT_SECONDS.length; i++) secondsByBeat[BEAT_SECONDS[i][0]] = BEAT_SECONDS[i][1];
 
   function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
   function span(p, a, b) { return b === a ? (p >= b ? 1 : 0) : clamp01((p - a) / (b - a)); }
@@ -756,6 +777,24 @@ export const stageScript = `
       return (b[0] + (b[1] - b[0]) * progress) * filmMax;
     }
 
+    function beatSeconds(beat) {
+      var video = document.querySelector('[data-scene-video="' + beat + '"]');
+      return video && video.duration ? video.duration : secondsByBeat[beat];
+    }
+
+    function filmSecondsAt(position) {
+      var point = filmMax ? clamp01(position / filmMax) : 0;
+      var seconds = 0;
+      for (var b = 0; b < BEATS.length; b++) {
+        var beat = BEATS[b][0], bounds = edge[beat], duration = beatSeconds(beat);
+        if (point <= bounds[1] || b === BEATS.length - 1) {
+          return seconds + duration * span(point, bounds[0], bounds[1]);
+        }
+        seconds += duration;
+      }
+      return seconds;
+    }
+
     function filmStates() {
       var states = [{ at: 0, heavy: false }];
       var state = function (at, heavy) { states.push({ at: at, heavy: heavy }); };
@@ -1044,7 +1083,7 @@ export const stageScript = `
     // completed state remains the magnetic resting point.
     var storyGlide = null, storyLocked = false, touchY = null;
     var storyStarted = 0, storyDuration = 0;
-    var storyFrom = 0, storyTo = 0;
+    var storyFrom = 0, storyTo = 0, storyStartStop = 0, storyEndStop = 0;
     var storyDirection = 0, storyInputUntil = 0;
     var storyTravelDirection = 0, storyAccelerated = false;
 
@@ -1083,34 +1122,37 @@ export const stageScript = `
       goTo(railTarget(darkMark), function () { handoffGlide = false; });
     }
 
-    function travelStory(direction, force) {
+    function travelStory(direction, force, target, origin) {
       if ((!force && storyLocked) || root.dataset.timeline !== 'live' || !direction) return;
-      var stops = storyStops();
-      var current = nearestStop(stops, window.scrollY);
-      var next = Math.max(0, Math.min(stops.length - 1, current + direction));
-      if (next === current) return;
+      if (typeof target !== 'number') {
+        var stops = storyStops();
+        var current = nearestStop(stops, window.scrollY);
+        var next = Math.max(0, Math.min(stops.length - 1, current + direction));
+        if (next === current) return;
 
-      // The last stop is the final Section 6 card. Its forward action is the
-      // Section 7 rail button, after which the document scrolls natively.
-      if (direction > 0 && current === stops.length - 2 && next === stops.length - 1) {
-        handoffToSectionSeven();
-        return;
+        // The last stop is the final Section 6 card. Its forward action is the
+        // Section 7 rail button, after which the document scrolls natively.
+        if (direction > 0 && current === stops.length - 2 && next === stops.length - 1) {
+          handoffToSectionSeven();
+          return;
+        }
+        target = stops[next].at;
+        origin = stops[current].at;
       }
 
-      var from = window.scrollY, to = stops[next].at, distance = Math.abs(to - from);
+      var from = window.scrollY, to = target, distance = Math.abs(to - from);
       storyLocked = true;
       storyTravelDirection = direction;
       storyAccelerated = false;
+      storyStartStop = typeof origin === 'number' ? origin : from;
+      storyEndStop = to;
       if (reduced || distance < 2) {
         window.scrollTo(0, to);
         storyLocked = false;
         return;
       }
 
-      var max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-      var ms = STORY_GLIDE_MS[0]
-        + clamp01(distance / max) * (STORY_GLIDE_MS[1] - STORY_GLIDE_MS[0]);
-      if (stops[next].heavy) ms *= STORY_HEAVY_MULTIPLIER;
+      var ms = Math.max(1, Math.abs(filmSecondsAt(to) - filmSecondsAt(from)) * 1000);
       storyStarted = performance.now();
       storyDuration = ms;
       storyFrom = from;
@@ -1125,16 +1167,12 @@ export const stageScript = `
         storyGlide = null;
         storyLocked = false;
         storyTravelDirection = 0;
-        // Give every completed composition a visible beat. If the gesture is
-        // still active after it, continue to only the adjacent state.
+        // A held same-direction gesture crosses directly into the next state.
+        // Releasing it leaves the completed composition as the resting point.
         if (storyDirection && performance.now() < storyInputUntil) {
           var direction = storyDirection;
           storyDirection = 0;
-          setTimeout(function () {
-            if (storyDirection || performance.now() < storyInputUntil) {
-              travelStory(storyDirection || direction);
-            }
-          }, STORY_STATE_BEAT_MS);
+          travelStory(direction);
           return;
         }
         storyDirection = 0;
@@ -1150,20 +1188,27 @@ export const stageScript = `
       if (!storyLocked || storyAccelerated) return;
       var now = performance.now();
       var progress = clamp01((now - storyStarted) / storyDuration);
+      if (progress < STORY_ACCELERATE_AFTER) return;
+
+      // One quantized follow-up input may finish the active state faster once
+      // it is visibly underway. Rebase from the current frame so it never
+      // jumps, then leave all later input to the next completed state.
       storyFrom = window.scrollY;
       storyStarted = now;
-      storyDuration = Math.max(1, (storyDuration * (1 - progress)) / STORY_FAST_MULTIPLIER);
+      storyDuration = Math.max(1, (storyDuration * (1 - progress)) / STORY_ACCELERATE_MULTIPLIER);
       storyAccelerated = true;
     }
 
     function redirectStory(direction) {
       if (!storyLocked || direction === storyTravelDirection) return;
+      var target = storyStartStop, origin = storyEndStop;
       if (storyGlide !== null) cancelAnimationFrame(storyGlide);
       storyGlide = null;
       storyLocked = false;
-      // Recalculate from the exact current frame, then travel one adjacent
-      // state in the requested direction. No snap, no queued extra state.
-      travelStory(direction, true);
+      // Reverse to the exact completed state the active transition departed.
+      // Using nearestStop here can choose that origin while still inside its
+      // midpoint, which would make the wheel appear to do nothing.
+      travelStory(direction, true, target, origin);
     }
 
     function handleStoryInput(direction) {
