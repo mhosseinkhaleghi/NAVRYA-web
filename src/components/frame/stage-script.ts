@@ -561,9 +561,36 @@ export const stageScript = `
     v.addEventListener('error', next);
   }
 
-  // The light tier is small enough to be finished before the scroll even
-  // unlocks, but only if it is not made to share the line with the heavy one.
-  // Started together, the 23MB of shipping plates starved the 1.3MB of proxies
+  // The light tier is the only thing on the page fetched before the viewer asks
+  // for anything, and that is a privilege it has to earn back.
+  //
+  // Marked \`preload="auto"\` it began at parse time, alongside the opening
+  // plate — the one thing the interface actually waits on. Measured against the
+  // live site by aborting the tier and watching the opening arrive, twice each:
+  //
+  //   with the tier   dawn 5952ms / 5514ms   unlock 10491ms / 10105ms
+  //   tier aborted    dawn 2974ms / 3212ms   unlock  6767ms /  6929ms
+  //
+  // It doubled the opening plate's arrival and cost three and a half seconds
+  // before anything could be looked at. Worth knowing: this did not reproduce
+  // against a local server under the same emulated throttle — loopback had the
+  // bytes either way — so the local reading said there was nothing here. The
+  // live experiment is the one that settled it.
+  //
+  // So it waits. Nothing shares the line with the opening plate until that
+  // plate is playing; from there the tier has the whole length of the shot to
+  // arrive, which at 1.8MB is about a second of a five-second run.
+  var proxiesWarmed = false;
+  function warmProxies() {
+    if (proxiesWarmed) return;
+    proxiesWarmed = true;
+    each('[data-scene-proxy]', function (el) {
+      if (el.getAttribute('preload') === 'none') { el.preload = 'auto'; el.load(); }
+    });
+  }
+
+  // Once started, the light tier must not be made to share the line with the
+  // heavy one either. Started together, the shipping plates starved the proxies
   // and neither was ready: measured, every proxy still at metadata by the time
   // the viewer was three steps in.
   var PROXY_WAIT_MS = 6000;
@@ -599,6 +626,10 @@ export const stageScript = `
     // they are what make the film run from the first gesture — and the shipping
     // plates behind them, one at a time, upgrading each shot as it arrives.
     ready(function () {
+      // Also here, not only from \`start\`: the opening can be skipped entirely —
+      // autoplay refused, no decoder, or the line too slow for the patience
+      // timer — and on those paths the light tier still has to be sent for.
+      warmProxies();
       var order = [];
       for (var q = 0; q < PLATES.length; q++) {
         if (PLATES[q] !== 'dawn') order.push(PLATES[q]);
@@ -641,6 +672,10 @@ export const stageScript = `
       function start() {
         if (going) return;
         going = true;
+        // The opening has what it needs and is about to run. Everything else on
+        // the page may have the line now, and has the length of the shot to use
+        // it — the light tier first, because it is what the first gesture draws.
+        warmProxies();
         var p = opening.play();
         // Autoplay refused, or no decoder: show the interface rather than hold
         // the page hostage to a video that is never going to run.

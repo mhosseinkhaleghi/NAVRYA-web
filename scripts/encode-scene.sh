@@ -105,17 +105,43 @@ enc() { # width  height  h264-crf  vp9-crf  label
 enc 1920 1080 "$H_1080" "$V_1080" 1080
 enc 1280 720  "$H_720"  "$V_720"  720
 
-# A 720p proxy, for the self-contained preview only. That build inlines every
-# plate as a data URI, so the whole sequence has to fit inside one file the
-# viewer downloads before anything renders. Resolution carries perceived
-# sharpness further than bitrate does, so the proxy keeps 720p and spends the
-# saving on compression instead of pixels.
-ffmpeg -v error -y -i "$SRC" "${CUT[@]}" -an -vf "scale=1280:720:flags=lanczos" \
-  -c:v libvpx-vp9 -crf 40 -b:v 0 -row-mt 1 -cpu-used 4 \
-  -g "$GOP" -keyint_min "$GOP" -pix_fmt yuv420p "$OUT/$SLUG-proxy.webm"
+# The light tier: 854×480, the whole film in about 1.8MB. Two consumers, and
+# both of them are why every number on this line is what it is.
+#
+#   The site renders it behind every scrubbed plate. It is fetched eagerly, so
+#   its weight lands in front of the opening plate rather than behind it — the
+#   viewer waits on it before the interface comes up. At 4.6MB it pushed the
+#   opening from 6.4s to 11.2s on a 12Mbps line and left the hero headline still
+#   at opacity 0 when the page was first looked at.
+#
+#   The preview build inlines it as a data URI, so the whole sequence has to fit
+#   in one file, under a 16MB ceiling, before anything renders.
+#
+# Both want it small; the site also wants it *seekable*, and that is the part
+# worth writing down. This used to be one keyframe for the whole clip — free for
+# a file the preview plays start to finish, and 189ms to answer a seek in the
+# tier whose entire job is answering a seek instantly. A keyframe every 24
+# frames costs bytes and buys that back:
+#
+#   854×480  one keyframe per clip   1127 KB   189 ms   SSIM 0.9216  ← used to
+#   854×480  gop 24 crf 50           1314 KB   104 ms   SSIM 0.9241     ship
+#   854×480  gop 24 crf 46           1785 KB   104 ms   SSIM 0.9393  ← ships now
+#
+# A better picture than the tier it replaces, at 45% of the seek cost. SSIM is
+# measured against the plate the proxy stands in for, both at 854×480.
+#
+# Its own GOP, deliberately not "$GOP": the light tier is scrubbed on the site
+# whichever mode the plate was encoded in, so it needs the keyframes either way.
+#
+# Do not raise the resolution here. It has been 1280×720 twice by accident —
+# the script said 720p while the files that shipped were 854×480 — and both
+# times it went unnoticed until the opening slowed down.
+ffmpeg -v error -y -i "$SRC" "${CUT[@]}" -an -vf "scale=854:480:flags=lanczos" \
+  -c:v libvpx-vp9 -crf 46 -b:v 0 -row-mt 1 -cpu-used 4 \
+  -g 24 -keyint_min 24 -pix_fmt yuv420p "$OUT/$SLUG-proxy.webm"
 for edge in first last; do
   [ "$edge" = first ] && n=0 || n=$((FRAMES - 1))
-  ffmpeg -v error -y -i "$SRC" -vf "select=eq(n\,$n),scale=1280:720:flags=lanczos" \
+  ffmpeg -v error -y -i "$SRC" -vf "select=eq(n\,$n),scale=854:480:flags=lanczos" \
     -frames:v 1 -q:v 5 "$OUT/$SLUG-$edge-proxy.jpg"
 done
 

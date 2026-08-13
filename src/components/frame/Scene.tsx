@@ -78,15 +78,29 @@ export function Scene() {
           />
 
           {/*
-           * The proxy: the same shot at 854×480, and the whole film in 1.3MB
-           * against the shipping renditions' 23.
+           * The proxy: the same shot at 854×480, and the whole film in 1.8MB
+           * against the shipping renditions' 15.
            *
            * It exists because of arithmetic that no amount of load ordering
            * gets around. The scroll unlocks about six seconds in and a viewer
-           * steps roughly every second and a half; the full plates are 23MB,
+           * steps roughly every second and a half; the full plates were 23MB,
            * which on a 12Mbps line is fifteen seconds. They will always be
            * ahead of it, and they were — measured, eight stops out of twelve
            * with a frozen still where the shot should have been running.
+           *
+           * `preload="none"`, and the controller sends for it the moment the
+           * opening plate starts playing. Eager was the obvious choice and it
+           * was wrong: this is the only tier fetched before the viewer asks for
+           * anything, so at parse time it competes with the one plate the
+           * interface actually waits on. Measured live, it doubled that plate's
+           * arrival and put three and a half seconds in front of first paint.
+           *
+           * Started at playback instead, it has the whole length of the opening
+           * shot to itself — about a second of a five-second run — and is in
+           * hand well before the scroll unlocks, which is the only deadline it
+           * has. Its weight is budgeted for the same reason and the budget is
+           * asserted in `verify.mjs`; re-encoding it at 720p once quietly
+           * tripled it, and nothing in the suite noticed.
            *
            * So the light copy carries the motion from the first gesture and the
            * heavy one takes over the moment it can. Durations are identical to
@@ -101,7 +115,7 @@ export function Scene() {
             <video
               className={styles.proxy}
               data-scene-proxy={id}
-              preload="auto"
+              preload="none"
               muted
               playsInline
               tabIndex={-1}

@@ -145,6 +145,18 @@ For every `<video>` in the document:
   each light copy paired with a plate. The light tier is what keeps the film
   running under a magnetic step; if it disappears the film does not fail
   loudly, it quietly freezes on stills again.
+- **The light tier is inside its weight budget**: the six light copies together
+  must be under 2.5MB, read from `Content-Length` off the wire rather than from
+  the repository, because what matters is what the edge serves.
+
+  Presence alone was not enough, and this is the check that was missing when it
+  mattered. The tier is the one thing on the page marked `preload="auto"`, so
+  its bytes are spent *before* the viewer asks for anything — in front of the
+  opening plate, which is what the interface waits on. Re-encoding it at
+  1280×720 rather than 854×480 tripled it to 4.6MB and the whole suite stayed
+  green: six copies, every pairing intact, every URL 200. What it actually cost
+  was the opening, 6.4s to 11.2s on a 12Mbps line, surfacing as the hero
+  headline sitting at `opacity: 0` on the coldest run.
 
 ## Exit criteria
 

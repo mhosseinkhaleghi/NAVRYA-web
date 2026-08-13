@@ -442,6 +442,60 @@ async function runOne(browser, locale, bp) {
     if (p.status >= 400) fail(where, "D2-video", `source ${p.src} returns ${p.status}`);
   }
 
+  /* The light tier has a weight budget, and it is a correctness property.
+   *
+   * Presence is asserted above, and presence was not enough. Re-encoding the
+   * tier at 1280×720 instead of 854×480 tripled it to 4.6MB and the whole suite
+   * stayed green: the count was still six, every pairing still held, every URL
+   * still served 200. What it cost was the opening — measured live, it doubled
+   * the opening plate's arrival and pushed the unlock from 6.8s to 10.3s —
+   * surfacing as the hero headline still at opacity 0 on the coldest run.
+   *
+   * The tier is fetched the moment the opening plate begins playing, so it no
+   * longer competes with that plate for the line. It still has a deadline: the
+   * scroll unlocks when the opening ends, and the tier is what the first
+   * gesture draws. One shot's length is what it gets, so its weight is bounded.
+   *
+   * Checked from Content-Length off the wire rather than from the repository,
+   * because what matters is what the edge actually serves.
+   */
+  const LIGHT_TIER_BUDGET = 2.5 * 1024 * 1024;
+  const lightSrcs = await page.evaluate(() =>
+    [...document.querySelectorAll("[data-scene-proxy] source")].map((s) => s.getAttribute("src")),
+  );
+  const lightSizes = await Promise.all(
+    [...new Set(lightSrcs)].map(async (src) => {
+      const res = await page.request.get(new URL(src, BASE).href, {
+        headers: { Range: "bytes=0-0" },
+        timeout: 30000,
+      });
+      // A 206 reports the full size in Content-Range; a server that ignored the
+      // range reports it in Content-Length.
+      const h = res.headers();
+      const total = /\/(\d+)\s*$/.exec(h["content-range"] || "")?.[1] ?? h["content-length"];
+      return { src, bytes: Number(total) || 0 };
+    }),
+  );
+  const lightTotal = lightSizes.reduce((n, f) => n + f.bytes, 0);
+  if (lightSizes.some((f) => !f.bytes)) {
+    notes.push(
+      `${locale.code}/${bp.name}: light tier size unreadable for ` +
+        lightSizes.filter((f) => !f.bytes).map((f) => f.src).join(", "),
+    );
+  } else if (lightTotal > LIGHT_TIER_BUDGET) {
+    const kb = (n) => `${Math.round(n / 1024)}KB`;
+    fail(
+      where,
+      "D2-video",
+      `light tier is ${kb(lightTotal)}, over its ${kb(LIGHT_TIER_BUDGET)} budget — ` +
+        `it has one shot's length to arrive before the scroll unlocks. ` +
+        lightSizes
+          .sort((a, b) => b.bytes - a.bytes)
+          .map((f) => `${f.src.split("/").pop()} ${kb(f.bytes)}`)
+          .join(", "),
+    );
+  }
+
   /* Fonts: Persian and Arabic must actually be in Peyda. */
   if (locale.dir === "rtl") {
     const peyda = await page.evaluate(async () => {

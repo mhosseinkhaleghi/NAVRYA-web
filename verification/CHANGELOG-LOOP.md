@@ -80,6 +80,74 @@ load ms  min/median/max: 896 / 1164 / 1517
 Console is clean, no request fails, all seven plates are present on every page,
 and nothing throws on load in any of the fifteen runs.
 
+## Fixed — the re-encode put three and a half seconds in front of the opening
+
+The re-encode below shipped with a regression I introduced and did not catch.
+Reported as the site still being slow, and it was.
+
+**What happened.** `encode-scene.sh` writes the light tier at 1280×720. The
+light tier that was actually shipping was 854×480 — `58e7dd6` had shrunk it by
+hand to cut the preview build and never updated the script, so the two had
+disagreed silently ever since. Re-running the script regenerated the tier at its
+own resolution and undid that edit: **1.21MB → 4.60MB**, tripled.
+
+That tier was the one thing on the page marked `preload="auto"`, so it began
+downloading at parse time, alongside the opening plate — the plate the interface
+waits on before anything can be looked at.
+
+**Measured against the live site, by aborting the tier and watching the
+opening.** Two runs each:
+
+| | dawn arrives | timeline unlocks |
+|---|---|---|
+| with the 4.5MB tier | 5952ms · 5514ms | 10491ms · 10105ms |
+| tier aborted | 2974ms · 3212ms | 6767ms · 6929ms |
+
+It doubled the opening plate's arrival and cost three and a half seconds before
+first paint. It also produced the one failure in the live suite —
+`en/mobile/s1-hero — D1-text: 4 text nodes, 0 visible ("Become the Hunter."
+opacity=0)` — the hero caught still at zero on the coldest run.
+
+**Worth recording: local said there was nothing here.** Under the same emulated
+throttle, a local server unlocked in 6555ms with the 1.8MB tier and 6597ms with
+the 4.6MB one — identical, so the local A/B cleared a tier that was in fact
+costing three seconds in the field. Loopback had the bytes either way. The live
+experiment is what settled it, and this is the second time in this loop that a
+local reading has been the misleading one.
+
+**Two fixes, because there were two faults.**
+
+*The tier waits its turn.* It is `preload="none"` now, and the controller sends
+for it the moment the opening plate starts playing. Nothing shares the line with
+the opening; from there the tier has the whole length of the shot to arrive,
+which at 1.8MB is about a second of a five-second run — and its only real
+deadline is the unlock, several seconds later.
+
+*The tier is budgeted, and the budget is asserted.* Presence was already checked
+— six copies, each paired with a plate — and presence is what stayed green while
+the tier tripled. `verify.mjs` now reads Content-Length off the wire and fails
+over 2.5MB, naming the offenders. Confirmed to fail against the 4.6MB tier and
+pass against the fixed one, so it is a check and not decoration.
+
+**And the tier is better than the one it replaces**, rather than merely smaller.
+It had been encoded with one keyframe for the whole clip — free for a file the
+preview plays start to finish, and 189ms to answer a seek in the tier whose
+entire job is answering a seek instantly. Measured on the heaviest plates:
+
+| light tier | film | seek | SSIM |
+|---|---|---|---|
+| 854×480, one keyframe per clip | 1127 KB | 189 ms | 0.9216 ← used to ship |
+| 854×480, gop 24 crf 50 | 1314 KB | 104 ms | 0.9241 |
+| **854×480, gop 24 crf 46** | **1785 KB** | **104 ms** | **0.9393** ← ships now |
+
+A better picture than the tier it replaces at 45% of the seek cost. The script
+now writes exactly this, with its own keyframe interval rather than the plate's,
+because the light tier is scrubbed on the site whichever mode the plate was
+encoded in.
+
+**Result, throttled, gesturing at a human cadence:** unlock 7273ms local, and
+all twelve stops carry the *shipping* plate, not the stand-in. 15/15 local.
+
 ## Re-encoded — a third off the film, at the same picture
 
 The two-tier fix stopped the freezing but left the weight: 23MB on desktop.
