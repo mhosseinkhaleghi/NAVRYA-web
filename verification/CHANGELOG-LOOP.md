@@ -80,6 +80,64 @@ load ms  min/median/max: 896 / 1164 / 1517
 Console is clean, no request fails, all seven plates are present on every page,
 and nothing throws on load in any of the fifteen runs.
 
+## Fixed — the opening shot played the whole way through at `opacity: 0`
+
+Reported: the first video, the one where the hunter walks into frame, never
+appears. Everything else clean.
+
+It was correct. It just could not be seen.
+
+```
+currentTime 0.69  paused false  readyState 4  box 1440x900  opacity 0
+currentTime 1.90  paused false  readyState 4  box 1440x900  opacity 0
+currentTime 3.10  paused false  readyState 4  box 1440x900  opacity 0
+currentTime 4.31  paused false  readyState 4  box 1440x900  opacity 0
+currentTime 5.04  paused  true  readyState 4  box 1440x900  opacity 0
+```
+
+**Mine, from the two-tier fix.** That change added
+
+```css
+.video:not([data-plate-ready]) { opacity: 0 }
+```
+
+so a shipping plate stays transparent until it can honour the position it is
+being scrubbed to — otherwise it paints its own first frame over a light copy
+already sitting in the right place. `data-plate-ready` is set by `bindPlate`,
+which runs over `SCENES`. `SCENES` starts at `turn`. The opening plate is
+`dawn`, it is played rather than scrubbed, and it is not in that table — so it
+never got the attribute, and the rule held it invisible for all five seconds
+while the still frame sat behind it.
+
+The guard was about handing over from a light copy. The lead plate has no light
+copy — it has no proxy at all, and it is never handed a position it might fail
+to honour. It should never have been inside that rule.
+
+Fixed in CSS rather than by setting the attribute from the controller, so the
+one plate every visitor waits on is visible even if no script runs:
+
+```css
+.video:not([data-plate-lead]):not([data-plate-ready]) { opacity: 0 }
+```
+
+**Why nothing caught it, which is the part worth keeping.** D2 asked whether
+every video decoded, had frames, had a non-zero box, and whether its sources
+were served. The plate answered yes to all four. It was flawless on every count
+anyone was measuring and simply invisible — *working* and *visible* were never
+the same property, and only the first was ever checked.
+
+D2 now asserts the opening plate's computed opacity **while the shot is
+running**, sampled across it rather than once. That timing is deliberate: the
+timeline unlocks when the shot ends, so anything measured after the suite's
+existing wait is looking at a plate parked on its final frame, which says
+nothing about whether it was ever on screen. Confirmed to fail against the
+reintroduced rule — *"opacity 0 at currentTime 0.23 over 19 samples"* — and to
+pass against the fix.
+
+Screenshots taken across the shot at 0.6s, 1.8s, 3.0s and 4.2s: the valley at
+dawn, then the hunter entering with bow and quiver as the sun breaks. Looked at,
+not inferred.
+
 ## Fixed — the re-encode put three and a half seconds in front of the opening
 
 The re-encode below shipped with a regression I introduced and did not catch.

@@ -79,15 +79,24 @@
 }
 
 /*
- * The full plate is transparent until it can actually carry the frame it is
+ * A scrubbed plate is transparent until it can actually carry the frame it is
  * being asked for. Without this it paints its own first frame over a proxy that
  * is already in the right place, and the picture jumps backwards to the top of
  * the shot before catching up.
  *
  * The fade is long enough not to read as a cut and short enough not to read as
  * a dissolve — what should be visible is the sharpening, not the transition.
+ *
+ * `:not([data-plate-lead])` is not a detail. The guard is about handing over
+ * from a light copy, and the lead plate has no light copy to hand over from —
+ * it is played, not scrubbed, so there is no position it could fail to honour
+ * and nothing underneath it to protect. Written without that exclusion it hid
+ * the opening: the plate played all five seconds at `opacity: 0` behind its own
+ * still, so the one shot every visitor sees never appeared. Nothing caught it,
+ * because the plate was flawless on every count anyone was measuring —
+ * decoding, buffered, correct box, advancing clock — and simply invisible.
  */
-.video:not([data-plate-ready]) {
+.video:not([data-plate-lead]):not([data-plate-ready]) {
   opacity: 0;
 }
 

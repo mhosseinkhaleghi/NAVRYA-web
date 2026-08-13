@@ -133,6 +133,22 @@ export function Scene() {
             className={styles.video}
             data-scene-video={id}
             /*
+             * The lead plate is marked, and the stylesheet reads the mark.
+             *
+             * The transparent-until-ready guard exists for a plate that has a
+             * light copy underneath it: without it the shipping plate paints
+             * its own first frame over a proxy already sitting at the right
+             * position. The lead plate has neither — no proxy, and it is played
+             * rather than scrubbed, so it is never handed a position it cannot
+             * honour. Gating it only hid it: it played the whole opening at
+             * `opacity: 0` behind its own still, which is the one shot every
+             * visitor sees.
+             *
+             * Declared here rather than set by the controller so that the plate
+             * a visitor waits on is visible even if no script runs.
+             */
+            {...(lead ? { "data-plate-lead": "" } : {})}
+            /*
              * The lead plate plays, so it is fetched outright. The rest stay at
              * `none` here and are pulled by the controller, in scroll order,
              * the moment the opening beat is over — see the warming chain.

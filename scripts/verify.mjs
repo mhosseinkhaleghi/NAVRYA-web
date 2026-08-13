@@ -356,6 +356,46 @@ async function runOne(browser, locale, bp) {
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
   const loadMs = Date.now() - started;
 
+  /* Watch the opening plate *while it plays*, before anything else.
+   *
+   * It has to be sampled here and not after the wait below, because the wait
+   * ends when the shot ends — by then the only thing left to look at is a plate
+   * sitting on its last frame, which says nothing about whether the shot was
+   * ever on screen. The dimmest moment while the clock is advancing is the
+   * honest measure, so that is what is kept.
+   */
+  const openingWatch = { minOpacity: 1, atTime: null, samples: 0, ready: null, lead: null };
+  for (let i = 0; i < 40; i++) {
+    const s = await page
+      .evaluate(() => {
+        const v = document.querySelector('[data-scene-video="dawn"]');
+        if (!v) return null;
+        return {
+          t: v.currentTime,
+          dur: v.duration || 0,
+          opacity: +getComputedStyle(v).opacity,
+          ready: v.hasAttribute("data-plate-ready"),
+          lead: v.hasAttribute("data-plate-lead"),
+          done: document.documentElement.getAttribute("data-timeline") !== "held",
+        };
+      })
+      .catch(() => null);
+    if (!s) break;
+    // Only while the shot is actually running: a plate at 0 has not started and
+    // a plate at its final frame has finished.
+    if (s.t > 0.05 && (!s.dur || s.t < s.dur - 0.1)) {
+      openingWatch.samples++;
+      if (s.opacity < openingWatch.minOpacity) {
+        openingWatch.minOpacity = s.opacity;
+        openingWatch.atTime = +s.t.toFixed(2);
+      }
+      openingWatch.ready = s.ready;
+      openingWatch.lead = s.lead;
+    }
+    if (s.done) break;
+    await page.waitForTimeout(250);
+  }
+
   // The timeline is held shut until the opening plate finishes. Wait it out
   // rather than fighting it — a wheel during the hold is correctly ignored.
   await page
@@ -423,6 +463,51 @@ async function runOne(browser, locale, bp) {
       );
     else if (lead.videoWidth === 0)
       fail(where, "D2-video", `the opening plate decoded to 0×0 — src=${lead.sources[0]}`);
+  }
+
+  /* The opening plate has to be *visible*, which is not the same as working.
+   *
+   * This is the check that was missing when it mattered. A stylesheet rule held
+   * the lead plate at `opacity: 0` for the whole of its five seconds and every
+   * assertion here passed: it decoded, it buffered, it had a full-size box, its
+   * clock advanced 0 to 5.04. It was flawless on every count anyone was
+   * measuring and simply could not be seen — the visitor got the still frame
+   * behind it and the one shot the whole opening is built around never played.
+   *
+   * Sampled above, while the shot was running; judged here.
+   */
+  where.at = "opening-plate";
+  const openState = await page.evaluate(() => {
+    const v = document.querySelector('[data-scene-video="dawn"]');
+    if (!v) return null;
+    const cs = getComputedStyle(v);
+    const r = v.getBoundingClientRect();
+    return {
+      visibility: cs.visibility,
+      display: cs.display,
+      w: Math.round(r.width),
+      h: Math.round(r.height),
+    };
+  });
+  if (!openState) {
+    fail(where, "D2-video", 'no [data-scene-video="dawn"] in the document');
+  } else {
+    if (!openingWatch.samples) {
+      notes.push(`${locale.code}/${bp.name}: never caught the opening plate mid-shot`);
+    } else if (openingWatch.minOpacity <= 0.05) {
+      fail(
+        where,
+        "D2-video",
+        `the opening plate is invisible while it plays: opacity ${openingWatch.minOpacity} ` +
+          `at currentTime ${openingWatch.atTime} over ${openingWatch.samples} samples ` +
+          `(data-plate-lead=${openingWatch.lead}, data-plate-ready=${openingWatch.ready}) — ` +
+          `it runs behind its own still and the visitor never sees the shot`,
+      );
+    }
+    if (openState.visibility === "hidden" || openState.display === "none")
+      fail(where, "D2-video", `the opening plate is ${openState.visibility}/${openState.display}`);
+    if (openState.w === 0 || openState.h === 0)
+      fail(where, "D2-video", `the opening plate box is ${openState.w}×${openState.h}`);
   }
 
   // Every source URL, fetched for real. A plate that is lazily loaded still has

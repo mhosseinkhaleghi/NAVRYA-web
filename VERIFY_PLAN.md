@@ -85,6 +85,19 @@ For every `<video>` in the document:
 - no failed network request for any of its `<source>` URLs
 - every `<source>` URL returns 2xx (checked directly, not just inferred)
 
+And for the opening plate specifically, **it must be visible while it plays**:
+computed `opacity` > 0.05 sampled repeatedly across the shot, not once at the
+end. Working and visible are different properties, and this list used to check
+only the first. A stylesheet rule held the lead plate at `opacity: 0` for the
+whole of its five seconds while it decoded, buffered, held a full-size box and
+advanced its clock 0 → 5.04 — flawless on every count above, and invisible. The
+visitor saw the still frame behind it, and the one shot the entire opening is
+built around never appeared.
+
+Sampled during playback on purpose: the timeline unlocks when the shot ends, so
+anything measured after that wait is looking at a plate on its final frame,
+which says nothing about whether the shot was ever on screen.
+
 ### D3 — Layout integrity
 
 - `document.scrollingElement.scrollWidth` must not exceed the viewport width by
