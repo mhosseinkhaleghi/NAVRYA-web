@@ -145,8 +145,32 @@ now writes exactly this, with its own keyframe interval rather than the plate's,
 because the light tier is scrubbed on the site whichever mode the plate was
 encoded in.
 
-**Result, throttled, gesturing at a human cadence:** unlock 7273ms local, and
-all twelve stops carry the *shipping* plate, not the stand-in. 15/15 local.
+**Result on `https://navrya.com`**, throttled to 12Mbps, gesturing at a human
+cadence, four runs:
+
+| | before | after |
+|---|---|---|
+| timeline unlocks | 10105–10491ms | **6452–8044ms** |
+| hero readable when the scroll opens | not on the coldest run | **every run** |
+| stops carrying the shipping plate | 10 of 12 | **12 of 12** |
+
+And the opening shot itself runs clean: sampled against the wall clock it plays
+4.89s of footage in 4.89s, with **zero frozen milliseconds** — playback begins
+at 1.57–2.6s, which is where it begins with no light tier on the page at all.
+So what remains before the interface arrives is the opening shot playing, which
+is the design, and not the network.
+
+15/15 local, 15/15 live. Zero page errors, zero console errors, zero failed
+requests across all fifteen live runs; 13 videos per page, the two tiers
+complete. Load 1265 / 1356 / 1891ms.
+
+**One thing deliberately not changed.** The origin serves HTML with
+`cache-control: s-maxage=31536000` — a year, to shared caches, with no
+revalidation. It is Next's default for a fully static page and it is a hazard
+worth knowing about, but it is not causing anything today: this deploy's HTML
+was live on the edge the moment the workflow finished. Flagged, not fixed,
+because changing caching as a side effect of a video fix is how the next
+mystery gets made.
 
 ## Re-encoded — a third off the film, at the same picture
 
