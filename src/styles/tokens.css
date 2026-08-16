@@ -28,20 +28,10 @@
 :root {
   color-scheme: dark;
 
-  /* ── Colour ─────────────────────────────────────────────────────────────── */
-  --c-bg: #030303;
-  --c-gold: #d8a64b;
-  --c-gold-soft: rgb(216 166 75 / 0.74);
-  --c-gold-line: rgb(216 166 75 / 0.38);
-  --c-gold-line-faint: rgb(216 166 75 / 0.16);
-  /* Section 2 sits over the sunrise, where a 0.38 hairline disappears. */
-  --c-gold-line-strong: rgb(216 166 75 / 0.62);
-  --c-cream: #ede4d2; /* hero headline + wordmark */
-  --c-text: #e8e6e0; /* hero sub-headline */
-  --c-nav: rgb(237 234 227 / 0.88);
-  /* The one colour carried in from the brand book, and only the mark's arrow
-   * uses it: #6C5CFF to #9A6CFF is the book's gradient, and this is its middle. */
-  --c-brand-violet: #8364ff;
+  /* Colour, metal and the type-family names now come from
+   * `navrya-tokens.css`, which also re-points every legacy --c-* name onto
+   * the application palette. Nothing in src/components/ had to change for
+   * that move; this block is gone rather than overriding it. */
 
   /* ── Frame ──────────────────────────────────────────────────────────────── */
   --frame-h: 100dvh;
@@ -66,13 +56,8 @@
   --fs-sub: clamp(1rem, min(2.04vw, 3.63vh), 2.6rem);
   --fs-micro: clamp(0.625rem, min(0.837vw, 1.49vh), 0.95rem);
 
-  --lh-display: 1.04;
   --lh-sub: 1.6;
 
-  --tracking-display: -0.015em;
-  --tracking-wordmark: 0.005em;
-  --tracking-nav: 0.01em;
-  --tracking-micro: 0.34em;
 
   /* ── Hero composition ───────────────────────────────────────────────────── */
   /* The comp sets the text block's leading edge at 608 / 1672 of the frame. */
@@ -263,7 +248,6 @@
 
   /* ── Ornaments ──────────────────────────────────────────────────────────── */
   --node-size: clamp(0.3rem, 0.42vw, 0.5rem);
-  --hairline: 1px;
 
   /* Type sits directly on the plate now — no scrim between them. This lifts it
    * off the brightest frames without touching a single pixel of the footage.
@@ -297,13 +281,11 @@
  * optical size and leading matched to the LTR composition. */
 [dir="rtl"] {
   --fs-display: clamp(2.35rem, min(6.2vw, 11.02vh), 8.75rem);
-  --lh-display: 1.35;
+  /* Leading for the sub-headline only. Display leading and every tracking value
+   * are reset for Arabic script in `navrya-tokens.css`, beside the Latin values
+   * they are resetting — they were duplicated here with the same numbers, which
+   * is the arrangement that lets the two halves drift apart unnoticed. */
   --lh-sub: 1.85;
-  --tracking-display: 0;
-  --tracking-wordmark: 0;
-  --tracking-nav: 0;
-  /* Letter-spacing breaks the cursive joins in Arabic script. */
-  --tracking-micro: 0;
   /* Arabic script carries its meaning in fine strokes, so the micro label
    * cannot sit at the Latin caption size and stay legible. */
   --fs-micro: clamp(0.75rem, min(0.95vw, 1.69vh), 1.1rem);
@@ -340,7 +322,6 @@
 
     --scroll-bottom: clamp(1.5rem, min(5vw, 8.89vh), 2.5rem);
     --mouse-w: clamp(1.4rem, min(6.6vw, 11.73vh), 1.9rem);
-    --tracking-display: -0.01em;
 
     --s2-inline-start: 0%;
     --fs-s2-display: clamp(1.9rem, min(9vw, 16.0vh), 4rem);

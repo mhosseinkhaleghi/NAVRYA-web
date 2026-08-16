@@ -106,20 +106,26 @@
    * face the site rendered Persian headlines in before, and it is what shows
    * if Peyda's files are not there. */
   --font-display:
-    "Navrya Display", "Playfair Display", "Peyda", "Amiri", "Iowan Old Style",
+    "Navrya Display", "Cinzel", "Peyda", "Amiri", "Iowan Old Style",
     "Times New Roman", serif;
 
   /* Sans: navigation, sub-headlines, labels, buttons. */
   --font-sans:
-    "Navrya Sans", "DM Sans", "Peyda", "Vazirmatn", -apple-system,
+    "Navrya Sans", "Satoshi", "Peyda", "Vazirmatn", -apple-system,
     BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+
+  /* The application design system's own names for the same two stacks, so its
+   * component recipes read the identical faces the site's components do. */
+  --font-ui: var(--font-sans);
+  --font-num: var(--font-sans);
+
+  /* Pull-quotes, and nothing else. The only place a third face appears. */
+  --font-quote: "EB Garamond", "Peyda", Georgia, serif;
 }
 
 /*
- * Persian and Arabic set tighter than the serif they used to fall back to.
- * Peyda's ascenders and descenders are shorter than Amiri's, so the generous
- * leading the headlines carry for Amiri leaves them looking loose.
+ * The RTL tracking reset lives in `navrya-tokens.css` now, next to the values
+ * it is resetting — Cinzel's positive display tracking has to return to zero
+ * for Arabic script, and keeping the pair in one file is what stops the two
+ * halves drifting apart. Load order matters: that file comes after this one.
  */
-[dir="rtl"] {
-  --tracking-display: 0;
-}

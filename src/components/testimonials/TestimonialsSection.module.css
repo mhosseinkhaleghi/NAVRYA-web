@@ -240,14 +240,25 @@
   transform: scaleX(-1);
 }
 
+/*
+ * The one place the third face appears. `--font-quote` is EB Garamond italic
+ * and the design system reserves it for pull-quotes and nothing else — a
+ * trader's own words are set in a different voice from the interface around
+ * them. Arabic and Persian fall through to Peyda behind it, as everywhere.
+ *
+ * The size stays on the site's fluid `--fs-s9-quote`: the system's `--type-quote`
+ * is a fixed 15px/20px composite built for an application panel, and this wall
+ * of cards is on the cinematic scale.
+ */
 .quote {
   margin: 0;
   margin-block-start: calc(var(--s2-gap) * 1.2);
-  color: #fff;
-  font-family: var(--font-sans);
+  color: var(--text-primary);
+  font-family: var(--font-quote);
+  font-style: italic;
   font-size: var(--fs-s9-quote);
-  font-weight: 300;
-  line-height: 1.65;
+  font-weight: 400;
+  line-height: 1.6;
   text-wrap: pretty;
 }
 

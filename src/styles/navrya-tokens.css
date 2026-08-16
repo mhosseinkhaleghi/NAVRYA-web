@@ -1,0 +1,206 @@
+/* =============================================================================
+ * NAVRYA — design tokens, transferred from the application design system.
+ *
+ * This file replaces the colour, metal, type-family, radius, border, shadow and
+ * motion layer of src/styles/tokens.css. It does NOT replace the site's fluid
+ * layout scale (--fs-display, --gutter, --s2-*, --s9-* …): the cinematic
+ * composition is the site's own and stays exactly as it is.
+ *
+ * Two halves:
+ *   PART A — the application's tokens, verbatim.
+ *   PART B — a compatibility bridge that re-points every legacy --c-* / --font-*
+ *            name onto PART A, so existing components keep working untouched.
+ *
+ * Load order in src/app/globals.css:
+ *   @import "../styles/navrya-fonts.css";   <- replaces fonts.css + brand.css
+ *   @import "../styles/navrya-tokens.css";  <- THIS FILE
+ *   @import "../styles/tokens.css";         <- keep, for the layout scale only
+ * ========================================================================== */
+
+/* ── PART A · application tokens ──────────────────────────────────────────── */
+
+:root {
+  color-scheme: dark;
+
+  /* Ink ramp — near-black technical surfaces */
+  --ink-950: #030807;      /* deepest ink, page void */
+  --ink-900: #070B0F;      /* app background */
+  --ink-850: #071017;
+  --surface-800: #0B1415;  /* card / panel surface */
+  --surface-780: #0B1016;
+  --raised-700: #111B1C;   /* raised surface: inputs, tiles */
+  --raised-680: #11161C;
+  --raised-600: #171C22;
+  --overlay-500: #1D232B;  /* overlay / popover */
+
+  /* Type colour */
+  --parchment: #F8F4EA;
+  --text-primary: #F4EAD7;
+  --text-muted: #ACA994;
+  --text-dim: #A8A097;
+  --text-disabled: #6C7078;
+
+  /* Metal */
+  --gold-warm: #D6AF6B;
+  --gold-warm-alt: #D4AF37;
+  --gold-antique: #B78A4A;
+  --gold-antique-alt: #B58A3A;
+  --bronze: #8A5F32;
+  --steel: #4B5157;
+  --line-neutral: #263332;
+  --shadow-black: rgba(0, 0, 0, .45);
+
+  /* Semantic — never replaced by a character accent */
+  --success: #2ECC71;
+  --info: #4DA3FF;
+  --warning: #FFB020;
+  --danger: #FF3830;
+  --disabled: #6C7078;
+
+  /* Semantic aliases */
+  --app-bg: var(--ink-900);
+  --surface-card: var(--surface-800);
+  --surface-raised: var(--raised-700);
+  --surface-overlay: var(--overlay-500);
+  --text-body: var(--text-primary);
+  --text-label: var(--text-muted);
+  --border-hairline: rgba(244, 234, 215, .08);
+  --border-gold: rgba(183, 138, 74, .55);
+  --border-gold-strong: rgba(183, 138, 74, .9);
+  --divider-gold: rgba(183, 138, 74, .28);
+  --scrim: rgba(3, 8, 7, .72);
+
+  /* The one colour carried in from the brand book — the mark's arrow only. */
+  --brand-violet: #8364ff;
+
+  /* ── Character accent ────────────────────────────────────────────────────
+   * The marketing site runs the NEUTRAL GOLD skin: no character colour.
+   * The four skins below exist so a future page (an archetype page, a
+   * character picker) can set data-character="hunter" on any ancestor and
+   * re-skin without a single other change. Do not use them site-wide. */
+  --char-accent: var(--gold-antique);
+  --char-accent-strong: var(--bronze);
+  --char-active-surface: rgba(183, 138, 74, .14);
+  --char-atmosphere: var(--ink-950);
+  --char-glow: rgba(183, 138, 74, .18);
+
+  /* ── Typography ──────────────────────────────────────────────────────────
+   * Fixed composites, for anything that is NOT part of the fluid cinematic
+   * scale: navigation, buttons, labels, cards, footer, forms. */
+  --type-character-title: 600 34px/42px var(--font-display);
+  --type-display-lg: 500 22px/28px var(--font-display);
+  --type-display-md: 500 18px/24px var(--font-display);
+  --type-quote: italic 400 15px/20px var(--font-quote);
+
+  --type-nav: 600 16px/22px var(--font-ui);
+  --type-section-label: 700 11px/14px var(--font-ui);
+  --type-username: 500 14px/20px var(--font-ui);
+  --type-body: 500 13px/18px var(--font-ui);
+  --type-caption: 500 11px/14px var(--font-ui);
+  --type-metric-value: 500 20px/24px var(--font-ui);
+  --type-level: 600 48px/52px var(--font-ui);
+
+  --tracking-label: .08em;
+  --tracking-display-ds: .06em;
+  --numeric-tabular: tabular-nums;
+
+  /* ── Spacing, geometry, corners ─────────────────────────────────────────── */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+  --space-12: 48px; --space-16: 64px;
+
+  --radius-4: 4px; --radius-6: 6px; --radius-8: 8px;
+  --radius-12: 12px; --radius-14: 14px; --radius-pill: 999px;
+
+  --border-1: 1px; --border-2: 2px;
+  --ornament-12: 12px; --ornament-16: 16px; --ornament-24: 24px;
+
+  --control-h: 44px;      /* every button, field and tap target */
+  --control-h-sm: 36px;
+  --target-min: 44px;
+  --icon-16: 16px; --icon-20: 20px; --icon-24: 24px;
+  --icon-stroke: 2px;
+
+  /* ── Elevation ──────────────────────────────────────────────────────────── */
+  --shadow-panel: 0 12px 30px rgba(0, 0, 0, .45);
+  --shadow-raised: 0 6px 18px rgba(0, 0, 0, .38);
+  --glow-active: 0 0 16px var(--char-glow);
+  --ring-focus: 0 0 0 2px var(--char-accent);
+  --frame-outer: 1px solid var(--border-gold);
+  --frame-inner: 1px solid var(--border-hairline);
+
+  /* ── Motion ─────────────────────────────────────────────────────────────── */
+  --dur-hover: 160ms;
+  --dur-progress: 240ms;
+  --dur-expand: 220ms;
+  --ease-out: cubic-bezier(.22, .61, .36, 1);
+  --ease-standard: cubic-bezier(.4, 0, .2, 1);
+  --hover-brightness: 1.08;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-hover: 0ms; --dur-progress: 0ms; --dur-expand: 0ms; }
+}
+
+/* The four character skins. Unused on the marketing site by default. */
+[data-character="hunter"] {
+  --char-accent: #66C94E; --char-accent-strong: #2F8F43;
+  --char-active-surface: #12331B; --char-atmosphere: #07150D;
+  --char-glow: rgba(102, 201, 78, .18);
+}
+[data-character="commander"] {
+  --char-accent: #F04432; --char-accent-strong: #A82B21;
+  --char-active-surface: #3A1714; --char-atmosphere: #160B09;
+  --char-glow: rgba(240, 68, 50, .18);
+}
+[data-character="engineer"] {
+  --char-accent: #3A9AF8; --char-accent-strong: #1B65AA;
+  --char-active-surface: #0B263D; --char-atmosphere: #061522;
+  --char-glow: rgba(58, 154, 248, .18);
+}
+[data-character="master"] {
+  --char-accent: #A965D8; --char-accent-strong: #72409B;
+  --char-active-surface: #26152F; --char-atmosphere: #120A18;
+  --char-glow: rgba(169, 101, 216, .18);
+}
+
+/* ── PART B · legacy bridge ───────────────────────────────────────────────────
+ * Every name the existing components already read, re-pointed at PART A.
+ * Nothing in src/components/ has to change for the palette to move.
+ * Delete a line here only once the last component that reads it is gone.
+ * ------------------------------------------------------------------------- */
+
+:root {
+  --c-bg: var(--ink-950);                      /* was #030303 */
+  --c-gold: var(--gold-warm);                  /* was #d8a64b */
+  --c-gold-soft: rgba(214, 175, 107, .74);
+  --c-gold-line: var(--border-gold);           /* was gold @ .38 → gold-antique @ .55 */
+  --c-gold-line-faint: rgba(183, 138, 74, .16);
+  --c-gold-line-strong: var(--border-gold-strong);
+  --c-cream: var(--parchment);                 /* was #ede4d2 */
+  --c-text: var(--text-primary);               /* was #e8e6e0 */
+  --c-nav: var(--text-muted);                  /* was cream @ .88 */
+  --c-brand-violet: var(--brand-violet);       /* unchanged */
+
+  --hairline: var(--border-1);
+
+  /* Cinzel is a capitals-forward face: it needs POSITIVE tracking where
+   * Playfair took negative. This is the single most visible line in the file. */
+  --tracking-display: .04em;
+  --tracking-wordmark: .06em;
+  --tracking-nav: .02em;
+  --tracking-micro: .14em;
+
+  /* Cinzel's lowercase runs wider and shorter than Playfair's, so the display
+   * leading opens up a touch and the sub-headline stays where it was. */
+  --lh-display: 1.12;
+}
+
+/* Persian and Arabic: Peyda carries the script; tracking always returns to 0. */
+[dir="rtl"] {
+  --tracking-display: 0;
+  --tracking-wordmark: 0;
+  --tracking-nav: 0;
+  --tracking-micro: 0;
+  --lh-display: 1.35;
+}

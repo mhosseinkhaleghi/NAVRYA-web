@@ -1,5 +1,27 @@
+/* Order is load-bearing, and each step depends on the one above it.
+ *
+ *   fonts       @font-face only — the files, no names
+ *   brand       the family stacks, the one place a typeface is named
+ *   navrya-*    the application design system: palette, metal, geometry,
+ *               control sizes, and a bridge re-pointing every legacy --c-*
+ *               name onto it so no component had to change for the palette
+ *   tokens      the site's own fluid cinematic scale, which the design system
+ *               deliberately does not touch — it must load last so a --fs-*
+ *               or --s9-* is never resolved against a value from elsewhere
+ *
+ * `navrya-components.css` is deliberately NOT in this chain. It is the design
+ * system's recipe sheet — `.nv-btn`, `.nv-field`, `.nv-panel` and the rest —
+ * and applying it would have meant putting its class names into the markup.
+ * The brief was a design change and nothing else, so the recipes were read and
+ * applied to the site's own modules instead: the header's Login, the footer's
+ * field, its social tiles and its closing pair now carry the system's sizes,
+ * corners and states without a single element changing. The file stays in
+ * `src/styles/` as the reference those rules were taken from; importing it
+ * would ship 11KB of class names that no element on the site uses.
+ */
 @import "../styles/fonts.css";
 @import "../styles/brand.css";
+@import "../styles/navrya-tokens.css";
 @import "../styles/tokens.css";
 
 /* -----------------------------------------------------------------------------
@@ -114,14 +136,18 @@ svg {
   display: block;
 }
 
+/* The design system's focus ring: 2px of accent at 2px offset, on every
+ * interactive element, always. Heavier and closer than the hairline it
+ * replaces — a 1px gold line at 4px offset reads as an ornament on this
+ * ground rather than as a focus state. */
 :focus-visible {
-  outline: var(--hairline) solid var(--c-gold);
-  outline-offset: 4px;
+  outline: var(--border-2) solid var(--char-accent);
+  outline-offset: 2px;
 }
 
 ::selection {
-  background: rgb(216 166 75 / 0.25);
-  color: var(--c-cream);
+  background: rgba(183 138 74 / 0.28);
+  color: var(--parchment);
 }
 
 @media (prefers-reduced-motion: reduce) {

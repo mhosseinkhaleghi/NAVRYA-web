@@ -80,6 +80,70 @@ load ms  min/median/max: 896 / 1164 / 1517
 Console is clean, no request fails, all seven plates are present on every page,
 and nothing throws on load in any of the fifteen runs.
 
+## Change — the application's design system, transferred
+
+Requested, not a defect. The site moves onto the NAVRYA application's design
+system: colour, metal, typefaces, control sizes and states. The scroll
+composition, the footage, the timeline and the fluid cinematic scale do not
+move, and **not one `.tsx` file changed** — the whole transfer is CSS and fonts.
+
+| | was | is |
+|---|---|---|
+| display face | Playfair Display | **Cinzel** |
+| UI face | DM Sans | **Satoshi** |
+| pull-quotes | DM Sans 300 | **EB Garamond italic** |
+| display tracking | `-0.015em` | `.04em` — Cinzel is capitals-forward |
+| gold | `#d8a64b` | `#d6af6b` |
+| control height | none | `44px` on every button and field |
+| radii | 7 ad-hoc values | `--radius-4/6/8/12/14` |
+
+**The palette moved without touching a component.** `navrya-tokens.css` ships
+the application's tokens and then re-points every legacy `--c-*` name onto them,
+so the sixty-odd rules that read `--c-gold` kept working and changed colour.
+
+**Four things the package asked for that were done differently, each measured:**
+
+*Cinzel and EB Garamond are self-hosted.* The package pulled them with
+`@import url(https://fonts.googleapis.com/…)`. A remote `@import` inside an
+imported stylesheet is a render-blocking round trip to a third-party origin
+before first paint — on the one page this project has spent the most effort
+making fast. Both are self-hosted like every other face here, and the build
+contains no reference to a font CDN.
+
+*Satoshi ships four cuts, not ten, as woff2, not OTF.* Nothing on the site sets
+an italic and only 300/400/500/600 are reachable from its CSS. 10 OTF at 490KB
+became 4 woff2 at 89KB.
+
+*EB Garamond is split by unicode-range.* One merged subset was tried first and
+silently dropped `İ`, `ğ` and `ş` — three glyphs of every Turkish quote would
+have fallen to another face. Split the way the rest of this file works, an
+English or Spanish reader downloads 44KB and never sees the second slice.
+
+*`navrya-components.css` is not imported.* Applying it would have meant putting
+its class names into the markup, and the brief was a design change with no
+element changing. The recipes were read and applied to the site's own modules
+instead. The file stays as the reference; importing it would ship 11KB of class
+names nothing uses.
+
+**Net font payload: +23KB.** Cinzel, EB Garamond and four Satoshi cuts add
+173KB; Playfair Display and DM Sans leave, taking 150KB with them.
+
+**Two things fixed on the way, because the system's rules exposed them.** The
+footer's social tiles were on a fluid clamp that bottomed out at 38px — six
+under the 44px tap target, on exactly the narrow layouts where a tap is the only
+way to hit them. And the closing CTA pair were one button drawn twice,
+separated only by a glow; they are now a filled primary against a framed
+secondary, which is a difference a reader can act on.
+
+**Verified.** 15/15 local, 15/15 live. The film is unchanged where it matters:
+throttled at 12Mbps, the timeline unlocks in 5757ms and all twelve stops carry
+the shipping plate, as before. Cinzel sets wider than Playfair, so the headline
+wrap was checked at 1920×937, 1366×625 and 390×844 — two lines at each, no
+overflow. Rendered faces were read from the renderer rather than the cascade,
+because the family stack begins with a placeholder that does not exist: hero
+Cinzel, Login Satoshi 600, quote EB Garamond italic, and under `fa` the
+per-glyph fallback still hands Persian to Peyda and Latin to Cinzel.
+
 ## Fixed — the opening shot played the whole way through at `opacity: 0`
 
 Reported: the first video, the one where the hunter walks into frame, never

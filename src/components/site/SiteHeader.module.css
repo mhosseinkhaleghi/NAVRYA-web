@@ -127,11 +127,15 @@
   color: var(--c-nav);
   font-family: var(--font-sans);
   font-size: var(--fs-nav);
-  font-weight: 400;
+  /* 600, not 400: the application's navigation is set heavier than the site's
+   * was, and Satoshi at 400 over film reads lighter than DM Sans did. Weight
+   * rather than `--type-nav` wholesale, because that composite carries a fixed
+   * 16px/22px and this bar is on the site's fluid scale. */
+  font-weight: 600;
   letter-spacing: var(--tracking-nav);
   white-space: nowrap;
   text-shadow: var(--text-lift);
-  transition: color 240ms var(--ease-out);
+  transition: color var(--dur-hover) var(--ease-out);
 }
 
 .navLink:hover {
@@ -142,14 +146,16 @@
   color: var(--c-gold);
 }
 
-/* Active marker, seated on the header hairline. */
+/* Active marker, seated on the header hairline. The accent, not the metal:
+ * the design system reserves `--char-accent` for the primary action, the
+ * active navigation marker and focus rings, and this is the second of those. */
 .navLink[aria-current]::after {
   content: "";
   position: absolute;
   inset-block-end: 0;
   inset-inline: 0;
-  block-size: 2px;
-  background: var(--c-gold);
+  block-size: var(--border-2);
+  background: var(--char-accent);
 }
 
 /* ── Trailing controls ────────────────────────────────────────────────────── */
@@ -167,27 +173,50 @@
   background: var(--c-gold-line);
 }
 
+/*
+ * The design system's control, in the site's own bar.
+ *
+ * Three things change and each is a rule rather than a preference. The height
+ * is fixed at `--control-h` instead of growing out of `em` padding, because 44px
+ * is the tap target every control on the platform answers to and an em-sized
+ * button drifts off it with the fluid type scale. The corner steps 6px → 8px,
+ * which is the only radius the system allows on a control. And the hover stops
+ * inverting to a gold fill: a filled gold button is the primary action, and this
+ * bar's Login is not it — the system's secondary washes the surface 4% and
+ * steps the frame from gold-55% to gold-90% instead.
+ *
+ * `--text-lift` stays. The bar sits over the film and that shadow is the site's
+ * own; the application has no equivalent because it has no footage behind it.
+ */
 .login {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.72em 1.85em;
-  border: var(--hairline) solid var(--c-gold);
-  border-radius: 6px;
-  color: var(--c-gold);
+  block-size: var(--control-h);
+  padding-inline: 24px;
+  border: var(--border-1) solid var(--border-gold);
+  border-radius: var(--radius-8);
+  background: rgb(11 20 21 / 0.72);
+  color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: var(--fs-nav);
-  letter-spacing: var(--tracking-nav);
+  font-weight: 600;
+  letter-spacing: 0.02em;
   white-space: nowrap;
   text-shadow: var(--text-lift);
   transition:
-    background-color 260ms var(--ease-out),
-    color 260ms var(--ease-out);
+    background-color var(--dur-hover) var(--ease-out),
+    border-color var(--dur-hover) var(--ease-out);
 }
 
 .login:hover {
-  background-color: var(--c-gold);
-  color: var(--c-bg);
+  background-color: rgb(244 234 215 / 0.06);
+  border-color: var(--border-gold-strong);
+}
+
+.login:active {
+  border-color: var(--char-accent);
+  background-color: var(--char-active-surface);
 }
 
 /* -----------------------------------------------------------------------------

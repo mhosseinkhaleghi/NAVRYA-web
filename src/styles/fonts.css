@@ -6,44 +6,94 @@
  * so an English visitor never downloads the Arabic subsets, and Persian /
  * Arabic glyphs resolve automatically through the family fallback chain.
  *
- * These are STAND-IN faces chosen to match the reference design. To swap in
- * the brand typeface, see `brand.css` — nothing else needs to change.
+ * Cinzel, Satoshi and EB Garamond come from the application design system.
+ * Vazirmatn and Amiri stay: they are the Arabic-script fallbacks behind
+ * Peyda and the design-system package does not carry a replacement for them.
+ * The family stacks live in `brand.css` — nothing else needs to change.
  * -------------------------------------------------------------------------- */
 
 
-/* Playfair Display */
+/* Cinzel — the display face. Capitals-forward, so it takes POSITIVE tracking
+ * where Playfair took negative; see --tracking-display in navrya-tokens.css.
+ * Self-hosted like every other face here: the design-system package pulled it
+ * from the Google Fonts CDN with an @import, and a remote @import inside an
+ * imported stylesheet is a render-blocking round trip to a third-party origin
+ * before first paint — on the one page whose opening this project has spent
+ * real effort making fast. */
 @font-face {
-  font-family: 'Playfair Display';
+  font-family: 'Cinzel';
   font-style: normal;
   font-weight: 400 900;
   font-display: swap;
-  src: url('/fonts/playfair-display-latin-ext-400-900.woff2') format('woff2');
+  src: url('/fonts/cinzel-latin-ext.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 @font-face {
-  font-family: 'Playfair Display';
+  font-family: 'Cinzel';
   font-style: normal;
   font-weight: 400 900;
   font-display: swap;
-  src: url('/fonts/playfair-display-latin-400-900.woff2') format('woff2');
+  src: url('/fonts/cinzel-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-/* DM Sans */
+/* Satoshi — the UI face. Shipped as licensed OTF in the design-system package
+ * and converted here: OTF is roughly twice the size of woff2 over the wire, and
+ * only four of the ten cuts are reachable from this site's CSS (300, 400, 500
+ * and 600/700 — nothing sets an italic anywhere). Subset to the Latin ranges
+ * the site actually serves, which is what every other face here does too. */
 @font-face {
-  font-family: 'DM Sans';
+  font-family: 'Satoshi';
   font-style: normal;
-  font-weight: 100 1000;
+  font-weight: 300;
   font-display: swap;
-  src: url('/fonts/dm-sans-latin-ext-100-1000.woff2') format('woff2');
+  src: url('/fonts/satoshi/satoshi-300.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Satoshi';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/satoshi/satoshi-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Satoshi';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/satoshi/satoshi-500.woff2') format('woff2');
+}
+/* Satoshi ships no 600 cut; the design system's Semibold maps onto Bold. */
+@font-face {
+  font-family: 'Satoshi';
+  font-style: normal;
+  font-weight: 600 700;
+  font-display: swap;
+  src: url('/fonts/satoshi/satoshi-700.woff2') format('woff2');
+}
+
+/* EB Garamond — italic, and only for pull-quotes.
+ *
+ * Split and range-gated like every other face here, which is the whole point of
+ * the arrangement: an English or Spanish reader downloads the 44KB latin slice
+ * and never sees the other one. Turkish is why the second slice exists at all —
+ * "İnkâr edip durduğum kalıbı buldu" needs İ, ğ and ş, and those live in Latin
+ * Extended-A. A single merged subset was tried first and quietly dropped them,
+ * which would have set three glyphs of every Turkish quote in a fallback face. */
+@font-face {
+  font-family: 'EB Garamond';
+  font-style: italic;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url('/fonts/eb-garamond-italic-latin-ext.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 @font-face {
-  font-family: 'DM Sans';
-  font-style: normal;
-  font-weight: 100 1000;
+  font-family: 'EB Garamond';
+  font-style: italic;
+  font-weight: 400 600;
   font-display: swap;
-  src: url('/fonts/dm-sans-latin-100-1000.woff2') format('woff2');
+  src: url('/fonts/eb-garamond-italic-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
