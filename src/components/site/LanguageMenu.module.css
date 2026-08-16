@@ -71,18 +71,45 @@
   flex-direction: column;
   min-inline-size: 12.5rem;
   padding: 0.35rem;
-  border: var(--hairline) solid var(--c-gold-line);
-  border-radius: 6px;
-  background: rgb(3 3 3 / 0.92);
+  border: var(--border-1) solid var(--border-gold);
+  border-radius: var(--radius-8);
+  background: var(--surface-overlay);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+  box-shadow: var(--shadow-panel);
   animation: menu-in 260ms var(--ease-cine) both;
+}
+
+/*
+ * Opening upward, for the footer's bottom bar.
+ *
+ * Two changes, and both are needed. The panel rises from the trigger rather
+ * than dropping from it, because in the last row of the document there is no
+ * "below" — it opened past the end of the page. And it aligns its *leading*
+ * edge with the trigger rather than its trailing one: in the footer the
+ * control sits against the leading gutter, so an end-aligned panel reached
+ * backwards out of the frame. Both are logical properties, so the footer's
+ * menu mirrors in Persian and Arabic the same as everything else here.
+ */
+.menu[data-placement="up"] .panel {
+  inset-block-start: auto;
+  inset-block-end: calc(100% + 0.9rem);
+  inset-inline-end: auto;
+  inset-inline-start: 0;
+  animation-name: menu-in-up;
 }
 
 @keyframes menu-in {
   from {
     opacity: 0;
     transform: translateY(-0.4rem);
+  }
+}
+
+@keyframes menu-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(0.4rem);
   }
 }
 

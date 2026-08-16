@@ -10,15 +10,6 @@
  * Recognisable at the size they are actually used, which is about 20px.
  */
 
-/** A chevron, for the list items. It points along the reading direction. */
-export function FooterChevron({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M9.5 5.5 16 12l-6.5 6.5" />
-    </svg>
-  );
-}
-
 /** The envelope on the newsletter field. */
 export function MailIcon({ className }: { className?: string }) {
   return (

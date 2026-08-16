@@ -105,6 +105,55 @@
   text-shadow: var(--text-lift);
 }
 
+/*
+ * The hero's primary action, at the design system's large control size.
+ *
+ * `--font-ui` and a fixed 14px, not the display face and not the fluid scale.
+ * Controls are the one thing on this page that do not scale with the frame:
+ * a button is a target before it is typography, and the system sizes it in
+ * pixels for the same reason it fixes the height at 52. The label sits in
+ * Satoshi beside a headline in Cinzel, which is the system's own pairing.
+ */
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+  align-self: start;
+  block-size: 52px;
+  margin-block-start: var(--hero-gap-rule-sub);
+  padding-inline: 28px;
+  border: var(--border-1) solid var(--char-accent);
+  border-radius: var(--radius-8);
+  background: var(--char-accent);
+  color: var(--ink-950);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  transition: filter var(--dur-hover) var(--ease-out);
+}
+
+.cta:hover {
+  filter: brightness(var(--hover-brightness));
+}
+
+.ctaIcon {
+  inline-size: 1.05em;
+  block-size: 1.05em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The arrow points away from the reader in either direction. */
+[dir="rtl"] .ctaIcon {
+  transform: scaleX(-1);
+}
+
 /* Each localised line is authored as its own line in the dictionary and keeps
  * its own row here, matching the two-line break in the comp. */
 .sublineLine {

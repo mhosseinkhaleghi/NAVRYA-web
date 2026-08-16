@@ -129,10 +129,11 @@ which says nothing about whether the shot was ever on screen.
   grow) and contract the others, with a real mouse move so `pointerenter`
   carries `pointerType: "mouse"`. Hover must not navigate. Arrow keys must move
   the selection, mirrored under RTL.
-- **Links out to the product**: the header's login, all four archetype panels
-  and the invitation under them must each be an `<a>` whose `href` is exactly
-  `https://app.navrya.com/` — read off the built page, not from the constant the
-  page was built from. Six links per locale, at every breakpoint.
+- **Links out to the product**: the header's login, all four archetype panels,
+  the invitation under them, the hero's call to action and the footer's closing
+  one must each be an `<a>` whose `href` is exactly `https://app.navrya.com/` —
+  read off the built page, not from the constant the page was built from. Eight
+  links per locale, at every breakpoint.
 
   A panel is a link, so pressing one leaves the site by design; expansion is
   asserted through hover instead. This replaces a click assertion with a hover

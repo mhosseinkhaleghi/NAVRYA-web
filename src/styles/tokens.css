@@ -46,14 +46,29 @@
   --nav-gap: clamp(0.5rem, 1.26vw, 1.5rem);
 
   /* ── Type ───────────────────────────────────────────────────────────────── */
-  --fs-wordmark: clamp(1.65rem, min(2.95vw, 5.25vh), 3.3rem);
+  /* The wordmark against an 88px bar.
+   *
+   * It was set at 2.95vw — 42px inside an 87px header, half the bar's height,
+   * which is a logo lockup rather than a header. The design system's bar puts
+   * the word at roughly a third of it, so the identity reads as the corner of
+   * the frame and the navigation beside it is the thing with weight. Cinzel is
+   * also a wider face than Playfair at the same size, so the old figure grew
+   * with the typeface change on top of already being large. */
+  --fs-wordmark: clamp(1.3rem, min(1.95vw, 3.47vh), 2.15rem);
   /* The mark stands a little above the word's cap height, as the book locks
    * them up. Keyed to the word so the pair never drifts apart. */
   --brand-mark: calc(var(--fs-wordmark) * 1.12);
   --brand-gap: calc(var(--fs-wordmark) * 0.42);
   --fs-nav: clamp(0.8125rem, min(1.1vw, 1.96vh), 1.3rem);
   --fs-display: clamp(2.6rem, min(6.4vw, 11.38vh), 9.5rem);
-  --fs-sub: clamp(1rem, min(2.04vw, 3.63vh), 2.6rem);
+  /* The sub-headline under the hero.
+   *
+   * 2.04vw put it at 29px against a 92px headline — barely a third of the size
+   * of the thing it is subordinate to, which is close enough to read as a
+   * second headline rather than as the line explaining the first. Down to a
+   * quarter, which is where the design system's own display-to-body step sits,
+   * and it now also has a button under it competing for the same attention. */
+  --fs-sub: clamp(0.95rem, min(1.5vw, 2.67vh), 1.8rem);
   --fs-micro: clamp(0.625rem, min(0.837vw, 1.49vh), 0.95rem);
 
   --lh-sub: 1.6;

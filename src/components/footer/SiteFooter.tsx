@@ -8,7 +8,6 @@ import {
   ArchetypeIcon,
   ArrowRightIcon,
   ArrowUpIcon,
-  FooterChevron,
   JourneyIcon,
   MailIcon,
   SOCIAL_ICON,
@@ -92,7 +91,7 @@ export function SiteFooter({
         </p>
 
         <div className={styles.ctaActions}>
-          <a className={styles.ctaPrimary} href={APP_URL}>
+          <a className={styles.ctaPrimary} href={APP_URL} data-footer-cta="">
             <JourneyIcon className={styles.ctaIcon} />
             {footer.cta.primary}
           </a>
@@ -104,11 +103,7 @@ export function SiteFooter({
       </div>
 
       <div className={styles.divider} aria-hidden="true">
-        <span className={styles.dividerNode} />
         <span className={styles.dividerLine} />
-        <span className={styles.diamondLarge} />
-        <span className={styles.dividerLine} />
-        <span className={styles.dividerNode} />
       </div>
 
       {/* ── the columns ─────────────────────────────────────────────────── */}
@@ -127,15 +122,11 @@ export function SiteFooter({
         </div>
 
         <nav className={styles.col} aria-label={a11y.footerNav}>
-          <h3 className={styles.colTitle}>
-            <Node className={styles.diamond} />
-            {footer.navTitle}
-          </h3>
+          <h3 className={styles.colTitle}>{footer.navTitle}</h3>
           <ul className={styles.colList}>
             {navLinks.map((label) => (
               <li key={label}>
                 <button type="button" className={styles.colLink}>
-                  <FooterChevron className={styles.chev} />
                   {label}
                 </button>
               </li>
@@ -144,15 +135,11 @@ export function SiteFooter({
         </nav>
 
         <div className={styles.col}>
-          <h3 className={styles.colTitle}>
-            <Node className={styles.diamond} />
-            {footer.resourcesTitle}
-          </h3>
+          <h3 className={styles.colTitle}>{footer.resourcesTitle}</h3>
           <ul className={styles.colList}>
             {footer.resources.map((label) => (
               <li key={label}>
                 <button type="button" className={styles.colLink}>
-                  <FooterChevron className={styles.chev} />
                   {label}
                 </button>
               </li>
@@ -161,10 +148,7 @@ export function SiteFooter({
         </div>
 
         <div className={styles.stay}>
-          <h3 className={styles.colTitle}>
-            <Node className={styles.diamond} />
-            {footer.stayTitle}
-          </h3>
+          <h3 className={styles.colTitle}>{footer.stayTitle}</h3>
           <p className={styles.stayBody}>{footer.stayBody}</p>
 
           {/*
@@ -191,10 +175,7 @@ export function SiteFooter({
             </button>
           </form>
 
-          <h3 className={styles.colTitle}>
-            <Node className={styles.diamond} />
-            {footer.socialTitle}
-          </h3>
+          <h3 className={styles.colTitle}>{footer.socialTitle}</h3>
           <ul className={styles.socialRow} aria-label={a11y.social}>
             {SOCIAL.map((name) => (
               <li key={name}>
@@ -211,21 +192,10 @@ export function SiteFooter({
 
       {/* ── the bottom bar ──────────────────────────────────────────────── */}
       <div className={styles.bottom}>
-        <LanguageMenu locale={locale} dictionary={dictionary} />
+        {/* Last row of the document: the panel has to rise, not drop. */}
+        <LanguageMenu locale={locale} dictionary={dictionary} placement="up" />
 
         <div className={styles.bottomRule} aria-hidden="true">
-          <span className={styles.dividerLine} />
-          <span className={styles.diamond} />
-          <span className={styles.dividerLine} />
-          <span className={styles.crest}>
-            <svg viewBox="0 0 48 48" aria-hidden="true">
-              <path d="M24 3 45 24 24 45 3 24Z" />
-              <path d="M24 11 37 24 24 37 11 24Z" opacity="0.55" />
-              <path d="M24 16v18M18 22l6-6 6 6M20 34h8" />
-            </svg>
-          </span>
-          <span className={styles.dividerLine} />
-          <span className={styles.diamond} />
           <span className={styles.dividerLine} />
         </div>
 
@@ -243,7 +213,6 @@ export function SiteFooter({
         <ul className={styles.legalList}>
           {footer.legal.map((item) => (
             <li key={item} className={styles.legalItem}>
-              <Node className={styles.diamondSmall} />
               <button type="button" className={styles.legalLink}>
                 {item}
               </button>

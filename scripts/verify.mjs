@@ -740,12 +740,19 @@ async function runOne(browser, locale, bp) {
       login: read("[data-login]"),
       panels: read("[data-cast-panel]"),
       foot: read("[data-explore]"),
+      hero: read("[data-hero-cta]"),
+      footerCta: read("[data-footer-cta]"),
     };
   });
   const expectLinks = [
     ["header login", appLinks.login, 1],
     ["archetype panel", appLinks.panels, 4],
     ["section 10 invitation", appLinks.foot, 1],
+    // The hero's own call to action, and the closing one in the footer. Eight
+    // ways out of the site now, not six — every one of them asserted, because a
+    // way out that silently points somewhere else is the failure nobody sees.
+    ["hero call to action", appLinks.hero, 1],
+    ["footer call to action", appLinks.footerCta, 1],
   ];
   for (const [label, found, want] of expectLinks) {
     if (found.length !== want) {

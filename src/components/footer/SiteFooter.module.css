@@ -7,8 +7,8 @@
  *
  * Written in logical properties throughout, so the whole thing mirrors in
  * Persian and Arabic without a single direction-specific rule. The two places
- * that cannot mirror by themselves are the chevrons and the subscribe arrow,
- * and those are flipped explicitly at the bottom of this file.
+ * The one place that cannot mirror by itself is the subscribe arrow, and that
+ * is flipped explicitly at the bottom of this file.
  * -------------------------------------------------------------------------- */
 
 .footer {
@@ -49,30 +49,12 @@
 
 /* ── shared ornaments ─────────────────────────────────────────────────────── */
 
-.diamond,
-.diamondLarge,
-.diamondSmall,
-.dividerNode {
+.diamond {
   flex: 0 0 auto;
   inline-size: var(--node-size);
   block-size: var(--node-size);
   border: var(--hairline) solid var(--c-gold);
   transform: rotate(45deg);
-}
-
-.diamondLarge {
-  inline-size: calc(var(--node-size) * 2.1);
-  block-size: calc(var(--node-size) * 2.1);
-}
-
-.diamondSmall {
-  inline-size: calc(var(--node-size) * 0.72);
-  block-size: calc(var(--node-size) * 0.72);
-  border-color: var(--c-gold-line);
-}
-
-.dividerNode {
-  border-color: var(--c-gold-line);
 }
 
 /* ── the call to action ───────────────────────────────────────────────────── */
@@ -181,8 +163,12 @@
   padding-inline: 28px;
   border: var(--border-1) solid var(--border-gold);
   border-radius: var(--radius-8);
-  font-family: var(--font-display);
-  font-size: clamp(0.9rem, 1.15vw, 1.15rem);
+  /* The UI face at a fixed 14px, which is what the system's large control is.
+   * These were set in the display face on the fluid scale, and Cinzel renders
+   * lowercase as small capitals — so "Start Your Journey" came out as a line of
+   * caps twice the intended size. A button label is interface, not display. */
+  font-family: var(--font-ui);
+  font-size: 14px;
   letter-spacing: 0.04em;
   white-space: nowrap;
   cursor: pointer;
@@ -307,19 +293,16 @@
 .blurb {
   margin: 0;
   max-inline-size: 30ch;
-  color: rgb(232 230 224 / 0.7);
-  font-size: clamp(0.85rem, 1vw, 1rem);
-  font-weight: 300;
-  line-height: 1.75;
+  color: var(--text-muted);
+  font: 400 13px/22px var(--font-ui);
+  text-wrap: pretty;
 }
 
 .motto {
   margin: 0;
-  color: var(--c-gold-soft);
-  font-size: var(--fs-micro);
-  font-weight: 500;
-  letter-spacing: var(--tracking-micro);
-  line-height: 1.5;
+  color: var(--gold-antique);
+  font: 700 11px/16px var(--font-ui);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
@@ -333,17 +316,15 @@
   padding-inline-start: clamp(1rem, 2.2vw, 2.5rem);
 }
 
+/* The system's section label, exactly: 11/14 at 700, tracked .08em, uppercase,
+ * in the warm gold. It was on the fluid `--fs-micro` at .14em tracking with an
+ * ornament in front of it — a structural label that grew with the viewport and
+ * carried decoration, where the system wants it fixed, tight and plain. */
 .colTitle {
-  display: flex;
-  align-items: center;
-  gap: 0.7em;
   margin: 0;
-  color: var(--c-gold);
-  font-family: var(--font-sans);
-  font-size: var(--fs-micro);
-  font-weight: 600;
-  letter-spacing: var(--tracking-micro);
-  line-height: 1;
+  color: var(--gold-warm);
+  font: var(--type-section-label);
+  letter-spacing: var(--tracking-label);
   text-transform: uppercase;
 }
 
@@ -360,33 +341,17 @@
   align-items: center;
   gap: 0.55em;
   padding: 0;
-  color: rgb(232 230 224 / 0.78);
-  font-size: clamp(0.85rem, 1vw, 1rem);
-  font-weight: 300;
-  line-height: 1.4;
+  color: var(--text-muted);
+  font: var(--type-body);
   text-align: start;
   cursor: pointer;
-  transition: color 220ms var(--ease-out);
+  transition: color var(--dur-hover) var(--ease-out);
 }
 
+/* Parchment, not gold: gold is the metal and the system spends it on structure
+ * and on the one primary action, never on a list of navigation links. */
 .colLink:hover {
-  color: var(--c-gold);
-}
-
-.chev {
-  flex: 0 0 auto;
-  inline-size: 0.85em;
-  block-size: 0.85em;
-  fill: none;
-  stroke: var(--c-gold);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  transition: transform 220ms var(--ease-out);
-}
-
-.colLink:hover .chev {
-  transform: translateX(2px);
+  color: var(--text-primary);
 }
 
 /* ── the newsletter column ────────────────────────────────────────────────── */
@@ -577,22 +542,6 @@
   min-inline-size: 0;
 }
 
-.crest {
-  flex: 0 0 auto;
-  inline-size: clamp(2.6rem, 4vw, 3.9rem);
-  block-size: clamp(2.6rem, 4vw, 3.9rem);
-}
-
-.crest svg {
-  inline-size: 100%;
-  block-size: 100%;
-  fill: none;
-  stroke: var(--c-gold);
-  stroke-width: 1.15;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
 .backTop {
   display: inline-flex;
   align-items: center;
@@ -767,13 +716,8 @@
  * right when the page flips, and it has to point *along* the reading direction.
  * -------------------------------------------------------------------------- */
 
-[dir="rtl"] .chev,
 [dir="rtl"] .submitArrow {
   transform: scaleX(-1);
-}
-
-[dir="rtl"] .colLink:hover .chev {
-  transform: scaleX(-1) translateX(2px);
 }
 
 [dir="rtl"] .ctaRuleLine {
@@ -792,7 +736,6 @@
   .ctaPrimary,
   .ctaSecondary,
   .colLink,
-  .chev,
   .social,
   .social svg,
   .submit,
