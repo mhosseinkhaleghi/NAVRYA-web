@@ -130,10 +130,20 @@ which says nothing about whether the shot was ever on screen.
   carries `pointerType: "mouse"`. Hover must not navigate. Arrow keys must move
   the selection, mirrored under RTL.
 - **Links out to the product**: the header's login, all four archetype panels,
-  the invitation under them, the hero's call to action and the footer's closing
-  one must each be an `<a>` whose `href` is exactly `https://app.navrya.com/` —
-  read off the built page, not from the constant the page was built from. Eight
-  links per locale, at every breakpoint.
+  the invitation under them, the hero's two calls to action and the footer's
+  closing one must each be an `<a>` whose `href` is exactly
+  `https://app.navrya.com/` — read off the built page, not from the constant the
+  page was built from. Nine links per locale, at every breakpoint.
+- **The hero's links are gated behind the opening**: while `data-intro` is
+  `armed`, the pair must be at `opacity: 0` *and* `pointer-events: none`,
+  sampled repeatedly across the shot.
+
+  Both halves are the check. They were added to the composition without being
+  added to the reveal, so a filled gold button painted over the film for five
+  seconds while the words it belongs to were still at zero. And invisible alone
+  would not be enough: an element at `opacity: 0` still takes a click and still
+  holds its place in the tab order, so an ungated pair is two invisible targets
+  over the footage.
 
   A panel is a link, so pressing one leaves the site by design; expansion is
   asserted through hover instead. This replaces a click assertion with a hover

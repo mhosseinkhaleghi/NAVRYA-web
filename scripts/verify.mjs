@@ -364,6 +364,16 @@ async function runOne(browser, locale, bp) {
    * ever on screen. The dimmest moment while the clock is advancing is the
    * honest measure, so that is what is kept.
    */
+  /* The hero's two links must not exist for the viewer until the opening ends.
+   *
+   * They were added to the composition without being added to the reveal, so
+   * they painted from the very first frame: a filled gold button sitting over
+   * the film for five seconds while the words it belongs to were still at zero.
+   * Invisible is not enough either — an element at `opacity: 0` still takes a
+   * click and still holds a place in the tab order, so what is asserted is both
+   * the opacity and that nothing can be pressed. */
+  const heroGate = { live: 0, samples: 0, worst: null };
+
   const openingWatch = { minOpacity: 1, atTime: null, samples: 0, ready: null, lead: null };
   for (let i = 0; i < 40; i++) {
     const s = await page
@@ -377,10 +387,26 @@ async function runOne(browser, locale, bp) {
           ready: v.hasAttribute("data-plate-ready"),
           lead: v.hasAttribute("data-plate-lead"),
           done: document.documentElement.getAttribute("data-timeline") !== "held",
+          intro: document.documentElement.dataset.intro,
+          hero: (() => {
+            const el = document.querySelector("[data-hero-trial]")?.parentElement;
+            if (!el) return null;
+            const cs = getComputedStyle(el);
+            return { opacity: +cs.opacity, pointer: cs.pointerEvents };
+          })(),
         };
       })
       .catch(() => null);
     if (!s) break;
+    // While the interface is still armed, the hero's links are neither visible
+    // nor pressable.
+    if (s.intro === "armed" && s.hero) {
+      heroGate.samples++;
+      if (s.hero.opacity > 0.02 || s.hero.pointer !== "none") {
+        heroGate.live++;
+        heroGate.worst ??= s.hero;
+      }
+    }
     // Only while the shot is actually running: a plate at 0 has not started and
     // a plate at its final frame has finished.
     if (s.t > 0.05 && (!s.dur || s.t < s.dur - 0.1)) {
@@ -489,6 +515,17 @@ async function runOne(browser, locale, bp) {
       h: Math.round(r.height),
     };
   });
+  if (heroGate.live) {
+    fail(
+      where,
+      "D1-text",
+      `the hero's links were live during the opening: ${heroGate.live} of ` +
+        `${heroGate.samples} samples at opacity ${heroGate.worst.opacity}, ` +
+        `pointer-events ${heroGate.worst.pointer} — they sit over the film ` +
+        `before the words they belong to have arrived`,
+    );
+  }
+
   if (!openState) {
     fail(where, "D2-video", 'no [data-scene-video="dawn"] in the document');
   } else {
@@ -741,6 +778,7 @@ async function runOne(browser, locale, bp) {
       panels: read("[data-cast-panel]"),
       foot: read("[data-explore]"),
       hero: read("[data-hero-cta]"),
+      trial: read("[data-hero-trial]"),
       footerCta: read("[data-footer-cta]"),
     };
   });
@@ -748,10 +786,11 @@ async function runOne(browser, locale, bp) {
     ["header login", appLinks.login, 1],
     ["archetype panel", appLinks.panels, 4],
     ["section 10 invitation", appLinks.foot, 1],
-    // The hero's own call to action, and the closing one in the footer. Eight
-    // ways out of the site now, not six — every one of them asserted, because a
-    // way out that silently points somewhere else is the failure nobody sees.
+    // The hero's pair and the closing one in the footer. Nine ways out of the
+    // site now, not six — every one of them asserted, because a way out that
+    // silently points somewhere else is the failure nobody sees.
     ["hero call to action", appLinks.hero, 1],
+    ["hero free trial", appLinks.trial, 1],
     ["footer call to action", appLinks.footerCta, 1],
   ];
   for (const [label, found, want] of expectLinks) {

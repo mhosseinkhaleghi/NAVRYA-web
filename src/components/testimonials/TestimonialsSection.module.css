@@ -18,6 +18,11 @@
   padding-block: var(--s9-pad);
   padding-inline: var(--rail-lane);
   background: var(--c-bg);
+  /* The design system's ruled ground. Set here and not only on the body
+   * because this section paints an opaque ground of its own to cover the
+   * film's sticky screen, which would hide anything under it. */
+  background-image: var(--grid-image);
+  background-attachment: fixed;
   overflow: hidden;
 
   /* Written by the controller from how far the section has climbed into the

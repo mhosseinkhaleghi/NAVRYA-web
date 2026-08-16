@@ -20,14 +20,25 @@
   color: var(--c-text);
   font-family: var(--font-sans);
 
-  /* The background picture lands here. Until it does this resolves to nothing
-   * and the footer sits on the page's own black, which is what the comp has
-   * behind the artwork anyway — so dropping the image in is one declaration
-   * and changes no layout. */
-  background-image: var(--footer-bg, none);
+  /*
+   * The background picture lands in `--footer-bg`, and until it does the
+   * fallback is the design system's ruled ground rather than nothing. One
+   * declaration still swaps them, and the ruling is what the footer sits on in
+   * the meantime — the same grid as the sections above it, so the page has one
+   * continuous ground rather than a black band at the bottom of it.
+   */
+  background-image: var(--footer-bg, var(--grid-image));
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+}
+
+/* The ruling belongs to the frame, not the document — but only while it *is*
+ * the ruling. A photograph has to sit still in the footer, so the fixed
+ * attachment is scoped to the fallback. */
+.footer:not([style*="--footer-bg"]) {
+  background-attachment: fixed;
+  background-size: auto;
 }
 
 /* A scrim, so the copy keeps its contrast whatever the picture turns out to be.

@@ -114,29 +114,64 @@
  * pixels for the same reason it fixes the height at 52. The label sits in
  * Satoshi beside a headline in Cinzel, which is the system's own pairing.
  */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: clamp(0.6rem, 1.1vw, 1rem);
+  margin-block-start: var(--hero-gap-rule-sub);
+}
+
+.trial,
 .cta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.6em;
-  align-self: start;
   block-size: 52px;
-  margin-block-start: var(--hero-gap-rule-sub);
   padding-inline: 28px;
-  border: var(--border-1) solid var(--char-accent);
+  border: var(--border-1) solid transparent;
   border-radius: var(--radius-8);
-  background: var(--char-accent);
-  color: var(--ink-950);
   font-family: var(--font-ui);
   font-size: 14px;
-  font-weight: 600;
   letter-spacing: 0.04em;
   white-space: nowrap;
-  transition: filter var(--dur-hover) var(--ease-out);
+  transition:
+    background-color var(--dur-hover) var(--ease-out),
+    border-color var(--dur-hover) var(--ease-out),
+    filter var(--dur-hover) var(--ease-out);
+}
+
+/* The module's one primary: a filled accent with ink on it. */
+.trial {
+  border-color: var(--char-accent);
+  background: var(--char-accent);
+  color: var(--ink-950);
+  font-weight: 600;
+}
+
+.trial:hover {
+  filter: brightness(var(--hover-brightness));
+}
+
+/* The secondary: the framed surface. Over the film it also needs the dark
+ * ground behind it, or a hairline frame alone disappears into the meadow. */
+.cta {
+  border-color: var(--border-gold);
+  background: rgb(11 20 21 / 0.72);
+  color: var(--text-primary);
+  font-weight: 500;
+  text-shadow: var(--text-lift);
 }
 
 .cta:hover {
-  filter: brightness(var(--hover-brightness));
+  background: rgb(244 234 215 / 0.06);
+  border-color: var(--border-gold-strong);
+}
+
+.trial:active,
+.cta:active {
+  border-color: var(--char-accent);
 }
 
 .ctaIcon {
@@ -308,10 +343,15 @@
 :global([data-intro="armed"]) .headline,
 :global([data-intro="armed"]) .rule,
 :global([data-intro="armed"]) .sublineLine,
+:global([data-intro="armed"]) .actions,
 :global([data-intro="armed"]) .scroll {
   opacity: 0;
 }
 
+/* Not only invisible — unreachable. These are links out of the site, and an
+ * element at `opacity: 0` is still clickable and still in the tab order, so
+ * during the opening they were two invisible targets sitting over the film. */
+:global([data-intro="armed"]) .actions,
 :global([data-intro="armed"]) .scroll {
   pointer-events: none;
 }
@@ -338,6 +378,13 @@
 
 :global([data-intro="shown"]) .sublineLine:nth-child(n + 3) {
   animation-delay: 0.9s;
+}
+
+/* The actions land after the last line of the sub-headline and before the
+ * scroll cue — they are the thing the copy has just argued for, so they arrive
+ * as its conclusion rather than alongside it. */
+:global([data-intro="shown"]) .actions {
+  animation: hero-lift 1s var(--ease-cine) 1.02s both;
 }
 
 /* `backwards`, not `both`: a filled-forwards animation would keep overriding
@@ -417,8 +464,17 @@
   :global([data-intro="shown"]) .rule,
   :global([data-intro="shown"]) .ruleNode,
   :global([data-intro="shown"]) .sublineLine,
+  :global([data-intro="shown"]) .actions,
   :global([data-intro="shown"]) .scroll {
     animation: none;
+  }
+
+  /* With the animation off, `both` is not there to leave them visible, so the
+   * armed state has to be lifted explicitly — otherwise the two links stay at
+   * zero and unclickable for a viewer who asked for less motion. */
+  :global([data-intro="shown"]) .actions {
+    opacity: 1;
+    pointer-events: auto;
   }
 }
 

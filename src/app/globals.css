@@ -106,8 +106,24 @@ html[data-timeline="held"] {
   overflow-y: hidden;
 }
 
+/*
+ * The page ground: near-black, ruled with the design system's grid.
+ *
+ * Gradients rather than an image, so it costs no request, stays sharp at any
+ * zoom and takes its colour from the palette like everything else. Fixed
+ * attachment, so the grid belongs to the frame rather than to the document:
+ * this whole site is one long scroll driving a film, and a ruling that scrolled
+ * with it would slide behind the sections and become motion the eye follows.
+ *
+ * The same pair is set on each section below the film. They have to paint an
+ * opaque ground of their own — the film's screen is `position: sticky` and sits
+ * behind them until they cover it — so a grid on the body alone would be
+ * painted over everywhere it could be seen.
+ */
 body {
   background-color: var(--c-bg);
+  background-image: var(--grid-image);
+  background-attachment: fixed;
   color: var(--c-text);
   font-family: var(--font-sans);
   font-synthesis-weight: none;

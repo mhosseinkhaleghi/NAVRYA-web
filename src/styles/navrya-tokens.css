@@ -184,6 +184,33 @@
 
   --hairline: var(--border-1);
 
+  /*
+   * The ruled ground the design sheets sit on.
+   *
+   * One cell of the spacing scale, so the ruling is on the same measure as the
+   * spacing above it, and a line faint enough to be texture rather than a
+   * table. Kept as a whole background-image value because every surface that
+   * needs it already paints `--c-bg` over the film and must keep doing so — a
+   * colour token could not carry a pattern, and the alternative was repeating
+   * the same two gradients in six stylesheets.
+   *
+   * Tune or switch off here: `--grid-line: transparent` removes the ruling
+   * everywhere without touching a rule.
+   */
+  --grid-cell: var(--space-12);
+  --grid-line: rgba(244, 234, 215, 0.035);
+  --grid-image:
+    repeating-linear-gradient(
+      to right,
+      var(--grid-line) 0 1px,
+      transparent 1px var(--grid-cell)
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      var(--grid-line) 0 1px,
+      transparent 1px var(--grid-cell)
+    );
+
   /* Cinzel is a capitals-forward face: it needs POSITIVE tracking where
    * Playfair took negative. This is the single most visible line in the file. */
   --tracking-display: .04em;
