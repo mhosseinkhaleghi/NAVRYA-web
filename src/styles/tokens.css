@@ -136,7 +136,31 @@
    * circle of glow, not a picture, and the section clips it. Held to the width
    * instead left a third of a screen of black under it on a phone. */
   --s7-orb: min(80vh, 148vw, 56rem);
-  --s7-pad: clamp(2.5rem, 4vw, 5rem);
+  /* ── The vertical rhythm of the sections below the film ──────────────────
+   *
+   * One standard, in one place. These four sections each declared their own
+   * padding token and every one of them held the same value, so the spacing
+   * looked deliberate and was in fact a coincidence — and none of it decided
+   * what a reader actually sees between two sections. That was decided by
+   * `min-block-size: 100dvh`: each section was pinned to a full screen whatever
+   * was in it, and `align-content` shared the leftover out as extra gaps. So
+   * the space between the orb and section 8 measured 379px at 1440, 375px at
+   * 1920 and 441px on a phone — three different numbers, none of them chosen,
+   * all of them a by-product of how short the content happened to be.
+   *
+   * Now the section is as tall as what is in it plus this padding, which is
+   * anchored on the design system's spacing scale: 48px (`--space-12`) at the
+   * floor, 96px at the ceiling. `--section-stack` is the step between blocks
+   * *within* a section, 24px to 40px — always smaller than the space between
+   * two sections, which is what makes the grouping read.
+   *
+   * The per-section names are kept and pointed here, so the standard is one
+   * edit rather than fourteen, and a section that genuinely needs to differ
+   * can still say so in its own line. */
+  --section-pad: clamp(3rem, 6vh, 6rem);
+  --section-stack: clamp(1.5rem, 3vh, 2.5rem);
+
+  --s7-pad: var(--section-pad);
 
   /* ── Section 8 — the prop firms ─────────────────────────────────────────── */
   --fs-s8-display: clamp(1.75rem, min(4.1vw, 7vh), 5.5rem);
@@ -148,8 +172,8 @@
   --s8-firm: clamp(9rem, 14vw, 15rem);
   --s8-gap: clamp(1.5rem, 3.4vw, 4rem);
   --s8-cap: clamp(0.7rem, 1.1vw, 1.1rem);
-  --s8-pad: clamp(2.5rem, 4vw, 5rem);
-  --s8-stack: clamp(2rem, 3.4vw, 3.5rem);
+  --s8-pad: var(--section-pad);
+  --s8-stack: var(--section-stack);
   /* Slow on purpose — atmosphere behind a row of names, not a ticker. */
   --s8-drift: 110s;
 
@@ -173,8 +197,8 @@
    * only seamless while the run is taller than the window it is seen through.
    */
   --s9-height: clamp(15rem, 54vh, 40rem);
-  --s9-pad: clamp(2.5rem, 4vw, 5rem);
-  --s9-stack: clamp(1.75rem, 3vw, 3rem);
+  --s9-pad: var(--section-pad);
+  --s9-stack: var(--section-stack);
   --s9-card-pad: clamp(1.1rem, 1.6vw, 1.9rem);
   --s9-radius: clamp(0.65rem, 0.9vw, 1.1rem);
   --s9-mark: clamp(1.5rem, 2.1vw, 2.4rem);
@@ -194,8 +218,8 @@
   --s10-measure: clamp(20rem, 62vw, 68rem);
   --s10-rule: clamp(12rem, 32vw, 34rem);
   --s10-compass: clamp(9rem, 13.5vw, 15rem);
-  --s10-pad: clamp(2.5rem, 4vw, 5rem);
-  --s10-stack: clamp(1.5rem, 2.6vw, 2.75rem);
+  --s10-pad: var(--section-pad);
+  --s10-stack: var(--section-stack);
   --s10-frame-pad: clamp(0.6rem, 1vw, 1.1rem);
   --s10-radius: clamp(0.6rem, 0.9vw, 1.1rem);
   --s10-gap: clamp(0.4rem, 0.7vw, 0.85rem);

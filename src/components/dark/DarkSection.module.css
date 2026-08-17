@@ -21,7 +21,21 @@
   position: relative;
   display: grid;
   place-items: center;
-  min-block-size: 100dvh;
+  /*
+   * As tall as the orb needs, plus the standard section padding.
+   *
+   * This was `100dvh`, and the screen height was doing two jobs at once: it set
+   * the rhythm between the sections *and* it was the only thing making the
+   * section tall enough for the orb, which is absolutely positioned and so
+   * contributes nothing to its own parent's height. Removing it for the first
+   * reason silently broke the second — the section collapsed to the height of
+   * the words and clipped 280px off the light.
+   *
+   * The floor is the orb's own diameter now, which is what `--s7-orb`'s comment
+   * in tokens.css always claimed it was. The two jobs are separate: this line
+   * is about the orb, `--section-pad` is about the rhythm.
+   */
+  min-block-size: calc(var(--s7-orb) + var(--section-pad) * 2);
   padding-block: var(--s7-pad);
   padding-inline: var(--rail-lane);
   background: var(--c-bg);

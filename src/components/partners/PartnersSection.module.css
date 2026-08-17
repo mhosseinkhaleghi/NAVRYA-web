@@ -14,8 +14,12 @@
   display: grid;
   /* A screen tall, and the head and the rail spread through it rather than
    * huddled in the middle — see section 7 for why both halves of that matter. */
-  min-block-size: 100dvh;
-  align-content: space-evenly;
+  /* As tall as what is in it, plus the standard section padding. It was pinned
+   * to a full screen whatever the content came to, and `align-content` shared
+   * the remainder out as extra gaps — so the space a reader saw between two
+   * sections was a by-product of how short the content happened to be, not a
+   * value anyone chose. See `--section-pad` in tokens.css. */
+  align-content: start;
   gap: var(--s8-stack);
   padding-block: var(--s8-pad);
   padding-inline: var(--rail-lane);

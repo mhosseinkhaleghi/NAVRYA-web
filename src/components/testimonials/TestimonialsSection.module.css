@@ -10,9 +10,11 @@
 .testimonials {
   position: relative;
   display: grid;
-  /* A screen tall, with the wall taking every pixel the head does not — see
-   * section 7. A fixed wall height in a screen-tall section is a void. */
-  min-block-size: 100dvh;
+  /* As tall as what is in it, plus the standard section padding. It was pinned
+   * to a full screen whatever the content came to, and `align-content` shared
+   * the remainder out as extra gaps — so the space a reader saw between two
+   * sections was a by-product of how short the content happened to be, not a
+   * value anyone chose. See `--section-pad` in tokens.css. */
   align-content: center;
   gap: var(--s9-stack);
   padding-block: var(--s9-pad);
