@@ -934,6 +934,145 @@ async function main() {
   });
   const results = [];
 
+  /*
+   * The features page.
+   *
+   * It is a second route running the same opening as the home page, off the
+   * same components and the same controller — so what has to be asserted is not
+   * that it works but that it works *the same way*: the plate decodes and is
+   * visible while it plays, the interface is held back until the shot has run,
+   * the words arrive, nothing overflows, and the bar knows which page it is on.
+   *
+   * Its own pass rather than a second route inside the matrix above: the home
+   * run walks ten sections and takes most of a minute, and this page has one
+   * slide. Every locale is covered at the desktop frame, where the composition
+   * differs most from the compact one, and English is covered at all three.
+   */
+  async function runFeature(locale, bp) {
+    const where = { locale: locale.code, bp: `${bp.name}/feature`, at: "load" };
+    const context = await browser.newContext({
+      viewport: { width: bp.width, height: bp.height },
+      deviceScaleFactor: 1,
+      reducedMotion: "no-preference",
+    });
+    const page = await context.newPage();
+    const bad = [];
+    page.on("pageerror", (e) => bad.push(String(e)));
+    page.on("console", (m) => m.type() === "error" && bad.push(m.text()));
+    page.on("requestfailed", (r) => bad.push(`${r.url()} ${r.failure()?.errorText}`));
+    page.on("response", (r) => r.status() >= 400 && bad.push(`${r.url()} ${r.status()}`));
+
+    await page.goto(`${BASE}/${locale.code}/feature`, {
+      waitUntil: "domcontentloaded",
+      timeout: 60000,
+    });
+
+    // Held back while the shot runs — the same gate the home page's opening is
+    // behind, and the reason the words are not on screen over the first frame.
+    let heldSamples = 0;
+    let leaked = 0;
+    for (let i = 0; i < 40; i++) {
+      const s = await page
+        .evaluate(() => {
+          const v = document.querySelector("[data-plate-lead]");
+          const head = document.querySelector("[data-hero] h1");
+          if (!v || !head) return null;
+          return {
+            intro: document.documentElement.dataset.intro,
+            headOpacity: +getComputedStyle(head).opacity,
+            plateOpacity: +getComputedStyle(v).opacity,
+            t: v.currentTime,
+            live: document.documentElement.getAttribute("data-timeline") !== "held",
+          };
+        })
+        .catch(() => null);
+      if (!s) break;
+      if (s.intro === "armed") {
+        heldSamples++;
+        if (s.headOpacity > 0.05) leaked++;
+        // The plate itself must be visible the whole way — the fault that had
+        // the home page's opening playing behind its own still.
+        if (s.t > 0.05 && s.plateOpacity <= 0.05) {
+          fail(where, "D2-video", `the plate is invisible at currentTime ${s.t.toFixed(2)}`);
+          break;
+        }
+      }
+      if (s.live) break;
+      await page.waitForTimeout(200);
+    }
+    if (!heldSamples) {
+      notes.push(`${locale.code}/${bp.name}/feature: never caught the opening while held`);
+    } else if (leaked) {
+      fail(
+        where,
+        "D1-text",
+        `the words were on screen during the opening: ${leaked} of ${heldSamples} samples`,
+      );
+    }
+
+    await page
+      .waitForFunction(
+        () => document.documentElement.getAttribute("data-timeline") !== "held",
+        { timeout: 25000 },
+      )
+      .catch(() => fail(where, "interaction", "the timeline never unlocked"));
+    await page.waitForTimeout(700);
+
+    where.at = "slide";
+    const s = await page.evaluate(() => {
+      const head = document.querySelector("[data-hero] h1");
+      const sub = document.querySelector("[data-hero] p");
+      const v = document.querySelector("[data-plate-lead]");
+      const box = (el) => {
+        const r = el.getBoundingClientRect();
+        return { w: Math.round(r.width), h: Math.round(r.height), top: Math.round(r.top) };
+      };
+      const active = document.querySelector('nav[aria-label] [aria-current]');
+      return {
+        headline: head ? { text: head.textContent.trim(), op: +getComputedStyle(head).opacity, ...box(head) } : null,
+        subline: sub ? { op: +getComputedStyle(sub).opacity, ...box(sub) } : null,
+        plate: v ? { rs: v.readyState, vw: v.videoWidth, op: +getComputedStyle(v).opacity } : null,
+        sources: v ? [...v.querySelectorAll("source")].map((x) => x.getAttribute("src")) : [],
+        dir: document.documentElement.dir,
+        overflowX: document.scrollingElement.scrollWidth - document.documentElement.clientWidth,
+        activeNav: active ? active.textContent.trim() : null,
+        homeHref: document.querySelector('nav a[href$="/' + document.documentElement.lang + '"]')?.getAttribute("href") ?? null,
+      };
+    });
+
+    for (const [name, t] of [["headline", s.headline], ["sub-headline", s.subline]]) {
+      if (!t) fail(where, "D1-text", `no ${name} on the slide`);
+      else if (t.op <= 0.05) fail(where, "D1-text", `the ${name} is at opacity ${t.op}`);
+      else if (t.w === 0 || t.h === 0) fail(where, "D1-text", `the ${name} box is ${t.w}×${t.h}`);
+    }
+    if (!s.plate) fail(where, "D2-video", "no lead plate on the slide");
+    else {
+      if (s.plate.rs === 0) fail(where, "D2-video", "the plate never loaded");
+      if (s.plate.vw === 0) fail(where, "D2-video", "the plate decoded to 0 wide");
+      if (s.plate.op <= 0.05) fail(where, "D2-video", `the plate is at opacity ${s.plate.op}`);
+    }
+    for (const src of s.sources) {
+      const res = await page.request
+        .get(new URL(src, BASE).href, { headers: { Range: "bytes=0-1024" }, timeout: 30000 })
+        .catch(() => null);
+      if (!res || res.status() >= 400)
+        fail(where, "D2-video", `source ${src} returns ${res ? res.status() : "no response"}`);
+    }
+    if (s.overflowX > 1)
+      fail(where, "D3-layout", `${s.overflowX}px of horizontal overflow`);
+    if (s.dir !== locale.dir)
+      fail(where, "D3-layout", `dir is ${s.dir}, expected ${locale.dir}`);
+    if (!s.activeNav)
+      fail(where, "interaction", "no nav item marked current on the features page");
+    if (!s.homeHref)
+      fail(where, "interaction", "the bar has no way back to the home page");
+    if (bad.length)
+      fail(where, "runtime", `${bad.length} error(s), first: ${bad[0]}`);
+
+    await context.close();
+    return { locale: locale.code, breakpoint: bp.name, route: "feature" };
+  }
+
   for (const locale of LOCALES) {
     for (const bp of BREAKPOINTS) {
       process.stdout.write(`${locale.code}/${bp.name} … `);
@@ -950,6 +1089,28 @@ async function main() {
       const added = failures.length - before;
       console.log(added === 0 ? "ok" : `${added} failure(s)`);
     }
+  }
+
+  // Every locale at the desktop frame, and English at all three.
+  const desktop = BREAKPOINTS.find((b) => b.name === "desktop") ?? BREAKPOINTS[BREAKPOINTS.length - 1];
+  const featurePasses = [
+    ...LOCALES.map((locale) => [locale, desktop]),
+    ...BREAKPOINTS.filter((b) => b !== desktop).map((bp) => [LOCALES[0], bp]),
+  ];
+  for (const [locale, bp] of featurePasses) {
+    process.stdout.write(`${locale.code}/${bp.name}/feature … `);
+    const before = failures.length;
+    try {
+      results.push(await runFeature(locale, bp));
+    } catch (err) {
+      fail(
+        { locale: locale.code, bp: `${bp.name}/feature`, at: "harness" },
+        "harness",
+        String(err.message ?? err),
+      );
+    }
+    const added = failures.length - before;
+    console.log(added === 0 ? "ok" : `${added} failure(s)`);
   }
 
   await browser.close();

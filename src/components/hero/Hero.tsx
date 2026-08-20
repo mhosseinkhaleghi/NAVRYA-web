@@ -3,11 +3,50 @@ import { APP_URL } from "@/config/site";
 
 import styles from "./Hero.module.css";
 
-export function Hero({ dictionary }: { dictionary: Dictionary }) {
-  const { headline, subline, scroll, cta, trial } = dictionary.hero;
+/** The copy an opening slide needs. The home page's `hero` block is one. */
+export type HeroCopy = {
+  headline: string;
+  subline: readonly string[];
+  scroll: string;
+};
+
+/**
+ * The opening slide, on the home page and on the features page.
+ *
+ * One component rather than two, and that is the point. The composition is the
+ * same on both — headline, ruled break, sub-headline, scroll cue, over a plate
+ * that plays itself in — and so is every rule that makes it behave: the three
+ * grid bands that keep the block clear of the bar and the cue, the reveal it is
+ * gated behind, the mirroring, the type scale, the shadow that lifts the words
+ * off the footage. A second page with its own markup would inherit none of that
+ * and would drift the first time any of it changed.
+ *
+ * What varies is stated as parameters. The features page has its own copy, sits
+ * on its own rail, and carries no buttons — its slide is the start of an
+ * argument rather than a place to act on one.
+ */
+export function Hero({
+  dictionary,
+  copy,
+  actions = true,
+  className,
+}: {
+  dictionary: Dictionary;
+  /** Defaults to the home page's opening. */
+  copy?: HeroCopy;
+  /** The two links into the product. The home page's opening carries them. */
+  actions?: boolean;
+  /** An extra class on the section, for a slide that sits on a different rail. */
+  className?: string;
+}) {
+  const { headline, subline, scroll } = copy ?? dictionary.hero;
+  const { cta, trial } = dictionary.hero;
 
   return (
-    <section className={styles.hero} data-hero="">
+    <section
+      className={className ? `${styles.hero} ${className}` : styles.hero}
+      data-hero=""
+    >
       <div className={styles.content} data-hero-part="">
         <h1 className={styles.headline}>{headline}</h1>
 
@@ -37,17 +76,19 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
          * have to work with JavaScript off, open in a new tab on a modified
          * click and be reachable by keyboard — all of which an anchor is.
          */}
-        <div className={styles.actions}>
-          <a className={styles.trial} href={APP_URL} data-hero-trial="">
-            {trial}
-          </a>
-          <a className={styles.cta} href={APP_URL} data-hero-cta="">
-            {cta}
-            <svg className={styles.ctaIcon} viewBox="0 0 16 16" aria-hidden="true">
-              <path d="M4 12L12 4M6 4h6v6" />
-            </svg>
-          </a>
-        </div>
+        {actions ? (
+          <div className={styles.actions}>
+            <a className={styles.trial} href={APP_URL} data-hero-trial="">
+              {trial}
+            </a>
+            <a className={styles.cta} href={APP_URL} data-hero-cta="">
+              {cta}
+              <svg className={styles.ctaIcon} viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M4 12L12 4M6 4h6v6" />
+              </svg>
+            </a>
+          </div>
+        ) : null}
       </div>
 
       <div className={styles.scroll} data-hero-part="">

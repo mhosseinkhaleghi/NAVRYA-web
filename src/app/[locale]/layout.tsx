@@ -37,26 +37,6 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} dir={getDirection(locale as Locale)}>
-      <head>
-        {/*
-         * The first thing on screen is the opening plate's first frame, and it
-         * cannot start downloading until the stylesheet that references it has
-         * parsed. Naming it here starts the fetch with the document instead.
-         */}
-        <link
-          rel="preload"
-          as="image"
-          href="/scene/hunter-dawn-first.jpg"
-          fetchPriority="high"
-        />
-        {/* The plate itself is not preloaded here. A media element fetches with
-         * range requests and will not always reuse a `rel=preload` entry, so
-         * the hint can cost a second full download of the one file the opening
-         * beat is waiting on. `preload="auto"` on the element itself starts the
-         * fetch a few milliseconds later and only once, and nothing competes
-         * with it: every other plate is `preload="none"` until the controller
-         * asks for it. */}
-      </head>
       <body>
         {/* Runs before the composition is painted, so the opening beat can
          * hold it back without it flashing on screen first. */}

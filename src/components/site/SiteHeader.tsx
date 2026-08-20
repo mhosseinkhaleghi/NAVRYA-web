@@ -13,9 +13,26 @@ type NavKey = keyof Dictionary["nav"];
 const NAV_KEYS: NavKey[] = ["home", "feature", "psychology", "pricing", "academy"];
 
 /**
+ * Which nav items have somewhere to go.
+ *
+ * The rest stay buttons. Those pages do not exist yet, and a control that is
+ * visibly inert is better than an `<a href="#">` that silently does nothing —
+ * the footer's columns are buttons for the same reason. As each page lands it
+ * joins this map and becomes a real link, with no other change.
+ *
+ * Plain anchors, not next/link: a client-side navigation swaps the markup
+ * without reloading the document, and the stage controller is an inline script
+ * that would never run again — the incoming page's plate would be a new element
+ * nobody had started, and its opening would simply not play. Changing page here
+ * is a change of document, exactly as changing language is.
+ */
+const NAV_HREF: Partial<Record<NavKey, (locale: Locale) => string>> = {
+  home: (locale) => `/${locale}`,
+  feature: (locale) => `/${locale}/feature`,
+};
+
+/**
  * The nav sits inside the fixed frame rather than on top of a scrolling page.
- * Items are buttons because they will switch scenes within the frame, not
- * navigate to separate documents — the wiring lands with the later sections.
  */
 export function SiteHeader({
   locale,
@@ -40,13 +57,23 @@ export function SiteHeader({
         <ul className={styles.navList}>
           {NAV_KEYS.map((key) => (
             <li key={key} className={styles.navItem}>
-              <button
-                type="button"
-                className={styles.navLink}
-                {...(key === active ? { "aria-current": "page" as const } : {})}
-              >
-                {nav[key]}
-              </button>
+              {NAV_HREF[key] ? (
+                <a
+                  href={NAV_HREF[key]!(locale)}
+                  className={styles.navLink}
+                  {...(key === active ? { "aria-current": "page" as const } : {})}
+                >
+                  {nav[key]}
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  className={styles.navLink}
+                  {...(key === active ? { "aria-current": "page" as const } : {})}
+                >
+                  {nav[key]}
+                </button>
+              )}
             </li>
           ))}
         </ul>

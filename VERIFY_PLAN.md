@@ -32,6 +32,19 @@ failing to stick, media 404ing out of the container, and RTL mirroring.
 **Routes.** `/{locale}` for each of the five. Plus `/` (must redirect to a
 locale) and one unknown path (must 404, not 500).
 
+`/{locale}/feature` as well — the features page, which runs the same opening off
+the same `Stage`, `Scene`, `Hero` and controller. It gets its own pass rather
+than a second route through the matrix: the home run walks ten sections and this
+page has one slide. Every locale at the desktop frame, where the composition
+differs most from the compact one, and English at all three.
+
+What is asserted there is not that it works but that it works *the same way*:
+the plate decodes and stays visible for the whole shot, the interface is held
+back until the shot ends, the headline and sub-headline arrive, nothing
+overflows, `dir` is right, and the bar marks the page it is on and still offers
+a way back. If the two pages ever stop sharing an implementation, this is what
+notices.
+
 **Targets.** `local` (production build, `next start`) and `live`
 (`https://navrya.com`). Local green with live broken is a failed run.
 

@@ -23,10 +23,19 @@ export function Stage({
   children,
   after,
   chrome,
+  trackVh,
 }: {
   children: ReactNode;
   after?: ReactNode;
   chrome?: ReactNode;
+  /**
+   * How long this page's film is, in vh. Omit on the home page: the controller
+   * has that sequence's beat table and sums it, which is the only figure the
+   * two must agree on. A page whose film is a different length says so here —
+   * the features page runs one slide and would otherwise inherit four thousand
+   * vh of empty track written for a sequence it does not have.
+   */
+  trackVh?: number;
 }) {
   return (
     <>
@@ -36,7 +45,11 @@ export function Stage({
        * the block is still exactly what the controller measures the scroll
        * against — the mechanism above it is unchanged.
        */}
-      <div className={styles.film} data-track="">
+      <div
+        className={styles.film}
+        data-track=""
+        {...(trackVh ? { "data-track-vh": String(trackVh) } : {})}
+      >
         <div className={styles.stage}>
           {/*
            * On compact frames the bar is a row of the stage rather than an

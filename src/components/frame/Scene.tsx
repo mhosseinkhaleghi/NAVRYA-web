@@ -45,6 +45,14 @@ import styles from "./Scene.module.css";
  * stills carry the sequence.
  */
 
+export type Plate = {
+  id: string;
+  slug: string;
+  lead: boolean;
+  codecs: readonly ("webm" | "mp4")[];
+};
+
+/** The home page's sequence, and the default. */
 const PLATES = [
   { id: "dawn", slug: "hunter-dawn", lead: true, codecs: ["webm", "mp4"] },
   { id: "turn", slug: "hunter-turn", lead: false, codecs: ["webm", "mp4"] },
@@ -57,10 +65,47 @@ const PLATES = [
 
 const MIME = { webm: "video/webm", mp4: "video/mp4" } as const;
 
-export function Scene() {
+/**
+ * `plates` is a parameter so a second page can run this layer with its own
+ * footage rather than a copy of it. Every rule that makes a plate behave —
+ * `object-fit`, the RTL mirror, the still behind it, the light tier in front of
+ * the heavy one, which renditions each breakpoint asks for, what the lead plate
+ * preloads — lives in this component and its stylesheet. A page that declared
+ * its own markup would inherit none of it, and the two would drift the first
+ * time one of those rules changed.
+ */
+export function Scene({ plates = PLATES }: { plates?: readonly Plate[] }) {
+  const opening = plates.find((p) => p.lead);
+
   return (
     <div className={styles.scene} aria-hidden="true">
-      {PLATES.map(({ id, slug, lead, codecs }) => (
+      {/*
+       * The first thing on screen is the opening plate's still, and it cannot
+       * start downloading until the stylesheet that names it has parsed. This
+       * starts the fetch with the document instead.
+       *
+       * Declared here rather than in the layout, where it was, because the
+       * layout does not know which plate leads — it named the home page's, and
+       * on any other page that is one wasted download and one missing one.
+       * React hoists the tag into `<head>` from wherever it is rendered, so the
+       * component that knows the answer is the one that can give it.
+       *
+       * The plate itself is deliberately not preloaded. A media element fetches
+       * with range requests and will not always reuse a `rel=preload` entry, so
+       * the hint can cost a second full download of the one file the opening is
+       * waiting on. `preload="auto"` on the element starts it a few
+       * milliseconds later and only once.
+       */}
+      {opening ? (
+        <link
+          rel="preload"
+          as="image"
+          href={`/scene/${opening.slug}-first.jpg`}
+          fetchPriority="high"
+        />
+      ) : null}
+
+      {plates.map(({ id, slug, lead, codecs }) => (
         <div
           key={id}
           className={styles.plate}

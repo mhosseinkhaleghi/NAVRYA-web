@@ -414,6 +414,24 @@ export const stageScript = `
   var total = 0, i;
   for (i = 0; i < BEATS.length; i++) total += BEATS[i][1];
 
+  /*
+   * A page may state its own film length, and one does.
+   *
+   * The beat table above is the home page's sequence. The features page runs
+   * the same opening — the same buffering gate, the same reveal at the same
+   * frame, the same unlock when the plate ends — but it is one slide long, and
+   * given the home page's 4380vh it would have hung four screens of empty track
+   * under a single shot.
+   *
+   * So the track carries its own length when it differs, and everything below
+   * measures against that. Read from the element rather than passed in, because
+   * this controller is one inline script shared by every page and there is
+   * nothing to pass it through.
+   */
+  var trackEl = document.querySelector('[data-track]');
+  var declared = trackEl ? +trackEl.getAttribute('data-track-vh') : 0;
+  if (declared > 0) total = declared;
+
   // The beat table is the source of truth for how long the timeline is, and the
   // token in tokens.css is only the no-JS fallback. They drifted the first time
   // a beat was added and the sequence ran off the end of its own track, so the
@@ -644,7 +662,7 @@ export const stageScript = `
   } else {
     root.dataset.intro = 'armed';
     ready(function () {
-      var opening = document.querySelector('[data-scene-video="dawn"]');
+      var opening = document.querySelector('[data-plate-lead]');
       if (!opening) { reveal(); return live(); }
 
       // How far a single unbroken range from the start reaches. Anything else
@@ -775,7 +793,7 @@ export const stageScript = `
   ready(function () {
     var hero = document.querySelector('[data-hero]');
     var heroParts = document.querySelectorAll('[data-hero-part]');
-    var opening = document.querySelector('[data-scene-video="dawn"]');
+    var opening = document.querySelector('[data-plate-lead]');
 
     var plateEls = [];
     for (i = 0; i < PLATES.length; i++) {

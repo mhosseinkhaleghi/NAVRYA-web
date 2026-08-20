@@ -37,6 +37,18 @@
 #                 this short is nearly all intra, which is exactly where AV1's
 #                 advantage disappears.
 #
+#   CROP=w:h:x:y  optional, in the environment: a window to take out of the
+#                 source before anything else. Generated footage arrives with a
+#                 generator's watermark burned into a corner, and a product site
+#                 cannot ship one. Cropping is the only removal that does not
+#                 invent pixels, so the window is chosen as the largest 16:9
+#                 rectangle that excludes it — measure the mark first rather
+#                 than guessing, and prefer losing frame edge to losing aspect.
+#
+#                 It is applied inside the same filter chain as the scale, so
+#                 the plate stays one generation off the source. Cropping in a
+#                 separate pass first would make every rendition a second.
+#
 #   seconds       optional: trim the plate to this length. Several of the
 #                 sources end on a run of identical frames, and shipping them
 #                 is pure weight — the timeline holds the last frame for as
@@ -64,6 +76,12 @@ SRC=${1:?usage: encode-scene.sh <source> <slug> [play|scrub] [seconds]}
 SLUG=${2:?usage: encode-scene.sh <source> <slug> [play|scrub] [seconds]}
 MODE=${3:-play}
 TRIM=${4:-}
+CROP=${CROP:-}
+
+# Prepended to every filter chain below, so the crop and the delivery encode
+# are one generation. Empty unless asked for.
+CUTBOX=""
+[ -n "$CROP" ] && CUTBOX="crop=$CROP,"
 
 OUT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/public/scene"
 mkdir -p "$OUT"
@@ -94,10 +112,10 @@ echo "$SLUG · ${DUR}s · ${FRAMES} frames · mode=$MODE (gop=$GOP)"
 # pair costs repository size, not bandwidth, and it is what lets a Firefox or a
 # Safari each get a plate they can decode.
 enc() { # width  height  h264-crf  vp9-crf  label
-  ffmpeg -v error -y -i "$SRC" "${CUT[@]}" -an -vf "scale=$1:$2:flags=lanczos" \
+  ffmpeg -v error -y -i "$SRC" "${CUT[@]}" -an -vf "${CUTBOX}scale=$1:$2:flags=lanczos" \
     -c:v libx264 -preset slow -crf "$3" -g "$GOP" -keyint_min "$GOP" \
     -profile:v high -pix_fmt yuv420p -movflags +faststart "$OUT/$SLUG-$5.mp4"
-  ffmpeg -v error -y -i "$SRC" "${CUT[@]}" -an -vf "scale=$1:$2:flags=lanczos" \
+  ffmpeg -v error -y -i "$SRC" "${CUT[@]}" -an -vf "${CUTBOX}scale=$1:$2:flags=lanczos" \
     -c:v libvpx-vp9 -crf "$4" -b:v 0 -row-mt 1 -cpu-used 3 -g "$GOP" -keyint_min "$GOP" \
     -pix_fmt yuv420p "$OUT/$SLUG-$5.webm"
 }
@@ -136,18 +154,18 @@ enc 1280 720  "$H_720"  "$V_720"  720
 # Do not raise the resolution here. It has been 1280×720 twice by accident —
 # the script said 720p while the files that shipped were 854×480 — and both
 # times it went unnoticed until the opening slowed down.
-ffmpeg -v error -y -i "$SRC" "${CUT[@]}" -an -vf "scale=854:480:flags=lanczos" \
+ffmpeg -v error -y -i "$SRC" "${CUT[@]}" -an -vf "${CUTBOX}scale=854:480:flags=lanczos" \
   -c:v libvpx-vp9 -crf 46 -b:v 0 -row-mt 1 -cpu-used 4 \
   -g 24 -keyint_min 24 -pix_fmt yuv420p "$OUT/$SLUG-proxy.webm"
 for edge in first last; do
   [ "$edge" = first ] && n=0 || n=$((FRAMES - 1))
-  ffmpeg -v error -y -i "$SRC" -vf "select=eq(n\,$n),scale=854:480:flags=lanczos" \
+  ffmpeg -v error -y -i "$SRC" -vf "select=eq(n\,$n),${CUTBOX}scale=854:480:flags=lanczos" \
     -frames:v 1 -q:v 5 "$OUT/$SLUG-$edge-proxy.jpg"
 done
 
-ffmpeg -v error -y -i "$SRC" -vf "select=eq(n\,0),scale=1920:1080:flags=lanczos" \
+ffmpeg -v error -y -i "$SRC" -vf "select=eq(n\,0),${CUTBOX}scale=1920:1080:flags=lanczos" \
   -frames:v 1 -q:v 5 "$OUT/$SLUG-first.jpg"
-ffmpeg -v error -y -i "$SRC" -vf "select=eq(n\,$((FRAMES - 1))),scale=1920:1080:flags=lanczos" \
+ffmpeg -v error -y -i "$SRC" -vf "select=eq(n\,$((FRAMES - 1))),${CUTBOX}scale=1920:1080:flags=lanczos" \
   -frames:v 1 -q:v 5 "$OUT/$SLUG-last.jpg"
 
 echo

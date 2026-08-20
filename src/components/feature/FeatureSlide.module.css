@@ -1,0 +1,64 @@
+/* -----------------------------------------------------------------------------
+ * The features page's opening slide.
+ *
+ * Everything that makes this slide behave is `Hero.module.css` — the three grid
+ * bands, the reveal, the type, the mirroring, the shadow that lifts the words
+ * off the plate. This file holds the one thing that differs, and holds it as a
+ * token override rather than as a rule, so it cannot fall out of step with the
+ * composition it is adjusting.
+ *
+ * The rail. The home page's block sits at 36.4% of the frame because the hunter
+ * stands to its left and the block starts where he stops. This slide's plate is
+ * darker and emptier on the leading side and the light is gathered on the
+ * trailing one, so the block moves in to 43.8% — the same figure the film's
+ * panels use for the same reason, measured off the comp at 733 / 1672.
+ * -------------------------------------------------------------------------- */
+
+.slide {
+  --hero-inline-start: 43.8%;
+
+  /*
+   * This slide's headline is a sentence, not a title.
+   *
+   * "Become the Hunter." is three words and can carry the full display size —
+   * it is a statement, and at 6.4vw it fills the frame the way a title card
+   * does. This one is sixty characters of argument, and at that size it came
+   * out six lines deep and ran from under the bar to the scroll cue. The comp
+   * sets it at 64px on its 1672 frame, which is 3.83vw and lands it on three,
+   * with the break falling where the sentence breaks.
+   *
+   * Paired with its own value in vh on the same 16:9 rule as every other
+   * vertical figure in tokens.css — 1vw is 1.778vh at the comp's aspect, so
+   * this changes nothing there and scales by height on a shorter frame.
+   */
+  --fs-display: clamp(1.9rem, min(3.83vw, 6.81vh), 5.25rem);
+
+  /* The comp's sub-headline is 19px against that same frame. It sits closer to
+   * the headline here than on the home page because there are only two things
+   * in the block and the second is doing the explaining. */
+  --fs-sub: clamp(0.9rem, min(1.14vw, 2.03vh), 1.45rem);
+}
+
+/* The compact band gives the block the full measure between the gutters, as
+ * every other composition on this site does below 1024px. Stated here too
+ * because the override above would otherwise hold the inset on a phone, where
+ * there is no room beside the text for anything to stand. */
+@media (max-width: 1023px) {
+  .slide {
+    --hero-inline-start: 0%;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .slide {
+    --hero-inline-start: 9%;
+  }
+}
+
+/* Ultrawides: the same stop the hero takes, so the block cannot drift off to
+ * the trailing edge on a very wide frame. */
+@media (min-width: 2200px) {
+  .slide {
+    --hero-inline-start: 38%;
+  }
+}
