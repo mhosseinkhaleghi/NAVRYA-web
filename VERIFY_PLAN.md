@@ -35,7 +35,7 @@ locale) and one unknown path (must 404, not 500).
 `/{locale}/feature` as well — the features page, which runs the same opening off
 the same `Stage`, `Scene`, `Hero` and controller. It gets its own pass rather
 than a second route through the matrix: the home run walks ten sections and this
-page has one slide. Every locale at the desktop frame, where the composition
+page has two slides. Every locale at the desktop frame, where the composition
 differs most from the compact one, and English at all three.
 
 What is asserted there is not that it works but that it works *the same way*:
@@ -44,6 +44,39 @@ back until the shot ends, the headline and sub-headline arrive, nothing
 overflows, `dir` is right, and the bar marks the page it is on and still offers
 a way back. If the two pages ever stop sharing an implementation, this is what
 notices.
+
+**Slide 2 — the battle map.** Reached with real wheel events, never `scrollTo`,
+because the two are not the same test and the difference is what a whole round
+of debugging turned on: the page was perfectly scrollable by script while every
+wheel gesture was being swallowed. With two stops the first one is also
+`length - 2`, so the film took the home page's hand-off-to-section-7 branch on
+the opening gesture and glided back to the top. What is asserted:
+
+- one gesture moves the page at all;
+- the opening and the slide's headline are never legible at the same time —
+  sampled all the way through the travel, not only at the ends;
+- the film's last magnetic stop is the foot of the document. Anything short of
+  it is scroll the wheel refuses to travel while the scrollbar says there is
+  more, and the fix is the film's own timing, never a shorter track: a resting
+  stop is `cues[1] + REST_SPAN` of its beat, so a last scene resting at the end
+  of its shot is what makes the two agree;
+- at rest the panel is active, both reveal groups are complete, the headline is
+  painted with a box, and the shot has actually reached its end;
+- neither medallion is cropped. They are drawn *outside* the frame they belong
+  to, so the row has to reserve their overhang — before it did, the foot mark
+  was cut by the viewport at every desktop frame measured;
+- the bar keeps its transparent ground. It takes the page's ground below the
+  film, and this film has no page below it, so the closing half-screen is still
+  footage.
+
+**One exemption, and its evidence.** `net::ERR_ABORTED` on a `.webm` or `.mp4`
+is not counted, on either route. A media element opens an unbounded range
+request and closes it the moment it holds the whole resource; the home page
+raises eleven of these per visit and the features page two, and every one was
+checked to end with the element at `readyState 4`, `networkState` idle, and
+`buffered` equal to `duration`. Nothing else is exempt: every source is proved
+separately by fetching it and reading its status, and any non-media failure or
+any 4xx/5xx is still a failure.
 
 **Targets.** `local` (production build, `next start`) and `live`
 (`https://navrya.com`). Local green with live broken is a failed run.

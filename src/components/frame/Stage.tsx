@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import styles from "./Stage.module.css";
 
@@ -23,19 +23,45 @@ export function Stage({
   children,
   after,
   chrome,
-  trackVh,
+  sequence,
 }: {
   children: ReactNode;
   after?: ReactNode;
   chrome?: ReactNode;
   /**
-   * How long this page's film is, in vh. Omit on the home page: the controller
-   * has that sequence's beat table and sums it, which is the only figure the
-   * two must agree on. A page whose film is a different length says so here —
-   * the features page runs one slide and would otherwise inherit four thousand
-   * vh of empty track written for a sequence it does not have.
+   * This page's film, when it is not the home page's.
+   *
+   * The controller carries the home sequence and sums its beats for the track's
+   * height. A page with a film of its own hands the four tables over here and
+   * the controller reads those instead — same mechanism, same rules, its own
+   * shots. Omit on the home page.
+   *
+   *   beats        [name, vh][] — the order of the film and how much scroll
+   *                each shot gets. Their sum is the track's height.
+   *   beatSeconds  [name, seconds][] — real durations, so a magnetic step plays
+   *                a shot at its own speed rather than at a scroll rate.
+   *   plates       the plate ids, in the order they are composited.
+   *   plateBeat    the beat each plate takes over on; null for the lead.
+   *   scenes       which plate scrubs on which beat, and the panel it reveals.
+   *   heroExit     when the opening copy leaves, as a fraction of the first
+   *                beat. Optional: the home film's window is the default, and
+   *                it suits a first beat that is a three-second shot. A film
+   *                whose first beat is most of its length needs its own.
    */
-  trackVh?: number;
+  sequence?: {
+    beats: readonly (readonly [string, number])[];
+    beatSeconds: readonly (readonly [string, number])[];
+    plates: readonly string[];
+    plateBeat: readonly (string | null)[];
+    heroExit?: readonly [number, number];
+    scenes: readonly {
+      plate: string;
+      beat: string;
+      panel: string | null;
+      exit: readonly [string, number, number] | null;
+      cues: readonly [number, number] | null;
+    }[];
+  };
 }) {
   return (
     <>
@@ -48,7 +74,31 @@ export function Stage({
       <div
         className={styles.film}
         data-track=""
-        {...(trackVh ? { "data-track-vh": String(trackVh) } : {})}
+        {...(sequence
+          ? {
+              /*
+               * The height, in the served HTML.
+               *
+               * The controller resolves this too, but it cannot do it before
+               * first paint: it is the first thing in the body precisely so it
+               * can hold the interface back, which is before this element has
+               * been parsed. Stating the total here means the track is the right
+               * height in the markup and nothing shifts when the script catches
+               * up — the two agree because both are this table.
+               */
+              style: {
+                "--timeline-vh": sequence.beats.reduce((n, b) => n + b[1], 0),
+              } as CSSProperties,
+              "data-beats": JSON.stringify(sequence.beats),
+              "data-beat-seconds": JSON.stringify(sequence.beatSeconds),
+              "data-plates": JSON.stringify(sequence.plates),
+              "data-plate-beat": JSON.stringify(sequence.plateBeat),
+              "data-scenes": JSON.stringify(sequence.scenes),
+              ...(sequence.heroExit
+                ? { "data-hero-exit": JSON.stringify(sequence.heroExit) }
+                : {}),
+            }
+          : {})}
       >
         <div className={styles.stage}>
           {/*

@@ -320,6 +320,9 @@
       "Just like a commander on the battlefield, a trader",
       "begins the day with data, probabilities, threats,",
       "and decisions."
-    ]
+    ],
+    "battlemap": {
+      "headline": "The Battlefield Is Never Missing Data."
+    }
   }
 }

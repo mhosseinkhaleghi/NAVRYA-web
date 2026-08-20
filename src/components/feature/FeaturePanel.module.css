@@ -1,0 +1,275 @@
+/* -----------------------------------------------------------------------------
+ * The features page's second slide.
+ *
+ * Same construction as the film's panels on the home page: a screen-sized
+ * absolute layer over the plate, arriving on `--r` as the controller scrubs the
+ * shot underneath it, leaving on `--exit`. Nothing here reads the scroll —
+ * everything is a pure function of the two properties the controller writes.
+ * -------------------------------------------------------------------------- */
+
+.panel {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-rows:
+    calc(var(--header-h) + env(safe-area-inset-top, 0px))
+    auto
+    minmax(0, 1fr);
+  padding-inline: var(--rail-lane);
+  /* Written by the controller as the slide leaves, over the shot that is
+   * already moving — the same handover the film's panels use. */
+  opacity: calc(1 - var(--exit, 0));
+  pointer-events: none;
+}
+
+/* Off the compositor entirely until the beat begins. */
+.panel:not([data-active]) {
+  visibility: hidden;
+}
+
+/* ── The head ─────────────────────────────────────────────────────────────── */
+
+.head {
+  grid-row: 2;
+  display: grid;
+  justify-items: center;
+  padding-block-start: clamp(0.75rem, 2.2vh, 2rem);
+  text-align: center;
+
+  /* The reveal: rise and settle, exactly as the film's panel titles do. */
+  opacity: var(--r, 0);
+  transform: translateY(calc((1 - var(--r, 0)) * 0.7em));
+}
+
+/*
+ * Gold, where every other headline on the site is cream.
+ *
+ * This slide's plate is a war map drawn in ember red, and cream over it read as
+ * a caption on a photograph. The metal is the one colour the map already has,
+ * so the words belong to the picture rather than sitting on top of it — and it
+ * is the design system's own gold, not a new one.
+ */
+.headline {
+  margin: 0;
+  color: var(--gold-warm);
+  font-family: var(--font-display);
+  font-size: var(--fs-f2-display);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: var(--tracking-display);
+  text-wrap: balance;
+  text-shadow: var(--text-lift);
+}
+
+[dir="rtl"] .headline {
+  line-height: 1.45;
+}
+
+/*
+ * There is no rule under this headline, and that is deliberate.
+ *
+ * Every other section on the site closes its title with a stopped gold line
+ * carrying a node, and this one was built with the same. But the frame below it
+ * already opens with one — its top medallion is a band, centred on the frame's
+ * top rail, that reaches out to both edges — and the two landed within a pixel
+ * of each other: measured at 1440, the rule sat at y=176 and the medallion
+ * spanned 133–227, so the line ran straight through the middle of the ornament.
+ * There is no room to separate them either; at 1024 the headline's box ends
+ * eleven pixels above the frame. The composition is a headline over a framed
+ * shot, and the frame's own band is its punctuation.
+ */
+
+/* ── The frame ────────────────────────────────────────────────────────────── */
+
+/*
+ * The ornament sits in the row under the head and fills it. It arrives after
+ * the words — the second reveal step the controller staggers — so the frame
+ * draws itself around a shot that is already running.
+ *
+ * Its margins are the medallions' overhang plus a little air, not a chosen gap.
+ * Both marks are drawn outside the box they belong to — that is what makes them
+ * read as fixed *to* the frame rather than as decoration inside it — so a row
+ * flush to the head above and the screen below crops them. It did: the foot
+ * medallion was cut by the viewport at every desktop frame measured, 14px at
+ * 1440 and 20px at 1920, because a 27px margin was holding a 41px overhang.
+ * Stated as the overhang, it cannot drift when a mark is resized.
+ */
+.frameRow {
+  grid-row: 3;
+  position: relative;
+  margin-block:
+    calc(var(--f2-top-drop) + clamp(0.35rem, 1vh, 0.9rem))
+    calc(var(--f2-bottom-drop) + clamp(0.35rem, 1vh, 0.9rem));
+  opacity: var(--r, 0);
+}
+
+.frame {
+  position: absolute;
+  inset: 0;
+  color: var(--c-gold-line-strong);
+}
+
+.rails {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+/*
+ * Every ornament is a square SVG at a fixed size, pinned to its edge.
+ *
+ * They are deliberately *not* part of the stretched drawing above: that one is
+ * `preserveAspectRatio="none"` so its lines meet the box exactly, and anything
+ * with a shape on it would be skewed by the same transform. A crossed sword
+ * flattened to a viewport's aspect is the kind of thing that looks wrong
+ * without the reason being obvious.
+ */
+.corner {
+  position: absolute;
+  inline-size: var(--f2-corner);
+  block-size: var(--f2-corner);
+}
+
+.cornerTopStart {
+  inset-block-start: 0;
+  inset-inline-start: 0;
+}
+
+.cornerTopEnd {
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  transform: scaleX(-1);
+}
+
+.cornerBottomStart {
+  inset-block-end: 0;
+  inset-inline-start: 0;
+  transform: scaleY(-1);
+}
+
+.cornerBottomEnd {
+  inset-block-end: 0;
+  inset-inline-end: 0;
+  transform: scale(-1);
+}
+
+/*
+ * The corners mirror with the writing direction on their own, because they are
+ * placed with logical insets — but `scaleX(-1)` is a physical transform, so
+ * under RTL the pair would flip twice and come back to where they started.
+ * Each one is restated for RTL with its horizontal flip inverted.
+ */
+[dir="rtl"] .cornerTopStart {
+  transform: scaleX(-1);
+}
+
+[dir="rtl"] .cornerTopEnd {
+  transform: none;
+}
+
+[dir="rtl"] .cornerBottomStart {
+  transform: scale(-1);
+}
+
+[dir="rtl"] .cornerBottomEnd {
+  transform: scaleY(-1);
+}
+
+.topMark {
+  position: absolute;
+  inset-block-start: 0;
+  left: 50%;
+  inline-size: var(--f2-top-mark);
+  block-size: calc(var(--f2-top-mark) / 2);
+  transform: translate(-50%, -50%);
+}
+
+.bottomMark {
+  position: absolute;
+  inset-block-end: 0;
+  left: 50%;
+  inline-size: var(--f2-bottom-mark);
+  block-size: calc(var(--f2-bottom-mark) / 2.5);
+  transform: translate(-50%, 34%);
+}
+
+.sideMark {
+  position: absolute;
+  inset-block-start: 50%;
+  inline-size: calc(var(--f2-side-mark) / 2);
+  block-size: var(--f2-side-mark);
+}
+
+.sideStart {
+  inset-inline-start: 0;
+  transform: translate(-50%, -50%);
+}
+
+.sideEnd {
+  inset-inline-end: 0;
+  transform: translate(50%, -50%);
+}
+
+/* The side marks are centred on a physical edge by a physical translate, and
+ * the logical inset already moved them — so the translate has to turn round. */
+[dir="rtl"] .sideStart {
+  transform: translate(50%, -50%);
+}
+
+[dir="rtl"] .sideEnd {
+  transform: translate(-50%, -50%);
+}
+
+/* -----------------------------------------------------------------------------
+ * Compact frames.
+ *
+ * Below 1024 the bar is two rows — brand and controls, then the nav — and it
+ * stops overlaying the film to become a row of the stage's own grid. A panel
+ * that goes on reserving `--header-h` for it is reserving the wrong number:
+ * that token is one row's worth, and the second row lands on top of the
+ * headline. Measured at 390 the nav sat at y=74 and the headline began at 83.
+ *
+ * So the panel stops being a layer over the frame and becomes the row under the
+ * bar, which is exactly what the film's own panels do at this width — same
+ * override, for the same reason.
+ * -------------------------------------------------------------------------- */
+
+@media (max-width: 1023px) {
+  .panel {
+    position: relative;
+    inset: auto;
+    grid-row: 2;
+    grid-column: 1;
+    min-block-size: 0;
+    /* The bar has its own row now, so the band at the top goes and the head
+     * and the frame divide what it leaves. */
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .head {
+    grid-row: 1;
+  }
+
+  .frameRow {
+    grid-row: 2;
+  }
+}
+
+/*
+ * The ornament thins out rather than shrinking: at a phone's width the side
+ * marks are smaller than the strokes that draw them, so they go and the frame
+ * keeps its two lines, its corners and its two medallions, which is what the
+ * composition actually is.
+ */
+
+@media (max-width: 767px) {
+  .panel {
+    padding-inline: var(--gutter);
+  }
+
+  .sideMark {
+    display: none;
+  }
+}

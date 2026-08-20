@@ -320,6 +320,9 @@
       "Igual que un comandante en el campo de batalla, un trader",
       "empieza el día con datos, probabilidades, amenazas",
       "y decisiones."
-    ]
+    ],
+    "battlemap": {
+      "headline": "Al Campo de Batalla Nunca le Faltan Datos."
+    }
   }
 }

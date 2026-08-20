@@ -113,6 +113,30 @@
   --s6-notch: clamp(6rem, 12.5vw, 14rem);
   --s6-star: clamp(0.6rem, 0.86vw, 1.05rem);
 
+  /* ── The features page, slide 2 — the battle map ────────────────────────── */
+  /* Its headline is a sentence at rest above a frame, not a title filling the
+   * screen, so it sits between the panels' scale and the sub-headline's. */
+  --fs-f2-display: clamp(1.5rem, min(3.1vw, 5.51vh), 4rem);
+  /* The ornaments are square SVGs at a fixed size — see FeaturePanel.module.css
+   * for why they are not part of the stretched drawing. Keyed to width alone:
+   * they are corner pieces on a border, not part of the vertical stack. */
+  --f2-corner: clamp(3.25rem, 6.4vw, 7.5rem);
+  --f2-top-mark: clamp(7rem, 13vw, 15rem);
+  --f2-bottom-mark: clamp(11rem, 21vw, 24rem);
+  --f2-side-mark: clamp(3.5rem, 6vw, 7rem);
+  /*
+   * How far each medallion hangs past the rail it is centred on.
+   *
+   * Both are the mark's own height times the fraction its transform shifts it
+   * by, and both are stated here because the frame's row has to *reserve* them:
+   * a medallion is drawn outside the box it belongs to, so if the row is flush
+   * to the headline above or the screen below, the ornament is what gets cut.
+   * The two aspect ratios are the marks' own viewBoxes — 2:1 at the top,
+   * 2.5:1 at the foot.
+   */
+  --f2-top-drop: calc(var(--f2-top-mark) / 2 * 0.5);
+  --f2-bottom-drop: calc(var(--f2-bottom-mark) / 2.5 * 0.34);
+
   /* ── Section 7 — the black ground, and the orb ──────────────────────────── */
   /* Centred over nothing, so it is set like section 5's statement rather than
    * like a railed panel. */

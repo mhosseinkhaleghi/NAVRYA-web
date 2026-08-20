@@ -379,14 +379,33 @@ const HARD_CAP_MS = 12000;
 export const stageScript = `
 (function () {
   var root = document.documentElement;
-  var BEATS = ${JSON.stringify(BEATS)};
-  var BEAT_SECONDS = ${JSON.stringify(BEAT_SECONDS)};
-  var SCENES = ${JSON.stringify(SCENES)};
-  var PLATES = ${JSON.stringify(PLATES)};
-  var PLATE_BEAT = ${JSON.stringify(PLATE_BEAT)};
+
+  /*
+   * The sequence, and which page's sequence it is.
+   *
+   * This controller is one inline script shared by every page, and the tables
+   * below are the home page's film. A second page with a film of its own says
+   * so on its track element and these are read from there instead — same
+   * mechanism, same rules, its own shots.
+   *
+   * JSON on an attribute rather than a second script: there is no client bundle
+   * on this site and nothing to pass arguments through, and the alternative was
+   * a second copy of everything under this line.
+   */
+  var HOME_BEATS = ${JSON.stringify(BEATS)};
+  var HOME_BEAT_SECONDS = ${JSON.stringify(BEAT_SECONDS)};
+  var HOME_SCENES = ${JSON.stringify(SCENES)};
+  var HOME_PLATES = ${JSON.stringify(PLATES)};
+  var HOME_PLATE_BEAT = ${JSON.stringify(PLATE_BEAT)};
+  var BEATS = HOME_BEATS;
+  var BEAT_SECONDS = HOME_BEAT_SECONDS;
+  var SCENES = HOME_SCENES;
+  var PLATES = HOME_PLATES;
+  var PLATE_BEAT = HOME_PLATE_BEAT;
   var REVEAL = ${INTRO_REVEAL_AT};
   var TITLE_SPAN = ${TITLE_SPAN}, REST_SPAN = ${REST_SPAN};
-  var HERO_EXIT = ${JSON.stringify(HERO_EXIT)};
+  var HOME_HERO_EXIT = ${JSON.stringify(HERO_EXIT)};
+  var HERO_EXIT = HOME_HERO_EXIT;
   var ARROW_AT = ${ARROW_MID}, ARROW_SPAN = ${ARROW_TITLE_SPAN};
   var BODY_AT = ${WORLD_GONE}, BODY_SPAN = ${ARROW_BODY_SPAN};
   var LEARN_FADE = ${LEARN_FADE}, LEARN_LEAD = ${LEARN_LEAD}, GLOW_LEAD = ${GLOW_LEAD};
@@ -412,32 +431,74 @@ export const stageScript = `
 
   // ── beat boundaries, as fractions of total scroll ────────────────────────
   var total = 0, i;
-  for (i = 0; i < BEATS.length; i++) total += BEATS[i][1];
+  var edge = {};
+  var secondsByBeat = {};
 
   /*
-   * A page may state its own film length, and one does.
+   * Resolve which film this page is running, and everything measured from it.
    *
-   * The beat table above is the home page's sequence. The features page runs
-   * the same opening — the same buffering gate, the same reveal at the same
-   * frame, the same unlock when the plate ends — but it is one slide long, and
-   * given the home page's 4380vh it would have hung four screens of empty track
-   * under a single shot.
+   * Called twice, and it has to be. This script is the first thing in the body
+   * so that it can hold the interface back before a single frame is painted —
+   * which means the track element it would read the page's sequence from has
+   * not been parsed yet. The first call therefore gets the home tables and
+   * sizes the track for them; the second runs the moment the DOM is ready,
+   * finds the attributes, and re-measures.
    *
-   * So the track carries its own length when it differs, and everything below
-   * measures against that. Read from the element rather than passed in, because
-   * this controller is one inline script shared by every page and there is
-   * nothing to pass it through.
+   * The page states the same total in an inline style on the track itself, so
+   * the height is right in the served HTML and nothing shifts between the two
+   * calls. This is what makes the numbers *agree*; the style is what makes them
+   * arrive on time.
    */
-  var trackEl = document.querySelector('[data-track]');
-  var declared = trackEl ? +trackEl.getAttribute('data-track-vh') : 0;
-  if (declared > 0) total = declared;
+  function readSequence() {
+    var trackEl = document.querySelector('[data-track]');
+    function declared(name, home) {
+      var raw = trackEl && trackEl.getAttribute('data-' + name);
+      if (!raw) return home;
+      try {
+        var parsed = JSON.parse(raw);
+        return parsed && parsed.length ? parsed : home;
+      } catch (e) { return home; }
+    }
+    BEATS = declared('beats', HOME_BEATS);
+    BEAT_SECONDS = declared('beat-seconds', HOME_BEAT_SECONDS);
+    SCENES = declared('scenes', HOME_SCENES);
+    PLATES = declared('plates', HOME_PLATES);
+    PLATE_BEAT = declared('plate-beat', HOME_PLATE_BEAT);
+    /*
+     * When the opening leaves, as a fraction of the first beat.
+     *
+     * It has to travel with the film rather than be a constant, because what it
+     * measures is a moment in a shot, not a distance down a page. The home
+     * film's first beat is three seconds of a man turning round, and the words
+     * hold for half of it. A film whose first beat is its only beat would keep
+     * the opening on screen through more than half the page on the same
+     * numbers, with the next slide's headline already arriving underneath it.
+     */
+    HERO_EXIT = declared('hero-exit', HOME_HERO_EXIT);
 
-  // The beat table is the source of truth for how long the timeline is, and the
-  // token in tokens.css is only the no-JS fallback. They drifted the first time
-  // a beat was added and the sequence ran off the end of its own track, so the
-  // controller states it rather than trusting the two to be kept in step. This
-  // runs before first paint, so the track is never the wrong height for a frame.
-  root.style.setProperty('--timeline-vh', total);
+    total = 0;
+    for (var k = 0; k < BEATS.length; k++) total += BEATS[k][1];
+
+    // The beat table is the source of truth for how long the timeline is, and
+    // the token in tokens.css is only the no-JS fallback. They drifted the first
+    // time a beat was added and the sequence ran off the end of its own track,
+    // so the controller states it rather than trusting the two to be kept in
+    // step.
+    root.style.setProperty('--timeline-vh', total);
+
+    edge = {};
+    var run = 0;
+    for (k = 0; k < BEATS.length; k++) {
+      edge[BEATS[k][0]] = [run / total, (run + BEATS[k][1]) / total];
+      run += BEATS[k][1];
+    }
+
+    secondsByBeat = {};
+    for (k = 0; k < BEAT_SECONDS.length; k++) {
+      secondsByBeat[BEAT_SECONDS[k][0]] = BEAT_SECONDS[k][1];
+    }
+  }
+  readSequence();
 
   /*
    * How tall a frame the timeline is measured against.
@@ -463,14 +524,10 @@ export const stageScript = `
   }
   sizeTrack();
 
-  var edge = {}, run = 0;
-  for (i = 0; i < BEATS.length; i++) {
-    edge[BEATS[i][0]] = [run / total, (run + BEATS[i][1]) / total];
-    run += BEATS[i][1];
-  }
-
-  var secondsByBeat = {};
-  for (i = 0; i < BEAT_SECONDS.length; i++) secondsByBeat[BEAT_SECONDS[i][0]] = BEAT_SECONDS[i][1];
+  // The second read, before anything else that runs on ready — the scene table
+  // and the plate list are built from these, so they have to be this page's by
+  // the time that happens.
+  ready(function () { readSequence(); sizeTrack(); });
 
   function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
   function span(p, a, b) { return b === a ? (p >= b ? 1 : 0) : clamp01((p - a) / (b - a)); }
@@ -980,17 +1037,39 @@ export const stageScript = `
       var panelRest = function (beat, cue, rest) {
         return filmPoint(beat, Math.min(1, cue + rest));
       };
-      state(panelRest('prey', ${DEER_GRAZES}, REST_SPAN), true);
-      state(panelRest('draw', ${BOW_SET} + 0.02, REST_SPAN), true);
-      state(panelRest('strike', ${AIM_HELD} + 0.02, REST_SPAN), true);
-      // The headline appears during the release. It is not a resting chapter:
-      // the fired arrow continues through to the completed payload below.
-      state(filmPoint('arrow', BODY_AT + BODY_SPAN), false);
-      state(filmPoint('learn', 0.99), true);
-      state(filmPoint('miss', Math.min(1, MISS_STRUCK + MISS_SPAN)), true);
+
+      /*
+       * A film rests where a panel has finished arriving.
+       *
+       * Every scene that carries one contributes a stop, taken from its own
+       * second cue plus the stagger — which is the moment the last line of that
+       * panel is up. Read from the scene table rather than written out, so a
+       * film with different shots gets its stops from its own, and retiming a
+       * scene moves its stop with it.
+       *
+       * This was three named beats of the home film. Naming them meant any
+       * other film threw on the first wheel event: \`edge\` has no entry for a
+       * beat that is not in its table, and the whole controller went down with
+       * it — visibly, as a page that would not scroll at all.
+       */
+      for (var sc = 0; sc < SCENES.length; sc++) {
+        var cfg = SCENES[sc];
+        if (!cfg.panel || !cfg.cues) continue;
+        state(panelRest(cfg.beat, cfg.cues[1], REST_SPAN), true);
+      }
+
+      // The sections that follow belong to the home film, and so do the beats
+      // that time them. A film without them simply has no stop there.
+      if (edge.arrow) {
+        // The headline appears during the release. It is not a resting chapter:
+        // the fired arrow continues through to the completed payload below.
+        state(filmPoint('arrow', BODY_AT + BODY_SPAN), false);
+      }
+      if (edge.learn) state(filmPoint('learn', 0.99), true);
+      if (edge.miss) state(filmPoint('miss', Math.min(1, MISS_STRUCK + MISS_SPAN)), true);
 
       var n = traitEls.length;
-      if (n) {
+      if (n && edge.traits) {
         var reachAll = (n - 1) + TRAIT_HOLD;
         for (var t = 0; t < n; t++) {
           state(filmPoint('traits', TRAIT_LEAD * (t + TRAIT_HOLD) / reachAll), false);
@@ -1144,10 +1223,15 @@ export const stageScript = `
         railAt.push(null);
         railFrom.push(null);
       } else {
+        // The rail's marks are named against the home page's beats. A page
+        // running its own sequence has none of them, and asking \`edge\` for a
+        // beat that is not in the table is how this used to throw before the
+        // first frame — taking the whole controller with it.
         var re = edge[RAIL[i].at[0]];
+        if (!re) { railFlow.push(null); railAt.push(null); railFrom.push(null); continue; }
         railFlow.push(null);
         railAt.push(re[0] + (re[1] - re[0]) * RAIL[i].at[1]);
-        railFrom.push(edge[RAIL[i].from][0]);
+        railFrom.push(edge[RAIL[i].from] ? edge[RAIL[i].from][0] : re[0]);
       }
     }
 
@@ -1155,6 +1239,10 @@ export const stageScript = `
     function railTarget(m) {
       var el = railFlow[m];
       if (el) return el.getBoundingClientRect().top + window.scrollY;
+      // A mark whose beat is not in this film's table has no position. Saying
+      // so beats arithmetic on null, which quietly evaluates to the top of the
+      // page and looks exactly like a scroll that refuses to move.
+      if (railAt[m] === null) return null;
       return railAt[m] * filmMax;
     }
 
@@ -1240,7 +1328,7 @@ export const stageScript = `
     // painted from: reach = (tp / TRAIT_LEAD) * (n - 1 + hold), and a slide is
     // whole at reach = t + hold. Same travelled jump as the rail, so the deck
     // runs to the slide instead of cutting to it.
-    if (dotEls.length) {
+    if (dotEls.length && edge.traits) {
       var tb = edge.traits, tw = tb[1] - tb[0];
       var reachAll = (dotEls.length - 1) + TRAIT_HOLD;
       for (i = 0; i < dotEls.length; i++) {
@@ -1297,9 +1385,14 @@ export const stageScript = `
       // so the final film scroll and the rail button land identically.
       var darkMark = RAIL.findIndex(function (section) { return section.name === 'dark'; });
       if (darkMark < 0) return;
+      // A film with nothing after it has no handover, and the mark has no
+      // position to give. Without this the target came back as null times the
+      // track length — zero — and every wheel glided the page back to the top.
+      var to = railTarget(darkMark);
+      if (typeof to !== 'number' || !isFinite(to)) return;
       storyDirection = 0;
       handoffGlide = true;
-      goTo(railTarget(darkMark), function () { handoffGlide = false; });
+      goTo(to, function () { handoffGlide = false; });
     }
 
     function travelStory(direction, force, target, origin) {
@@ -1312,7 +1405,11 @@ export const stageScript = `
 
         // The last stop is the final Section 6 card. Its forward action is the
         // Section 7 rail button, after which the document scrolls natively.
-        if (direction > 0 && current === stops.length - 2 && next === stops.length - 1) {
+        // Only where there is a Section 7 to hand over to: on a film that ends
+        // with its own last shot, this branch fired on the very first wheel —
+        // two stops make the first one \`length - 2\` — and swallowed it.
+        if (direction > 0 && flows.length
+            && current === stops.length - 2 && next === stops.length - 1) {
           handoffToSectionSeven();
           return;
         }
@@ -1492,19 +1589,23 @@ export const stageScript = `
       // continuous to cut on. It dips through black instead: the arrow fades
       // down, the frame is empty for a moment, then the morning fades up. The
       // two are never on screen together, so the one-plate rule still holds.
-      var db = edge.depart, dw = db[1] - db[0];
-      var out = span(p, db[0] + DEPART_PLATE[0] * dw, db[0] + DEPART_PLATE[1] * dw);
-      var into = span(p, db[0] + ARRIVE_PLATE[0] * dw, db[0] + ARRIVE_PLATE[1] * dw);
-      if (shown && p > db[0] && p < db[1]) {
-        opacity[ARROW_PLATE] = 1 - out;
-        opacity[MISS_PLATE] = into;
+      var db = edge.depart;
+      if (db) {
+        var dw = db[1] - db[0];
+        var out = span(p, db[0] + DEPART_PLATE[0] * dw, db[0] + DEPART_PLATE[1] * dw);
+        var into = span(p, db[0] + ARRIVE_PLATE[0] * dw, db[0] + ARRIVE_PLATE[1] * dw);
+        if (shown && p > db[0] && p < db[1]) {
+          opacity[ARROW_PLATE] = 1 - out;
+          opacity[MISS_PLATE] = into;
+        }
       }
 
       // The end of the sequence. There is no plate after the forest, so it goes
       // down to the page's own black rather than handing over to another shot,
       // and section 7 is composed on that ground.
-      var fb = edge.fall, fw = fb[1] - fb[0];
-      if (shown && p > fb[0]) {
+      var fb = edge.fall;
+      if (fb && shown && p > fb[0]) {
+        var fw = fb[1] - fb[0];
         opacity[MISS_PLATE] =
           1 - span(p, fb[0] + FALL_PLATE[0] * fw, fb[0] + FALL_PLATE[1] * fw);
       }
@@ -1556,16 +1657,15 @@ export const stageScript = `
         }
       }
 
-      paintArrow(
-        shown ? span(p, edge.arrow[0], edge.arrow[1]) : 0,
-        shown ? span(p, edge.learn[0], edge.learn[1]) : 0,
-        shown ? span(p, edge.depart[0], edge.depart[1]) : 0
-      );
-      paintMiss(
-        shown ? span(p, edge.miss[0], edge.miss[1]) : 0,
-        shown ? span(p, edge.traits[0], edge.traits[1]) : 0,
-        shown ? span(p, edge.fall[0], edge.fall[1]) : 0
-      );
+      // Both sections belong to the home film, and so do the beats that drive
+      // them. \`at\` reads 0 for a beat this page does not have, which is what
+      // every one of these values already is before the sequence reaches them.
+      function at(name) {
+        var e = shown && edge[name];
+        return e ? span(p, e[0], e[1]) : 0;
+      }
+      paintArrow(at('arrow'), at('learn'), at('depart'));
+      paintMiss(at('miss'), at('traits'), at('fall'));
 
       paintFlow();
       paintRail();
@@ -1574,14 +1674,29 @@ export const stageScript = `
       // its bar. The bar is transparent over the footage by design — over
       // moving copy it just looks like a collision — so it takes the page's own
       // ground from here on.
-      if (window.scrollY > filmMax - window.innerHeight * 0.5) {
+      //
+      // Only where there is a page to be past, though. On a film with nothing
+      // after it the last half-viewport is still footage, and giving the bar a
+      // solid ground there is exactly the collision this avoids everywhere else.
+      if (flows.length && window.scrollY > filmMax - window.innerHeight * 0.5) {
         root.setAttribute('data-past-film', '');
       } else {
         root.removeAttribute('data-past-film');
       }
 
-      var hb = edge.turn, hw = hb[1] - hb[0];
-      var heroOut = ease(span(p, hb[0] + HERO_EXIT[0] * hw, hb[0] + HERO_EXIT[1] * hw));
+      /*
+       * The opening leaves over the shot that follows it.
+       *
+       * That shot is the film's first beat — the lead plate has no beat of its
+       * own, because it plays before the timeline unlocks. This was written as
+       * \`edge.turn\`, which is what the home film happens to call that beat, and
+       * naming it meant any other film threw here on its first frame.
+       */
+      var hb = BEATS.length ? edge[BEATS[0][0]] : null;
+      var hw = hb ? hb[1] - hb[0] : 0;
+      var heroOut = hb
+        ? ease(span(p, hb[0] + HERO_EXIT[0] * hw, hb[0] + HERO_EXIT[1] * hw))
+        : 0;
       for (var h = 0; h < heroParts.length; h++) {
         heroParts[h].style.setProperty('--exit', heroOut);
       }

@@ -959,7 +959,23 @@ async function main() {
     const bad = [];
     page.on("pageerror", (e) => bad.push(String(e)));
     page.on("console", (m) => m.type() === "error" && bad.push(m.text()));
-    page.on("requestfailed", (r) => bad.push(`${r.url()} ${r.failure()?.errorText}`));
+    /*
+     * Same exemption the home pass makes, for the same reason and no other: a
+     * media element opens an unbounded range request and closes it the moment
+     * it has the whole resource, which surfaces as `ERR_ABORTED` on a request
+     * that succeeded. The home page raises eleven of these per visit and this
+     * page raises two; every one of them ends with the element at readyState 4,
+     * networkState idle, and `buffered` equal to `duration`.
+     *
+     * Nothing is being waved through. The sources are proved for real below, by
+     * fetching each one and checking its status, and any non-media failure or
+     * any 4xx/5xx still fails here.
+     */
+    const cancelledMedia = (r) =>
+      r.failure()?.errorText === "net::ERR_ABORTED" && /\.(webm|mp4)$/.test(r.url());
+    page.on("requestfailed", (r) => {
+      if (!cancelledMedia(r)) bad.push(`${r.url()} ${r.failure()?.errorText}`);
+    });
     page.on("response", (r) => r.status() >= 400 && bad.push(`${r.url()} ${r.status()}`));
 
     await page.goto(`${BASE}/${locale.code}/feature`, {
@@ -1066,6 +1082,125 @@ async function main() {
       fail(where, "interaction", "no nav item marked current on the features page");
     if (!s.homeHref)
       fail(where, "interaction", "the bar has no way back to the home page");
+    /* ── Slide 2 ───────────────────────────────────────────────────────────
+     *
+     * Reached the way a visitor reaches it — real wheel events, not scrollTo.
+     * That distinction is the whole point of this block: the page was perfectly
+     * scrollable by script while the wheel was being swallowed, because with
+     * two stops the first one is also `length - 2` and the film took the home
+     * page's hand-off-to-section-7 branch on the very first gesture.
+     */
+    where.at = "slide-2";
+    const maxY = await page.evaluate(() =>
+      Math.round(document.scrollingElement.scrollHeight - window.innerHeight),
+    );
+    const readSlide2 = () =>
+      page.evaluate(() => {
+        const panel = document.querySelector('[data-panel="f2"]');
+        const head = panel && panel.querySelector('[data-reveal-group="title"]');
+        const frame = panel && panel.querySelector('[data-reveal-group="rest"]');
+        const hero = document.querySelector("[data-hero] h1");
+        const v = document.querySelector('[data-scene-video="battlemap"]');
+        const num = (el, prop) => (el ? +getComputedStyle(el).getPropertyValue(prop) : null);
+        const edges = (sel) => {
+          const el = panel && panel.querySelector(sel);
+          if (!el) return null;
+          const r = el.getBoundingClientRect();
+          return [Math.round(r.top), Math.round(r.bottom)];
+        };
+        return {
+          y: Math.round(window.scrollY),
+          active: panel ? panel.hasAttribute("data-active") : null,
+          headR: num(head, "--r"),
+          frameR: num(frame, "--r"),
+          heroOp: hero ? +getComputedStyle(hero).opacity : null,
+          t: v ? v.currentTime : null,
+          dur: v && v.duration ? v.duration : null,
+          barGround: document.documentElement.hasAttribute("data-past-film"),
+          vh: window.innerHeight,
+          topMark: edges('[class*="topMark"]'),
+          footMark: edges('[class*="bottomMark"]'),
+          headline: (() => {
+            const h = panel && panel.querySelector("h2");
+            if (!h) return null;
+            const r = h.getBoundingClientRect();
+            return {
+              text: h.textContent.trim(),
+              op: +getComputedStyle(h).opacity,
+              w: Math.round(r.width),
+              h: Math.round(r.height),
+              top: Math.round(r.top),
+            };
+          })(),
+        };
+      });
+
+    await page.mouse.wheel(0, 240);
+    await page.waitForTimeout(450);
+    if ((await page.evaluate(() => Math.round(window.scrollY))) < 8)
+      fail(where, "interaction", "a wheel gesture does not move the features page at all");
+
+    // Both headlines on screen at once is the failure the opening's own exit
+    // window guards against, and it is only visible while the film is moving.
+    let doubled = 0;
+    for (let i = 0; i < 60; i++) {
+      const s = await readSlide2();
+      if (s.heroOp > 0.05 && s.headR > 0.05) doubled++;
+      if (s.y >= maxY - 4) break;
+      await page.mouse.wheel(0, 240);
+      await page.waitForTimeout(150);
+    }
+    if (doubled)
+      fail(
+        where,
+        "D1-text",
+        `the opening and the slide's headline were both on screen in ${doubled} sample(s)`,
+      );
+
+    await page.waitForTimeout(500);
+    const rest = await readSlide2();
+
+    // No stretch of document below the last magnetic stop: the wheel would
+    // refuse to travel it while the scrollbar said there was more.
+    if (rest.y < maxY - 4)
+      fail(
+        where,
+        "interaction",
+        `the film rests at ${rest.y} of ${maxY} — ${maxY - rest.y}px the wheel cannot reach`,
+      );
+    if (rest.active !== true) fail(where, "D1-text", "slide 2 never became active");
+    if (!(rest.headR > 0.99))
+      fail(where, "D1-text", `the slide's head rests at --r ${rest.headR}`);
+    if (!(rest.frameR > 0.99))
+      fail(where, "D1-text", `the slide's frame rests at --r ${rest.frameR}`);
+    if (!rest.headline) fail(where, "D1-text", "slide 2 has no headline");
+    else {
+      if (rest.headline.op <= 0.05)
+        fail(where, "D1-text", `slide 2's headline is at opacity ${rest.headline.op}`);
+      if (rest.headline.w === 0 || rest.headline.h === 0)
+        fail(where, "D3-layout", `slide 2's headline box is ${rest.headline.w}×${rest.headline.h}`);
+    }
+    if (rest.dur && rest.t < rest.dur * 0.9)
+      fail(
+        where,
+        "D2-video",
+        `the map rests at ${rest.t.toFixed(2)}s of ${rest.dur.toFixed(2)}s — the shot never finished`,
+      );
+
+    // The ornament is drawn outside the box it frames, so the viewport is what
+    // crops it. Both medallions were being cut before the row reserved them.
+    for (const [name, box] of [["top medallion", rest.topMark], ["foot medallion", rest.footMark]]) {
+      if (!box) continue;
+      if (box[1] > rest.vh)
+        fail(where, "D3-layout", `the ${name} is cut off ${box[1] - rest.vh}px below the frame`);
+      if (box[0] < 0) fail(where, "D3-layout", `the ${name} is cut off above the frame`);
+    }
+
+    // The bar takes a solid ground below the film. This film has nothing below
+    // it, so the last half-screen is still footage and the bar stays clear.
+    if (rest.barGround)
+      fail(where, "D3-layout", "the bar took a solid ground over the closing footage");
+
     if (bad.length)
       fail(where, "runtime", `${bad.length} error(s), first: ${bad[0]}`);
 

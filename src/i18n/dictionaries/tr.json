@@ -320,6 +320,9 @@
       "Tıpkı savaş alanındaki bir komutan gibi, bir yatırımcı da",
       "güne verilerle, olasılıklarla, tehditlerle",
       "ve kararlarla başlar."
-    ]
+    ],
+    "battlemap": {
+      "headline": "Savaş Alanında Veri Hiçbir Zaman Eksik Değildir."
+    }
   }
 }
