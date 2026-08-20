@@ -91,10 +91,28 @@ export function Hero({
         ) : null}
       </div>
 
+      {/*
+       * Two elements, not one, and the inner one is the whole reason.
+       *
+       * The cue arrives on an animation and leaves on `--exit`, and both used
+       * to be on this element — but a running animation outranks a normal
+       * declaration, so for as long as the entrance was still playing the cue
+       * was pinned visible no matter what the exit said. It is not a narrow
+       * window either: the timeline unlocks when the opening plate ends, and
+       * the cue is still arriving then — measured at opacity 0.752 with the
+       * page already live and scrollable.
+       *
+       * So the part carries the exit and the inner span carries the entrance,
+       * which is the arrangement every other block in this hero already has —
+       * `.content` leaves, and the headline, rule and sub-headline inside it
+       * arrive. The two transforms compose instead of fighting.
+       */}
       <div className={styles.scroll} data-hero-part="">
-        <span className={styles.scrollLabel}>{scroll}</span>
-        <span className={styles.mouse} aria-hidden="true">
-          <span className={styles.wheel} />
+        <span className={styles.scrollInner}>
+          <span className={styles.scrollLabel}>{scroll}</span>
+          <span className={styles.mouse} aria-hidden="true">
+            <span className={styles.wheel} />
+          </span>
         </span>
       </div>
     </section>

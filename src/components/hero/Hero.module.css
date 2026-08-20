@@ -204,13 +204,19 @@
   grid-row: 3;
   justify-self: center;
   z-index: 2;
+  margin-block: clamp(0.75rem, 1.6vh, 1.75rem)
+    calc(var(--scroll-bottom) + env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+}
+
+/* The cue's own stack. It exists so the entrance has an element of its own —
+ * see the note in `Hero.tsx` — and it inherits the composition it used to hold
+ * directly. */
+.scrollInner {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--s2-cue-gap);
-  margin-block: clamp(0.75rem, 1.6vh, 1.75rem)
-    calc(var(--scroll-bottom) + env(safe-area-inset-bottom, 0px));
-  pointer-events: none;
 }
 
 .scrollLabel {
@@ -344,7 +350,7 @@
 :global([data-intro="armed"]) .rule,
 :global([data-intro="armed"]) .sublineLine,
 :global([data-intro="armed"]) .actions,
-:global([data-intro="armed"]) .scroll {
+:global([data-intro="armed"]) .scrollInner {
   opacity: 0;
 }
 
@@ -388,8 +394,13 @@
 }
 
 /* `backwards`, not `both`: a filled-forwards animation would keep overriding
- * the cue's opacity and transform, and the exit beat needs them back. */
-:global([data-intro="shown"]) .scroll {
+ * the cue's opacity and transform, and the exit beat needs them back.
+ *
+ * That is necessary and it was not sufficient — a *running* animation overrides
+ * them just as hard, and this one is still running when the timeline unlocks.
+ * The entrance is on the inner span now and the exit is on the part, so the
+ * fill mode is no longer the only thing keeping them apart. */
+:global([data-intro="shown"]) .scrollInner {
   animation: hero-lift 1s var(--ease-cine) 1.15s backwards;
 }
 
@@ -465,7 +476,7 @@
   :global([data-intro="shown"]) .ruleNode,
   :global([data-intro="shown"]) .sublineLine,
   :global([data-intro="shown"]) .actions,
-  :global([data-intro="shown"]) .scroll {
+  :global([data-intro="shown"]) .scrollInner {
     animation: none;
   }
 

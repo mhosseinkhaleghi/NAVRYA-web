@@ -61,7 +61,12 @@ the opening gesture and glided back to the top. What is asserted:
   was this check's own first bug and it reported seven collisions on a page that
   has none. Proved both ways — the corrected check is silent on the shipped
   timing and fires on the old exit window, where the opening is still at full
-  opacity with the slide's headline 22% arrived;
+  opacity with the slide's headline 22% arrived. It then found a second, real
+  one: the scroll cue's entrance animation is still running when the timeline
+  unlocks — measured at opacity 0.752 with the page already live — and a running
+  animation overrides the exit declaration, so the cue was pinned on screen over
+  the arriving slide. The entrance now lives on an inner span and the exit on
+  the part, which is the arrangement the rest of the hero already uses;
 - the film's last magnetic stop is the foot of the document. Anything short of
   it is scroll the wheel refuses to travel while the scrollbar says there is
   more, and the fix is the film's own timing, never a shorter track: a resting
