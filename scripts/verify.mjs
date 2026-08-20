@@ -1099,7 +1099,22 @@ async function main() {
         const panel = document.querySelector('[data-panel="f2"]');
         const head = panel && panel.querySelector('[data-reveal-group="title"]');
         const frame = panel && panel.querySelector('[data-reveal-group="rest"]');
-        const hero = document.querySelector("[data-hero] h1");
+        /*
+         * The opening's visibility is on `[data-hero-part]`, not on the
+         * headline inside it.
+         *
+         * `opacity` does not inherit — it composites — so a heading inside a
+         * block at `opacity: 0` still computes to 1 and reads as fully on
+         * screen. Asking the `h1` was this check's own bug, and it reported
+         * seven false collisions on a page where the block goes to 0 before the
+         * slide's headline has begun. Both parts are read, and the most visible
+         * one is the answer: the block leaves and the scroll cue leaves with it,
+         * and either still on screen is still a collision.
+         */
+        const heroOp = [...document.querySelectorAll("[data-hero-part]")].reduce(
+          (most, el) => Math.max(most, +getComputedStyle(el).opacity),
+          0,
+        );
         const v = document.querySelector('[data-scene-video="battlemap"]');
         const num = (el, prop) => (el ? +getComputedStyle(el).getPropertyValue(prop) : null);
         const edges = (sel) => {
@@ -1113,7 +1128,7 @@ async function main() {
           active: panel ? panel.hasAttribute("data-active") : null,
           headR: num(head, "--r"),
           frameR: num(frame, "--r"),
-          heroOp: hero ? +getComputedStyle(hero).opacity : null,
+          heroOp,
           t: v ? v.currentTime : null,
           dur: v && v.duration ? v.duration : null,
           barGround: document.documentElement.hasAttribute("data-past-film"),

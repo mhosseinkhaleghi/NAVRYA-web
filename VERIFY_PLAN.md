@@ -54,7 +54,14 @@ the opening gesture and glided back to the top. What is asserted:
 
 - one gesture moves the page at all;
 - the opening and the slide's headline are never legible at the same time —
-  sampled all the way through the travel, not only at the ends;
+  sampled all the way through the travel, not only at the ends. Read off
+  `[data-hero-part]`, which is the element the exit opacity is on, and never off
+  the heading inside it: `opacity` composites rather than inheriting, so a
+  headline inside a block at `opacity: 0` still computes to 1. Asking the `h1`
+  was this check's own first bug and it reported seven collisions on a page that
+  has none. Proved both ways — the corrected check is silent on the shipped
+  timing and fires on the old exit window, where the opening is still at full
+  opacity with the slide's headline 22% arrived;
 - the film's last magnetic stop is the foot of the document. Anything short of
   it is scroll the wheel refuses to travel while the scrollbar says there is
   more, and the fix is the film's own timing, never a shorter track: a resting
