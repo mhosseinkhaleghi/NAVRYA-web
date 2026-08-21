@@ -1,6 +1,7 @@
 import { APP_URL } from "@/config/site";
 import { BrandMark } from "@/components/site/BrandMark";
 import { LanguageMenu } from "@/components/site/LanguageMenu";
+import type { RouteKey } from "@/config/routes";
 import { type Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
 
@@ -52,9 +53,12 @@ function Node({ className }: { className?: string }) {
 export function SiteFooter({
   locale,
   dictionary,
+  route = "home",
 }: {
   locale: Locale;
   dictionary: Dictionary;
+  /** The page this footer is on, so its language menu stays on it. */
+  route?: RouteKey;
 }) {
   const { footer, nav, a11y } = dictionary;
 
@@ -193,7 +197,7 @@ export function SiteFooter({
       {/* ── the bottom bar ──────────────────────────────────────────────── */}
       <div className={styles.bottom}>
         {/* Last row of the document: the panel has to rise, not drop. */}
-        <LanguageMenu locale={locale} dictionary={dictionary} placement="up" />
+        <LanguageMenu locale={locale} dictionary={dictionary} placement="up" route={route} />
 
         <div className={styles.bottomRule} aria-hidden="true">
           <span className={styles.dividerLine} />

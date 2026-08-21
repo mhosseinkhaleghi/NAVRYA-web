@@ -1,5 +1,6 @@
 import { ChevronDownIcon } from "@/components/icons/ChevronDownIcon";
 import { GlobeIcon } from "@/components/icons/GlobeIcon";
+import { localeHref, type RouteKey } from "@/config/routes";
 import {
   locales,
   localeName,
@@ -26,10 +27,21 @@ export function LanguageMenu({
   locale,
   dictionary,
   placement = "down",
+  route = "home",
 }: {
   locale: Locale;
   dictionary: Dictionary;
   placement?: "down" | "up";
+  /**
+   * The page the menu is currently on.
+   *
+   * Changing language is a change of language, not a change of subject: the
+   * reader stays where they are and the page is restated in the language they
+   * asked for. Every option used to point at `/${option}`, so switching on the
+   * features page dropped them onto the home page and they had to find their
+   * way back — in a language they had just told us they read better.
+   */
+  route?: RouteKey;
 }) {
   return (
     <details className={styles.menu} data-language-menu="" data-placement={placement}>
@@ -57,7 +69,7 @@ export function LanguageMenu({
         {locales.map((option) => (
           <a
             key={option}
-            href={`/${option}`}
+            href={localeHref(route, option)}
             hrefLang={option}
             className={styles.option}
             {...(option === locale ? { "aria-current": "true" as const } : {})}

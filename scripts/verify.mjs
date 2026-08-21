@@ -97,12 +97,80 @@ const SECTIONS = [
   { n: 10, name: "archetypes", sel: "[data-archetypes]", kind: "flow" },
 ];
 
+/**
+ * Every page's title, by route and then by locale.
+ *
+ * Filled as the runs go and judged once at the end, because the defect it
+ * catches is only visible across locales: the title and description were one
+ * hardcoded English pair for all five, so a Turkish reader got a Turkish page
+ * whose tab, bookmark, shared link and search result all said "Become the
+ * Hunter." Any single run looks fine on its own — five identical titles is what
+ * gives it away.
+ *
+ * Structural rather than a copy of the dictionary, on the same principle as
+ * `APP_URL` above: importing the strings the page was built from would make the
+ * assertion agree with itself no matter what shipped.
+ */
+const titles = new Map();
+
 const failures = [];
 const notes = [];
 const fail = (where, what, detail) => {
   failures.push({ ...where, check: what, detail });
   console.log(`  FAIL  ${where.locale}/${where.bp}/${where.at} — ${what}: ${detail}`);
 };
+
+/**
+ * The chrome every page carries: its name, and the way out to the other five.
+ *
+ * `route` is the path after the locale — "" for the home page, "/feature" for
+ * the features page. Both assertions below are stated against it, because both
+ * bugs they cover were the same mistake in different places: the page forgetting
+ * which page it is.
+ */
+async function checkChrome(page, where, locale, route) {
+  const chrome = await page.evaluate(() => ({
+    title: document.title,
+    lang: document.documentElement.lang,
+    menus: [...document.querySelectorAll("[data-language-menu]")].map((menu) =>
+      [...menu.querySelectorAll("a[hreflang]")].map((a) => ({
+        code: a.getAttribute("hreflang"),
+        href: a.getAttribute("href"),
+      })),
+    ),
+  }));
+
+  if (chrome.lang !== locale) {
+    fail(where, "D5-lang", `<html lang> is "${chrome.lang}", expected "${locale}"`);
+  }
+
+  if (!chrome.title.trim()) fail(where, "D5-lang", "the page has no title");
+  const byRoute = titles.get(route) ?? new Map();
+  byRoute.set(locale, chrome.title);
+  titles.set(route, byRoute);
+
+  /*
+   * Changing language must not change the subject.
+   *
+   * Every option has to be this same page in that language. They were all
+   * `/${code}`, so switching language on the features page dropped the reader
+   * onto the home page — in the language they had just said they read better,
+   * with no way back except finding the nav again.
+   */
+  if (!chrome.menus.length) fail(where, "D5-lang", "no language menu on the page");
+  for (const menu of chrome.menus) {
+    const codes = menu.map((a) => a.code).join(",");
+    if (codes !== "en,tr,fa,ar,es") {
+      fail(where, "D5-lang", `language menu offers "${codes}"`);
+    }
+    for (const { code, href } of menu) {
+      const want = `/${code}${route}`;
+      if (href !== want) {
+        fail(where, "D5-lang", `language link ${code} goes to "${href}", not "${want}"`);
+      }
+    }
+  }
+}
 
 /* ── assertions that run inside the page ─────────────────────────────────── */
 
@@ -355,6 +423,10 @@ async function runOne(browser, locale, bp) {
   const started = Date.now();
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
   const loadMs = Date.now() - started;
+
+  // The bar and its language menu are in the served markup, so this needs
+  // nothing to have played yet.
+  await checkChrome(page, { ...where, at: "chrome" }, locale.code, "");
 
   /* Watch the opening plate *while it plays*, before anything else.
    *
@@ -983,6 +1055,8 @@ async function main() {
       timeout: 60000,
     });
 
+    await checkChrome(page, { ...where, at: "chrome" }, locale.code, "/feature");
+
     // Held back while the shot runs — the same gate the home page's opening is
     // behind, and the reason the words are not on screen over the first frame.
     let heldSamples = 0;
@@ -1264,6 +1338,33 @@ async function main() {
   }
 
   await browser.close();
+
+  /*
+   * The one assertion that cannot be made from inside a single run.
+   *
+   * A page carrying the wrong language's title looks perfectly well-formed on
+   * its own; what gives it away is that all five locales carry the *same* one.
+   *
+   * Gated on the whole locale set having run, and on nothing else — a narrowed
+   * `--breakpoints` sweep still visits all five and can still make this
+   * judgement, where fewer than five locales proves nothing either way.
+   */
+  if (LOCALES.length === ALL_LOCALES.length) {
+    for (const [route, byLocale] of titles) {
+      const distinct = new Set(byLocale.values());
+      if (distinct.size !== byLocale.size) {
+        const shared = [...byLocale.entries()]
+          .filter(([, t]) => [...byLocale.values()].filter((x) => x === t).length > 1)
+          .map(([l, t]) => `${l}="${t}"`)
+          .join(", ");
+        fail(
+          { locale: "all", bp: route || "/", at: "titles" },
+          "D5-lang",
+          `${byLocale.size} locales share ${distinct.size} title(s): ${shared}`,
+        );
+      }
+    }
+  }
 
   await mkdir(OUT, { recursive: true });
   await writeFile(

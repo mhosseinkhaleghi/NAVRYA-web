@@ -167,6 +167,26 @@ which says nothing about whether the shot was ever on screen.
 - no element with `NaN` in its computed position
 - no image with `naturalWidth === 0`
 
+### D5 — The page is in the reader's language
+
+Checked on both routes, in every locale, at every breakpoint.
+
+- `<html lang>` must equal the locale being visited
+- the page must have a non-empty `<title>`
+- across a full run, the five locales of a route must not share a title. One
+  hardcoded English pair served all five for a while: the page rendered in
+  Turkish while its tab, its bookmark, its shared link and its search result all
+  said "Become the Hunter." A single run cannot see that — only the set can,
+  which is why this one assertion is made after the matrix rather than inside it
+  (and is skipped on a `--locales=` run, where fewer than five proves nothing)
+- every language menu on the page — the bar's and the footer's alike — must
+  offer exactly `en,tr,fa,ar,es`, and **every option must point at the current
+  route in that locale**, not at its home page. Changing language is a change of
+  language, not a change of subject: `/en/feature` → Turkish must be
+  `/tr/feature`. It was `/tr`, so switching language on the features page
+  dropped the reader onto the home page, in the language they had just told us
+  they read better
+
 ## Runtime health, collected at every stop
 
 - browser console errors and warnings (the **first** error thrown on load is

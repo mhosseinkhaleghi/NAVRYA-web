@@ -6,7 +6,7 @@ import { Hero } from "@/components/hero/Hero";
 import { Scene } from "@/components/frame/Scene";
 import { Stage } from "@/components/frame/Stage";
 import { SiteHeader } from "@/components/site/SiteHeader";
-import { isLocale } from "@/i18n/config";
+import { isLocale, locales } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 
 import slide from "@/components/feature/FeatureSlide.module.css";
@@ -29,11 +29,29 @@ import slide from "@/components/feature/FeatureSlide.module.css";
  * both films scroll at the same rate and neither changes pace at a seam.
  */
 
-export const metadata: Metadata = {
-  title: "Navrya — A Commander Starts With Clarity.",
-  description:
-    "Just like a commander on the battlefield, a trader begins the day with data, probabilities, threats, and decisions.",
-};
+/** This page's name, in the reader's own language — see the note in `layout`. */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  if (!isLocale(locale)) return {};
+
+  const { feature } = await getDictionary(locale);
+  const title = `Navrya — ${feature.headline}`;
+  const description = feature.subline.join(" ");
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `/${locale}/feature`,
+      languages: Object.fromEntries(locales.map((l) => [l, `/${l}/feature`])),
+    },
+    openGraph: { title, description, locale, type: "website" },
+  };
+}
 
 /** The plates, on the same terms as the home page's. */
 const PLATES = [

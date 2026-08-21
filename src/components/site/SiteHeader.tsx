@@ -1,4 +1,5 @@
 import { APP_URL } from "@/config/site";
+import { ROUTE_HREF, type RouteKey } from "@/config/routes";
 import { type Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
 
@@ -7,18 +8,16 @@ import { BrandMark } from "./BrandMark";
 
 import styles from "./SiteHeader.module.css";
 
-type NavKey = keyof Dictionary["nav"];
+type NavKey = keyof Dictionary["nav"] & RouteKey;
 
 /** Order is fixed by the design; labels come from the active dictionary. */
 const NAV_KEYS: NavKey[] = ["home", "feature", "psychology", "pricing", "academy"];
 
-/**
- * Which nav items have somewhere to go.
- *
- * The rest stay buttons. Those pages do not exist yet, and a control that is
- * visibly inert is better than an `<a href="#">` that silently does nothing —
- * the footer's columns are buttons for the same reason. As each page lands it
- * joins this map and becomes a real link, with no other change.
+/*
+ * Which nav items have somewhere to go is `ROUTE_HREF`, shared with the
+ * language menu — see the note there. The rest stay buttons: those pages do not
+ * exist yet, and a control that is visibly inert is better than an
+ * `<a href="#">` that silently does nothing.
  *
  * Plain anchors, not next/link: a client-side navigation swaps the markup
  * without reloading the document, and the stage controller is an inline script
@@ -26,10 +25,6 @@ const NAV_KEYS: NavKey[] = ["home", "feature", "psychology", "pricing", "academy
  * nobody had started, and its opening would simply not play. Changing page here
  * is a change of document, exactly as changing language is.
  */
-const NAV_HREF: Partial<Record<NavKey, (locale: Locale) => string>> = {
-  home: (locale) => `/${locale}`,
-  feature: (locale) => `/${locale}/feature`,
-};
 
 /**
  * The nav sits inside the fixed frame rather than on top of a scrolling page.
@@ -57,9 +52,9 @@ export function SiteHeader({
         <ul className={styles.navList}>
           {NAV_KEYS.map((key) => (
             <li key={key} className={styles.navItem}>
-              {NAV_HREF[key] ? (
+              {ROUTE_HREF[key] ? (
                 <a
-                  href={NAV_HREF[key]!(locale)}
+                  href={ROUTE_HREF[key]!(locale)}
                   className={styles.navLink}
                   {...(key === active ? { "aria-current": "page" as const } : {})}
                 >
@@ -82,7 +77,7 @@ export function SiteHeader({
       <div className={styles.controls}>
         <span className={styles.divider} aria-hidden="true" />
 
-        <LanguageMenu locale={locale} dictionary={dictionary} />
+        <LanguageMenu locale={locale} dictionary={dictionary} route={active} />
 
         {/* Login leaves this site for the product, so it is a link and not a
           * button: it should middle-click, ctrl-click and copy-link like every
