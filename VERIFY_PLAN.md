@@ -101,7 +101,16 @@ asserted at that stop:
 
 - the panel is active, all eight callouts and the closing lines have reached
   `--r > 0.99`, and no callout is empty in any locale;
-- the scatter plate has decoded and run to its end;
+- the scatter plate has decoded and run to **its resting cue**, and the frame at
+  that stop is still showing *it*. Both halves matter, and the second was added
+  after the fault it describes shipped. A slide rests where its panel has
+  finished arriving — `cues[1] + REST_SPAN` — and that point has to fall inside
+  its own beat. Slide 3's came to exactly 1.0, the boundary, so the next plate
+  took the frame on the same tick and the slide rested with its eight callouts
+  pinned over the first frame of the dive, naming a map no longer under them.
+  The number was correct while this was the last slide and the end of the beat
+  was the foot of the page; adding a fourth made the same number wrong without
+  changing it. The cue is 0.72 now and the shot settles at 0.87 of itself;
 - no callout sits outside the viewport, **and neither does the closing
   sentence**. It is the stage's sibling rather than its child, because on a wide
   frame it is set over the foot of the picture instead of pinned to a point on

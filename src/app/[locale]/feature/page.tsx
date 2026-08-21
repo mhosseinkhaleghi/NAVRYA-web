@@ -75,10 +75,11 @@ const PLATES = [
    * move is the slide, which is why the plate is 2.21s of a three-second source
    * rather than the tail of it.
    *
-   * It starts at source frame 19 and not at frame 0, because the source opens
-   * on slide 3's labelled map held still, with its eight callouts baked in and
-   * in English. By frame 19 the dive has smeared them past reading — checked
-   * frame by frame — so the movement is kept and the lettering is not. The
+   * It starts two frames later than the dive does, because the dive's own first
+   * frame still carries one readable English callout: "Execution." sits nearest
+   * the zoom axis, so it blurs least and outlives the other seven. Checked frame
+   * by frame — legible at the first, gone by the third. Two frames is 0.08s of a
+   * 2.2s move and takes nothing from it. The
    * magnetic step takes its length from the shot's own seconds, so restoring
    * the full dive is also what makes it play at the speed it was cut at.
    */
@@ -126,7 +127,7 @@ const SEQUENCE = {
   beatSeconds: [
     ["battlemap", 5.041667],
     ["scatter", 0.875],
-    ["council", 2.208662],
+    ["council", 2.1256],
   ],
   plates: ["commander", "battlemap", "scatter", "council"],
   plateBeat: [null, "battlemap", "scatter", "council"],
@@ -154,21 +155,34 @@ const SEQUENCE = {
       /*
        * Everything on this slide is one staggered arrival, so it is all in the
        * `rest` group and `cues[0]` drives nothing — there is no title here, the
-       * headline above belongs to the scene before. The frame draws itself
-       * first, then the eight callouts in turn, then the sentence they add up
-       * to, and the stagger the controller applies across ten steps completes
-       * exactly at `cues[1] + REST_SPAN`, which is the end of its own shot.
+       * headline above belongs to the scene before. The eight callouts arrive in
+       * turn and then the sentence they add up to, the stagger completing at
+       * `cues[1] + REST_SPAN`.
+       *
+       * That sum has to land *inside* this beat, not at the end of it. At 0.85
+       * it came to exactly 1.0 — the boundary where the next plate takes the
+       * frame — so the slide came to rest on the first frame of the dive with
+       * its labels pinned over it, naming a map that was no longer there. It
+       * was right while this was the last slide and the end of the beat was the
+       * foot of the document; adding a fourth made the same number wrong.
+       *
+       * 0.72 rests at 0.87 of the beat: the shot is settled, the map is under
+       * the words that name it, and the last eighth is a hold to read it in
+       * before the camera leaves.
        */
-      cues: [0.05, 0.85],
+      cues: [0.05, 0.72],
       /*
-       * Slide 3 leaves over the shot that follows it, which is what every
-       * handover on the home film does: the callouts and their sentence go
-       * while the council shot is already rushing in, rather than blinking out
-       * against a frozen frame. Early in the beat, because the whip-in is the
-       * loudest thing in this film and nothing should still be readable across
-       * it.
+       * Slide 3 leaves at the very top of the next beat, and quickly.
+       *
+       * It leaves *over* the following shot rather than against a frozen frame,
+       * which is what every handover on this site does — but the following shot
+       * here is a dive, and a callout pinned to a point on a map that is rushing
+       * past is not a handover, it is a mistake. Over 22% of the beat the eight
+       * labels sat sharp and still on top of a picture in full motion, with the
+       * map they name already gone. A tenth is enough to read as a fade and
+       * short enough that nothing is still legible once the camera moves.
        */
-      exit: ["council", 0, 0.22],
+      exit: ["council", 0, 0.1],
     },
     {
       plate: "council",

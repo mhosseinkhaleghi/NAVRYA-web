@@ -1300,6 +1300,22 @@ async function main() {
               ready: v ? v.readyState : null,
             };
           })(),
+          /*
+           * Which plate the frame is actually showing at this stop.
+           *
+           * A slide rests where its panel has finished arriving, and that point
+           * has to fall *inside* its own beat. Slide 3's landed exactly on the
+           * boundary — `cues[1] + REST_SPAN` came to 1.0 — so the next plate
+           * took the frame on the same tick: the slide came to rest with its
+           * eight callouts pinned over the first frame of the dive, naming a map
+           * that was no longer under them. The number was right while that slide
+           * was the last one and the end of its beat was the foot of the page;
+           * adding a fourth slide made the same number wrong, silently.
+           */
+          shown: (() => {
+            const on = [...document.querySelectorAll("[data-plate-id][data-plate-on]")];
+            return on.map((p) => p.getAttribute("data-plate-id")).join("+");
+          })(),
           f3: (() => {
             const panel = document.querySelector('[data-panel="f3"]');
             if (!panel) return null;
@@ -1523,9 +1539,23 @@ async function main() {
       if (f3.offscreen)
         fail(where, "D3-layout", `${f3.offscreen} callout(s) sit outside the viewport`);
       if (!(f3.ready > 0)) fail(where, "D2-video", `the scatter plate is at readyState ${f3.ready}`);
-      if (f3.dur && !(f3.t >= f3.dur - 0.12))
+      /*
+       * The shot must have run to the slide's resting cue — not to its end.
+       *
+       * It used to be asserted to the end, and that was right while this was the
+       * last slide: its rest was `cues[1] + REST_SPAN` = 1.0, the end of the
+       * beat and the foot of the page, all the same point. A fourth slide made
+       * that arrangement wrong — resting on the boundary handed the frame to the
+       * next plate on the same tick — so the rest moved back inside the beat and
+       * the shot now settles at 0.87 of itself. Ending is no longer the
+       * property to check; reaching the resting cue is, and that the frame is
+       * still this slide's, which `shown` above tests.
+       */
+      const REST_AT = 0.87;
+      if (f3.dur && !(f3.t >= f3.dur * REST_AT - 0.12))
         fail(where, "D2-video",
-          `the scatter plate rests at ${f3.t.toFixed(2)}s of ${f3.dur.toFixed(2)}s`);
+          `the scatter plate rests at ${f3.t.toFixed(2)}s of ${f3.dur.toFixed(2)}s — ` +
+          `short of its resting cue at ${(f3.dur * REST_AT).toFixed(2)}s`);
       /*
        * The callouts are pinned to the picture, so the box they are pinned
        * inside has to *be* the picture. Two pixels of tolerance for subpixel
@@ -1534,6 +1564,21 @@ async function main() {
       if (f3.pinned && f3.drift !== null && f3.drift > 2)
         fail(where, "D3-layout",
           `the callout layer is ${Math.round(f3.drift)}px off the painted plate`);
+    }
+
+    /*
+     * Slide 3 rests on its own shot.
+     *
+     * Found at the stop before the end: the resting point sat on the beat
+     * boundary and the frame had already handed over.
+     */
+    {
+      const at3 = samples.find((s) => s.f3 && s.f3.active && s.f3.minNoteR > 0.99 &&
+        s.f4 && !s.f4.active);
+      if (at3 && at3.shown && at3.shown !== "scatter")
+        fail(where, "D3-layout",
+          `slide 3 rests showing the ${at3.shown} plate — its labels are over a shot ` +
+          `that is not the map they name`);
     }
 
     /* ── slide 4 — the council table ──────────────────────────────────── */
