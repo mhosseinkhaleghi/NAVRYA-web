@@ -139,6 +139,21 @@ opening belongs to slide 3. Asserted at the last stop:
   right with it. Checked as which half of the frame the block's centre falls in,
   on wide frames only.
 
+**Every stop shows its own plate, not the stand-in.** Checked at each resting
+stop of the features walk: the composited shipping plate must carry
+`data-plate-ready`. The proxy is 854×480 and exists to cover the moment before
+the real shot lands; it covered the first two slides of this page outright. The
+warm chain skipped its lead plate by *name* — `'dawn'`, which is what the home
+film calls its lead and what no other film does — so on this film it queued the
+lead first and then waited eight seconds for a `canplaythrough` that had fired
+seven seconds earlier. No shipping plate was requested until 12.9s, against an
+unlock at 5.5s: measured at the first two stops, 21% and 59% buffered with the
+viewer watching the proxy. The chain now skips the lead by role, never waits on
+a plate that is already warm, and warms exactly one plate ahead while the
+opening plays. One, not the whole tier — preloading six 1080p plates at once
+cost the home film 580ms on its unlock, not for want of bandwidth but because
+demuxing fourteen megabytes competes with playing the shot on screen.
+
 **The plates carry no burned-in lettering.** `scripts/check-plate-clean.mjs`,
 run separately from the browser suite because it is a property of the files
 rather than of the page. The source for slide 3 draws its own English callouts

@@ -1223,6 +1223,29 @@ async function main() {
           dur: v && v.duration ? v.duration : null,
           barGround: document.documentElement.hasAttribute("data-past-film"),
           /*
+           * Is the shot on screen the real one, or still the light stand-in?
+           *
+           * The proxy is 854×480 and exists to cover the moment before the
+           * shipping plate arrives. It covered the first two slides of this page
+           * outright: the warm chain skipped its lead plate by *name* — the home
+           * film's name — so on this film it queued the lead first, sat eight
+           * seconds waiting for a `canplaythrough` that had already fired, and
+           * did not ask for a single shipping plate until 12.9s against an
+           * unlock at 5.5s. Measured at the first two stops: 21% and 59%
+           * buffered, `data-plate-ready` absent, the viewer watching the proxy.
+           */
+          plate: (() => {
+            const on = [...document.querySelectorAll("[data-plate-id][data-plate-on]")];
+            const v = on.map((p) => p.querySelector("video[data-scene-video]")).filter(Boolean)[0];
+            if (!v) return null;
+            const b = v.buffered;
+            return {
+              id: v.getAttribute("data-scene-video"),
+              ready: v.hasAttribute("data-plate-ready"),
+              covered: v.duration && b.length ? b.end(b.length - 1) / v.duration : 0,
+            };
+          })(),
+          /*
            * Slide 3 — the map, named.
            *
            * `stage` against `painted` is the assertion that matters. The eight
@@ -1468,6 +1491,21 @@ async function main() {
         "D2-video",
         `the map rests at ${at2.t.toFixed(2)}s of ${at2.dur.toFixed(2)}s — the shot never finished`,
       );
+
+    /*
+     * Every stop shows its own plate, not the stand-in.
+     *
+     * Checked across the whole walk rather than at one stop, because the fault
+     * this covers was a queue that started too late — so it showed at the early
+     * stops and had corrected itself by the last.
+     */
+    for (const s of samples) {
+      if (!s.plate) continue;
+      if (!s.plate.ready)
+        fail(where, "D2-video",
+          `at y=${s.y} the ${s.plate.id} plate is composited but not ready — ` +
+          `${Math.round(s.plate.covered * 100)}% buffered, so this is the proxy`);
+    }
 
     /* ── slide 3 — the map, named ─────────────────────────────────────── */
     if (!at3.f3) fail(where, "D1-text", "slide 3 is not in the DOM");

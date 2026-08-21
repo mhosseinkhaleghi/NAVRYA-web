@@ -70,11 +70,17 @@ const PLATES = [
   { id: "battlemap", slug: "commander-map", lead: false, codecs: ["webm", "mp4"] },
   { id: "scatter", slug: "commander-scatter", lead: false, codecs: ["webm", "mp4"] },
   /*
-   * `council` is not a continuation — it is a cut to somewhere else, and the
-   * source says so: it arrives as a transition, opening on the labelled map,
-   * flashing white at frame 31, and whipping into the council table. Only the
-   * last stretch is this plate, so it starts at source frame 37. The opening
-   * seconds belong to slide 3, English lettering and all.
+   * `council` is not a continuation but a journey: the camera leaves the map
+   * from above, dives through it, and arrives in the room. The whole of that
+   * move is the slide, which is why the plate is 2.21s of a three-second source
+   * rather than the tail of it.
+   *
+   * It starts at source frame 19 and not at frame 0, because the source opens
+   * on slide 3's labelled map held still, with its eight callouts baked in and
+   * in English. By frame 19 the dive has smeared them past reading — checked
+   * frame by frame — so the movement is kept and the lettering is not. The
+   * magnetic step takes its length from the shot's own seconds, so restoring
+   * the full dive is also what makes it play at the speed it was cut at.
    */
   { id: "council", slug: "commander-council", lead: false, codecs: ["webm", "mp4"] },
 ] as const;
@@ -120,7 +126,7 @@ const SEQUENCE = {
   beatSeconds: [
     ["battlemap", 5.041667],
     ["scatter", 0.875],
-    ["council", 1.458333],
+    ["council", 2.208662],
   ],
   plates: ["commander", "battlemap", "scatter", "council"],
   plateBeat: [null, "battlemap", "scatter", "council"],

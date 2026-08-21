@@ -624,6 +624,18 @@ export const stageScript = `
     var v = document.querySelector('[data-scene-video="' + id + '"]');
     load(id);
     if (!v) { warmChain(order, i + 1); return; }
+    /*
+     * A plate that can already play through is done, and waiting on it is
+     * waiting for an event that has already happened.
+     *
+     * This cost eleven seconds of an idle line. The chain's first entry was the
+     * opening plate — excluded on the home film by name, not by role, so any
+     * other film handed it straight back — and that plate had finished at
+     * 1.3s. \`canplaythrough\` had long since fired, the listener below caught
+     * nothing, and the queue sat on the timeout while the viewer scrolled onto
+     * plates that had not been asked for yet.
+     */
+    if (v.readyState >= 4) { warmChain(order, i + 1); return; }
     var moved = false;
     var next = function () {
       if (moved) return;
@@ -668,6 +680,27 @@ export const stageScript = `
   // heavy one either. Started together, the shipping plates starved the proxies
   // and neither was ready: measured, every proxy still at metadata by the time
   // the viewer was three steps in.
+  /*
+   * The shipping plates, in the order they are watched.
+   *
+   * The lead is skipped because it is already on screen — it is the shot the
+   * opening plays, and it was fetched outright before anything else. It used to
+   * be skipped by *name*: \`PLATES[q] !== 'dawn'\`, which is what the home film
+   * calls its lead and what every other film does not.
+   */
+  var chainStarted = false;
+  function startWarmChain() {
+    if (chainStarted) return;
+    chainStarted = true;
+    var order = [];
+    for (var q = 0; q < PLATES.length; q++) {
+      if (PLATE_BEAT[q]) order.push(PLATES[q]);
+    }
+    whenProxiesReady(function () { warmChain(order, 0); });
+  }
+
+  // A stalled opening must not hold the shipping plates back for ever.
+  var OPENING_WAIT_MS = 9000;
   var PROXY_WAIT_MS = 6000;
   function whenProxiesReady(done) {
     var proxies = [];
@@ -705,11 +738,8 @@ export const stageScript = `
       // autoplay refused, no decoder, or the line too slow for the patience
       // timer — and on those paths the light tier still has to be sent for.
       warmProxies();
-      var order = [];
-      for (var q = 0; q < PLATES.length; q++) {
-        if (PLATES[q] !== 'dawn') order.push(PLATES[q]);
-      }
-      whenProxiesReady(function () { warmChain(order, 0); });
+      // The rest of the tier, once the opening has finished being watched.
+      startWarmChain();
     });
   }
 
@@ -747,10 +777,88 @@ export const stageScript = `
       function start() {
         if (going) return;
         going = true;
-        // The opening has what it needs and is about to run. Everything else on
-        // the page may have the line now, and has the length of the shot to use
-        // it — the light tier first, because it is what the first gesture draws.
+        /*
+         * The opening has what it needs and is about to run. Everything else on
+         * the page may have the line now, and has the length of the shot to use
+         * it — the light tier first, because it is what the first gesture draws,
+         * and the shipping plates behind it.
+         *
+         * The chain used to wait for the reveal, which is the *end* of the
+         * opening. Measured on this page, that left the line idle from 1.3s,
+         * when the opening plate and every proxy had landed, until 12.9s — and
+         * the viewer was already scrolling at 5.5s, onto plates still at
+         * metadata. Starting here spends the length of the shot instead of
+         * throwing it away, and takes nothing from the opening: that plate has
+         * already buffered by the time this runs.
+         */
         warmProxies();
+        /*
+         * The heavy tier waits for the opening plate to be *finished*, not
+         * merely playable.
+         *
+         * The light tier may start here — that is measured and settled above.
+         * The shipping plates are a different weight of thing: on the home film
+         * they are fourteen megabytes, and starting them at the same moment put
+         * 550ms back onto the opening, which is the regression the note above
+         * this function exists to prevent. Waiting for \`canplaythrough\` costs
+         * the feature page nothing — its opening plate lands at 1.7s and the
+         * shot runs to 5.5s — and gives the home film its line back.
+         */
+        /*
+         * One plate ahead during the opening, and only one.
+         *
+         * The first gesture lands on the film's first shot, and on a page whose
+         * opening is short that shot was still at metadata when the viewer got
+         * there — measured on the features page, the whole heavy tier had not
+         * been asked for until 12.9s against an unlock at 5.5s.
+         *
+         * Warming the *whole* chain here instead is worse than the problem: six
+         * 1080p plates preloading at once cost the home film 580ms on its
+         * unlock, and not for want of bandwidth — the opening plate had already
+         * landed by then — but because demuxing fourteen megabytes competes
+         * with playing the shot that is on screen. One plate is the amount that
+         * helps the next gesture without taking anything from the current one.
+         */
+        whenOpeningBuffered(function () {
+          for (var f = 0; f < PLATES.length; f++) {
+            if (PLATE_BEAT[f]) { load(PLATES[f]); break; }
+          }
+        });
+
+        /*
+         * "Finished" means the bytes are here, not that the browser is
+         * optimistic about them.
+         *
+         * \`canplaythrough\` is an estimate against the current line, and on the
+         * home film it fired at 2.1s for a plate that did not finish arriving
+         * until 3.6s — so the fourteen megabytes behind it started while the
+         * opening was still downloading and put 550ms back onto the unlock.
+         * Buffered coverage is the same test this controller uses everywhere
+         * else to decide whether a plate can really be drawn, and it is the
+         * right one here too. Capped, so an opening that stalls cannot starve
+         * everything behind it for ever.
+         */
+        function whenOpeningBuffered(done) {
+          var fired = false;
+          function covered() {
+            var b = opening.buffered;
+            return opening.duration && b.length &&
+              b.end(b.length - 1) >= opening.duration - 0.05;
+          }
+          function fire() {
+            if (fired) return;
+            fired = true;
+            clearTimeout(cap);
+            opening.removeEventListener('progress', check);
+            opening.removeEventListener('canplaythrough', check);
+            done();
+          }
+          function check() { if (covered()) fire(); }
+          var cap = setTimeout(fire, OPENING_WAIT_MS);
+          if (covered()) { fire(); return; }
+          opening.addEventListener('progress', check);
+          opening.addEventListener('canplaythrough', check);
+        }
         var p = opening.play();
         // Autoplay refused, or no decoder: show the interface rather than hold
         // the page hostage to a video that is never going to run.
@@ -842,8 +950,24 @@ export const stageScript = `
       full.addEventListener('canplay', markReady);
       full.addEventListener('canplaythrough', markReady);
       full.addEventListener('seeked', markReady);
+      markReady();
     }
-    return function (fraction) { seekProxy(fraction); seekFull(fraction); };
+    /*
+     * The mark is also taken on every scrub, not only when an event says so.
+     *
+     * Three listeners are three chances to be told, and all three are missed if
+     * the plate became ready before this binding — or if the browser simply did
+     * not raise one. The cost of missing it is total, because the stylesheet
+     * holds an unmarked plate at \`opacity: 0\`: a shot that is fully downloaded
+     * stays invisible and the viewer watches the 854×480 stand-in instead, with
+     * nothing to recover it. Seen on the deployed build, 100% buffered with no
+     * attribute. Asking directly costs one property read and cannot be missed.
+     */
+    return function (fraction) {
+      if (full && !full.hasAttribute('data-plate-ready')) markReady();
+      seekProxy(fraction);
+      seekFull(fraction);
+    };
   }
 
   // ── the sequence ─────────────────────────────────────────────────────────

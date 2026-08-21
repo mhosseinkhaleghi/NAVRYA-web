@@ -125,6 +125,14 @@ SKIP=0
 if [ -n "$TRIM" ]; then
   DUR=$TRIM
   FRAMES=$(awk -v t="$TRIM" -v f="$FPS" 'BEGIN { split(f, a, "/"); printf "%d", t * a[1] / a[2] }')
+elif [ -n "$START" ]; then
+  # A start with no length runs to the end of the source, so the plate is
+  # shorter than the source by exactly what was skipped. Both numbers have to
+  # follow: without this the closing still is selected at a frame index past the
+  # end of the file and simply never gets written — silently, because `select`
+  # matching nothing is not an error.
+  DUR=$(awk -v d="$DUR" -v st="$START" 'BEGIN { printf "%.6f", d - st }')
+  FRAMES=$((FRAMES - SKIP))
 fi
 echo "$SLUG · ${DUR}s · ${FRAMES} frames from source frame ${SKIP} · mode=$MODE (gop=$GOP)"
 

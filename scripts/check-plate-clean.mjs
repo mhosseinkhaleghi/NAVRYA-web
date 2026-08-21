@@ -32,16 +32,20 @@ const PLATES = [
  * it: that shot is lit parchment and candlelight and is full of near-white
  * pixels by nature.
  *
- * Its source is a *transition* — it opens on slide 3's labelled map, flashes
- * white, and whips into the council table — so the plate starts at source frame
- * 37 and the risk is not a lost trim but a lost `START`. Losing it would put
- * the labelled map, English and all, at the head of slide 4. So the test is
- * aimed at one place: the patch of frame where slide 3's "Price." callout sits.
- * On the labelled map it reads about 25; on this shot it is dark stone under 8.
+ * Its risk is not a lost trim but a lost `START`. The source is a transition —
+ * it opens on slide 3's labelled map, held and sharp, then dives through it
+ * into the room — and the plate begins at source frame 19, once the dive has
+ * smeared the lettering past reading. Lose the start and the plate opens on the
+ * held map instead, English callouts crisp and legible.
+ *
+ * So the test is not "is there bright text" but "is this frame *moving*". A
+ * held map is nearly identical to the frame two later; a frame mid-dive is not.
+ * Measured on this source: the held opening changes by about 1 grey level over
+ * two frames, the dive by more than 20.
  */
-const STARTS_CLEAN = [
-  { file: "public/scene/commander-council-1080.webm", crop: "90:34:415:245", limit: 12 },
-  { file: "public/scene/commander-council-proxy.webm", crop: "40:15:185:109", limit: 12 },
+const MOVING_AT_START = [
+  { file: "public/scene/commander-council-1080.webm", floor: 8 },
+  { file: "public/scene/commander-council-proxy.webm", floor: 8 },
 ];
 
 const W = 479;
@@ -74,35 +78,39 @@ for (const { file, limit } of PLATES) {
   );
 }
 
-for (const { file, crop, limit } of STARTS_CLEAN) {
+for (const { file, floor } of MOVING_AT_START) {
+  const W2 = 240;
+  const H2 = 135;
   const raw = execFileSync(
     "ffmpeg",
-    ["-v", "error", "-i", file, "-vf", `crop=${crop}`, "-f", "rawvideo", "-pix_fmt", "gray", "-"],
+    ["-v", "error", "-i", file, "-vf", `scale=${W2}:${H2}`, "-f", "rawvideo", "-pix_fmt", "gray", "-"],
     { maxBuffer: 1 << 30 },
   );
-  const [w, h] = crop.split(":").map(Number);
-  const n = w * h;
-  let worst = 0;
-  for (let f = 0; f < Math.floor(raw.length / n); f++) {
+  const n = W2 * H2;
+  const frame = (i) => raw.subarray(i * n, (i + 1) * n);
+  let move = 0;
+  if (raw.length >= n * 3) {
+    const a = frame(0);
+    const c = frame(2);
     let sum = 0;
-    for (let p = f * n; p < (f + 1) * n; p++) sum += raw[p];
-    worst = Math.max(worst, sum / n);
+    for (let p = 0; p < n; p++) sum += Math.abs(a[p] - c[p]);
+    move = sum / n;
   }
-  const ok = worst <= limit;
+  const ok = move >= floor;
   if (!ok) bad++;
   console.log(
-    `  ${ok ? "ok  " : "FAIL"} ${file} — brightest that patch ever gets: ` +
-      `${worst.toFixed(1)}, limit ${limit} (the labelled map reads ~25)`,
+    `  ${ok ? "ok  " : "FAIL"} ${file} — opens in motion: ${move.toFixed(1)} grey levels over ` +
+      `two frames, floor ${floor} (a held frame reads about 1)`,
   );
 }
 
 if (bad) {
   console.error(
-    "\nA plate carries burned-in lettering, or starts before its own shot does.\n" +
-      "Re-encode it over the clean run:\n" +
+    "\nA plate carries burned-in lettering, or opens on the shot before it.\n" +
+      "Re-encode it over its own run:\n" +
       "  scripts/encode-scene.sh <source> commander-scatter scrub 0.875\n" +
-      "  START=1.583333 scripts/encode-scene.sh <source> commander-council scrub 1.458\n",
+      "  START=0.833333 scripts/encode-scene.sh <source> commander-council scrub\n",
   );
   process.exit(1);
 }
-console.log("\nplates carry no burned-in lettering, and each starts on its own shot.");
+console.log("\nplates carry no burned-in lettering, and each opens on its own shot.");
