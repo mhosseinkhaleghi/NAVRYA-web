@@ -67,159 +67,50 @@
 }
 
 /*
- * There is no rule under this headline, and that is deliberate.
+ * The stopped rule under the headline, with its node — the site's own
+ * punctuation, the same one every other section closes its title with.
  *
- * Every other section on the site closes its title with a stopped gold line
- * carrying a node, and this one was built with the same. But the frame below it
- * already opens with one — its top medallion is a band, centred on the frame's
- * top rail, that reaches out to both edges — and the two landed within a pixel
- * of each other: measured at 1440, the rule sat at y=176 and the medallion
- * spanned 133–227, so the line ran straight through the middle of the ornament.
- * There is no room to separate them either; at 1024 the headline's box ends
- * eleven pixels above the frame. The composition is a headline over a framed
- * shot, and the frame's own band is its punctuation.
+ * It was dropped while an ornamental frame stood below: that frame opened with
+ * a band of its own, centred on its top rail, and the two landed within a pixel
+ * of each other — measured at 1440 the rule sat at y=176 and the medallion
+ * spanned 133–227, so the line ran through the middle of the ornament. The
+ * frame is gone, the collision with it, and the reason for going without.
  */
-
-/* ── The frame ────────────────────────────────────────────────────────────── */
-
-/*
- * The ornament sits in the row under the head and fills it. It arrives after
- * the words — the second reveal step the controller staggers — so the frame
- * draws itself around a shot that is already running.
- *
- * Its margins are the medallions' overhang plus a little air, not a chosen gap.
- * Both marks are drawn outside the box they belong to — that is what makes them
- * read as fixed *to* the frame rather than as decoration inside it — so a row
- * flush to the head above and the screen below crops them. It did: the foot
- * medallion was cut by the viewport at every desktop frame measured, 14px at
- * 1440 and 20px at 1920, because a 27px margin was holding a 41px overhang.
- * Stated as the overhang, it cannot drift when a mark is resized.
- */
-.frameRow {
-  grid-row: 3;
+.rule {
   position: relative;
-  margin-block:
-    calc(var(--f2-top-drop) + clamp(0.35rem, 1vh, 0.9rem))
-    calc(var(--f2-bottom-drop) + clamp(0.35rem, 1vh, 0.9rem));
-  opacity: var(--r, 0);
+  /*
+   * Spaced off the *type*, not off the box above it.
+   *
+   * Sitting straight under the h2, the line landed six pixels above the bottom
+   * of the glyphs — it crossed the words. `line-height: 1.08` is tighter than
+   * Cinzel's own metrics, so the headline's border box ends at y=155 while its
+   * ink runs to y=161, and anything spaced between boxes cannot see that.
+   * Stated as a fraction of the headline's own size, the clearance holds at
+   * every viewport instead of being right at the one it was measured on.
+   */
+  margin-block-start: calc(var(--fs-f2-display) * 0.34);
+  block-size: var(--border-1);
+  inline-size: var(--f2-rule);
+  max-inline-size: 100%;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    var(--c-gold-line) 20%,
+    var(--c-gold-line-strong) 50%,
+    var(--c-gold-line) 80%,
+    transparent 100%
+  );
 }
 
-.frame {
+.rule::after {
+  content: "";
   position: absolute;
-  inset: 0;
-  color: var(--c-gold-line-strong);
-}
-
-.rails {
-  position: absolute;
-  inset: 0;
-  inline-size: 100%;
-  block-size: 100%;
-}
-
-/*
- * Every ornament is a square SVG at a fixed size, pinned to its edge.
- *
- * They are deliberately *not* part of the stretched drawing above: that one is
- * `preserveAspectRatio="none"` so its lines meet the box exactly, and anything
- * with a shape on it would be skewed by the same transform. A crossed sword
- * flattened to a viewport's aspect is the kind of thing that looks wrong
- * without the reason being obvious.
- */
-.corner {
-  position: absolute;
-  inline-size: var(--f2-corner);
-  block-size: var(--f2-corner);
-}
-
-.cornerTopStart {
-  inset-block-start: 0;
-  inset-inline-start: 0;
-}
-
-.cornerTopEnd {
-  inset-block-start: 0;
-  inset-inline-end: 0;
-  transform: scaleX(-1);
-}
-
-.cornerBottomStart {
-  inset-block-end: 0;
-  inset-inline-start: 0;
-  transform: scaleY(-1);
-}
-
-.cornerBottomEnd {
-  inset-block-end: 0;
-  inset-inline-end: 0;
-  transform: scale(-1);
-}
-
-/*
- * The corners mirror with the writing direction on their own, because they are
- * placed with logical insets — but `scaleX(-1)` is a physical transform, so
- * under RTL the pair would flip twice and come back to where they started.
- * Each one is restated for RTL with its horizontal flip inverted.
- */
-[dir="rtl"] .cornerTopStart {
-  transform: scaleX(-1);
-}
-
-[dir="rtl"] .cornerTopEnd {
-  transform: none;
-}
-
-[dir="rtl"] .cornerBottomStart {
-  transform: scale(-1);
-}
-
-[dir="rtl"] .cornerBottomEnd {
-  transform: scaleY(-1);
-}
-
-.topMark {
-  position: absolute;
-  inset-block-start: 0;
   left: 50%;
-  inline-size: var(--f2-top-mark);
-  block-size: calc(var(--f2-top-mark) / 2);
-  transform: translate(-50%, -50%);
-}
-
-.bottomMark {
-  position: absolute;
-  inset-block-end: 0;
-  left: 50%;
-  inline-size: var(--f2-bottom-mark);
-  block-size: calc(var(--f2-bottom-mark) / 2.5);
-  transform: translate(-50%, 34%);
-}
-
-.sideMark {
-  position: absolute;
   inset-block-start: 50%;
-  inline-size: calc(var(--f2-side-mark) / 2);
-  block-size: var(--f2-side-mark);
-}
-
-.sideStart {
-  inset-inline-start: 0;
-  transform: translate(-50%, -50%);
-}
-
-.sideEnd {
-  inset-inline-end: 0;
-  transform: translate(50%, -50%);
-}
-
-/* The side marks are centred on a physical edge by a physical translate, and
- * the logical inset already moved them — so the translate has to turn round. */
-[dir="rtl"] .sideStart {
-  transform: translate(50%, -50%);
-}
-
-[dir="rtl"] .sideEnd {
-  transform: translate(-50%, -50%);
+  inline-size: var(--node-size);
+  block-size: var(--node-size);
+  border: var(--border-1) solid var(--c-gold);
+  transform: translate(-50%, -50%) rotate(45deg);
 }
 
 /* -----------------------------------------------------------------------------
@@ -243,33 +134,17 @@
     grid-row: 2;
     grid-column: 1;
     min-block-size: 0;
-    /* The bar has its own row now, so the band at the top goes and the head
-     * and the frame divide what it leaves. */
+    /* The bar has its own row now, so the band at the top goes. */
     grid-template-rows: auto minmax(0, 1fr);
   }
 
   .head {
     grid-row: 1;
   }
-
-  .frameRow {
-    grid-row: 2;
-  }
 }
-
-/*
- * The ornament thins out rather than shrinking: at a phone's width the side
- * marks are smaller than the strokes that draw them, so they go and the frame
- * keeps its two lines, its corners and its two medallions, which is what the
- * composition actually is.
- */
 
 @media (max-width: 767px) {
   .panel {
     padding-inline: var(--gutter);
-  }
-
-  .sideMark {
-    display: none;
   }
 }

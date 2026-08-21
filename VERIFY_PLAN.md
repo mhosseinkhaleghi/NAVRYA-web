@@ -72,11 +72,15 @@ the opening gesture and glided back to the top. What is asserted:
   more, and the fix is the film's own timing, never a shorter track: a resting
   stop is `cues[1] + REST_SPAN` of its beat, so a last scene resting at the end
   of its shot is what makes the two agree;
-- at rest the panel is active, both reveal groups are complete, the headline is
-  painted with a box, and the shot has actually reached its end;
-- neither medallion is cropped. They are drawn *outside* the frame they belong
-  to, so the row has to reserve their overhang — before it did, the foot mark
-  was cut by the viewport at every desktop frame measured;
+- at rest the panel is active, its reveal is complete, the headline is painted
+  with a box, and the shot has actually reached its end;
+- the rule under the headline is present, has a real width, and **does not cross
+  the words**. There was a gold ornamental frame on this slide and it is gone —
+  the map is the whole picture now — which brought the site's usual stopped rule
+  back under the title. Sitting straight beneath the h2 it struck through the
+  text: `line-height: 1.08` is tighter than Cinzel's metrics, so the border box
+  ends six pixels above the ink and every box-based measure called the stack
+  clean. The check reads the glyphs with a Range, not the element box;
 - the bar keeps its transparent ground. It takes the page's ground below the
   film, and this film has no page below it, so the closing half-screen is still
   footage.

@@ -1172,7 +1172,7 @@ async function main() {
       page.evaluate(() => {
         const panel = document.querySelector('[data-panel="f2"]');
         const head = panel && panel.querySelector('[data-reveal-group="title"]');
-        const frame = panel && panel.querySelector('[data-reveal-group="rest"]');
+        const rule = panel && panel.querySelector('[data-reveal-group="title"] span');
         /*
          * The opening's visibility is on `[data-hero-part]`, not on the
          * headline inside it.
@@ -1201,14 +1201,28 @@ async function main() {
           y: Math.round(window.scrollY),
           active: panel ? panel.hasAttribute("data-active") : null,
           headR: num(head, "--r"),
-          frameR: num(frame, "--r"),
+          ruleBox: (() => {
+            if (!rule) return null;
+            const r = rule.getBoundingClientRect();
+            return { top: Math.round(r.top), w: Math.round(r.width), cx: Math.round(r.left + r.width / 2) };
+          })(),
+          /* Where the headline's *glyphs* end, not where its box does. A range
+           * over the text reports the ink; `getBoundingClientRect` on the h2
+           * reports a border box that `line-height: 1.08` makes shorter than
+           * the letters it holds. The rule was six pixels inside the words and
+           * every box-based measurement called it clear. */
+          headInk: (() => {
+            const h = panel && panel.querySelector("h2");
+            if (!h) return null;
+            const r = document.createRange();
+            r.selectNodeContents(h);
+            return Math.round(r.getBoundingClientRect().bottom);
+          })(),
           heroOp,
           t: v ? v.currentTime : null,
           dur: v && v.duration ? v.duration : null,
           barGround: document.documentElement.hasAttribute("data-past-film"),
           vh: window.innerHeight,
-          topMark: edges('[class*="topMark"]'),
-          footMark: edges('[class*="bottomMark"]'),
           headline: (() => {
             const h = panel && panel.querySelector("h2");
             if (!h) return null;
@@ -1260,8 +1274,26 @@ async function main() {
     if (rest.active !== true) fail(where, "D1-text", "slide 2 never became active");
     if (!(rest.headR > 0.99))
       fail(where, "D1-text", `the slide's head rests at --r ${rest.headR}`);
-    if (!(rest.frameR > 0.99))
-      fail(where, "D1-text", `the slide's frame rests at --r ${rest.frameR}`);
+    /*
+     * The rule under the headline — the site's own punctuation, and the only
+     * ornament this slide has now that the gold frame is gone.
+     *
+     * Asserted against the headline's ink rather than its box, because that is
+     * exactly how it went wrong: sitting straight under the h2 it landed six
+     * pixels *above* the bottom of the glyphs and struck through the words,
+     * while every box-based measure reported a clean stack.
+     */
+    if (!rest.ruleBox) fail(where, "D1-text", "slide 2 has no rule under its headline");
+    else {
+      if (rest.ruleBox.w < 24)
+        fail(where, "D3-layout", `the rule is ${rest.ruleBox.w}px wide — its token is missing`);
+      if (rest.headInk !== null && rest.ruleBox.top < rest.headInk)
+        fail(
+          where,
+          "D3-layout",
+          `the rule crosses the headline: it sits ${rest.headInk - rest.ruleBox.top}px above the ink`,
+        );
+    }
     if (!rest.headline) fail(where, "D1-text", "slide 2 has no headline");
     else {
       if (rest.headline.op <= 0.05)
@@ -1275,15 +1307,6 @@ async function main() {
         "D2-video",
         `the map rests at ${rest.t.toFixed(2)}s of ${rest.dur.toFixed(2)}s — the shot never finished`,
       );
-
-    // The ornament is drawn outside the box it frames, so the viewport is what
-    // crops it. Both medallions were being cut before the row reserved them.
-    for (const [name, box] of [["top medallion", rest.topMark], ["foot medallion", rest.footMark]]) {
-      if (!box) continue;
-      if (box[1] > rest.vh)
-        fail(where, "D3-layout", `the ${name} is cut off ${box[1] - rest.vh}px below the frame`);
-      if (box[0] < 0) fail(where, "D3-layout", `the ${name} is cut off above the frame`);
-    }
 
     // The bar takes a solid ground below the film. This film has nothing below
     // it, so the last half-screen is still footage and the bar stays clear.

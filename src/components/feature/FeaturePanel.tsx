@@ -1,5 +1,3 @@
-import { BattleFrame } from "./BattleFrame";
-
 import styles from "./FeaturePanel.module.css";
 
 /**
@@ -11,9 +9,11 @@ import styles from "./FeaturePanel.module.css";
  * the panel as the slide leaves over the shot that follows. Nothing in here
  * listens to the scroll; every value is a function of those two properties.
  *
- * `data-reveal-group="title"` arrives on the first cue and `"rest"` on the
- * second, staggered — the head, then the frame drawing itself around a shot
- * that is already running.
+ * The headline and its rule, and nothing else. There was a gold ornamental
+ * frame drawn around the map here; it is gone, and the map is the whole
+ * picture. `BattleFrame` went with it rather than being left behind unused —
+ * `git show ec1bc11:src/components/feature/BattleFrame.tsx` has it if a later
+ * slide wants one.
  */
 export function FeaturePanel({
   id,
@@ -26,10 +26,7 @@ export function FeaturePanel({
     <section className={styles.panel} data-panel={id}>
       <div className={styles.head} data-reveal-group="title">
         <h2 className={styles.headline}>{headline}</h2>
-      </div>
-
-      <div className={styles.frameRow} data-reveal-group="rest" data-reveal-step="0">
-        <BattleFrame styles={styles} />
+        <span className={styles.rule} aria-hidden="true" />
       </div>
     </section>
   );
