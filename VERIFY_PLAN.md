@@ -94,7 +94,14 @@ asserted at that stop:
 - the panel is active, all eight callouts and the closing lines have reached
   `--r > 0.99`, and no callout is empty in any locale;
 - the scatter plate has decoded and run to its end;
-- no callout sits outside the viewport;
+- no callout sits outside the viewport, **and neither does the closing
+  sentence**. It is the stage's sibling rather than its child, because on a wide
+  frame it is set over the foot of the picture instead of pinned to a point on
+  it — so the portrait layout has to stack the two explicitly, and when it did
+  not the sentence went absolute against a panel it no longer filled and sat at
+  y=844 in an 844-tall viewport. Fully opaque, `--r` complete, flush against the
+  bottom edge and invisible; only a box test sees it, and the first version of
+  this check tested the callouts alone and let it through;
 - **the callout layer lands on the painted plate, within 2px on every edge.**
   This is the one that matters. The labels are pinned to percentages of the
   *picture*, and the picture is `object-fit: contain` — so its box is only the

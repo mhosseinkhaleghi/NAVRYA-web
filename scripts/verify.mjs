@@ -1255,6 +1255,22 @@ async function main() {
               notes: notes.length,
               minNoteR: notes.length ? Math.min(...notes.map((n) => r(n))) : null,
               closeR: r(close),
+              /*
+               * The sentence has to be *on screen*, not merely painted.
+               *
+               * It is the stage's sibling rather than its child — on a wide
+               * frame it is set over the foot of the picture, not pinned to a
+               * point on it — so the portrait layout has to stack the two, and
+               * when it did not the sentence went absolute against a panel it
+               * no longer filled: measured at y=844 in an 844-tall viewport and
+               * y=1024 in a 1024. Fully opaque, correct `--r`, flush against
+               * the bottom edge and invisible. Only a box test sees that.
+               */
+              closeOffscreen: (() => {
+                if (!close) return null;
+                const b = close.getBoundingClientRect();
+                return b.width === 0 || b.height === 0 || b.top < 0 || b.bottom > innerHeight;
+              })(),
               blank: notes.filter((n) => !(n.textContent || "").trim()).length,
               offscreen: notes.filter((n) => {
                 const b = n.getBoundingClientRect();
@@ -1367,6 +1383,8 @@ async function main() {
         fail(where, "D1-text", `the last callout rests at --r ${f3.minNoteR}`);
       if (!(f3.closeR > 0.99))
         fail(where, "D1-text", `slide 3's closing lines rest at --r ${f3.closeR}`);
+      if (f3.closeOffscreen)
+        fail(where, "D3-layout", "slide 3's closing lines are outside the viewport");
       if (f3.offscreen)
         fail(where, "D3-layout", `${f3.offscreen} callout(s) sit outside the viewport`);
       if (!(f3.ready > 0)) fail(where, "D2-video", `the scatter plate is at readyState ${f3.ready}`);
