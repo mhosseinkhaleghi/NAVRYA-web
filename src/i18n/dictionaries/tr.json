@@ -323,6 +323,22 @@
     ],
     "battlemap": {
       "headline": "Savaş Alanında Veri Hiçbir Zaman Eksik Değildir."
+    },
+    "scatter": {
+      "notes": {
+        "price": "Fiyat.",
+        "sessions": "Piyasa seansları.",
+        "timeframes": "Zaman dilimleri.",
+        "setups": "Formasyonlar.",
+        "emotions": "Duygular.",
+        "execution": "İşlem.",
+        "risk": "Risk.",
+        "history": "Geçmiş."
+      },
+      "closing": [
+        "Bir yatırımcının sorunu veri eksikliği değil.",
+        "Sorun, her şeyin dağınık olması."
+      ]
     }
   }
 }

@@ -1222,6 +1222,54 @@ async function main() {
           t: v ? v.currentTime : null,
           dur: v && v.duration ? v.duration : null,
           barGround: document.documentElement.hasAttribute("data-past-film"),
+          /*
+           * Slide 3 — the map, named.
+           *
+           * `stage` against `painted` is the assertion that matters. The eight
+           * callouts are pinned to percentages of the *picture*, and the
+           * picture is `object-fit: contain`, so its box is only the element's
+           * box when the viewport happens to be 16:9. Any drift and every label
+           * points at empty ground — differently at every width, and never
+           * obviously enough to notice in one screenshot.
+           */
+          f3: (() => {
+            const panel = document.querySelector('[data-panel="f3"]');
+            if (!panel) return null;
+            const stage = panel.querySelector('[class*="stage"]');
+            const v = document.querySelector('[data-scene-video="scatter"]');
+            const notes = [...panel.querySelectorAll("span[data-side]")];
+            const close = panel.querySelector("p");
+            const r = (el) => (el ? +getComputedStyle(el).getPropertyValue("--r") : null);
+            const sb = stage.getBoundingClientRect();
+            let painted = null;
+            if (v && v.videoWidth) {
+              const vb = v.getBoundingClientRect();
+              const ar = v.videoWidth / v.videoHeight;
+              const wide = vb.width / vb.height > ar;
+              const pw = wide ? vb.height * ar : vb.width;
+              const ph = wide ? vb.height : vb.width / ar;
+              painted = { x: vb.left + (vb.width - pw) / 2, y: vb.top + (vb.height - ph) / 2, w: pw, h: ph };
+            }
+            return {
+              active: panel.hasAttribute("data-active"),
+              notes: notes.length,
+              minNoteR: notes.length ? Math.min(...notes.map((n) => r(n))) : null,
+              closeR: r(close),
+              blank: notes.filter((n) => !(n.textContent || "").trim()).length,
+              offscreen: notes.filter((n) => {
+                const b = n.getBoundingClientRect();
+                return b.left < 0 || b.right > innerWidth || b.top < 0 || b.bottom > innerHeight;
+              }).length,
+              t: v ? v.currentTime : null,
+              dur: v && v.duration ? v.duration : null,
+              ready: v ? v.readyState : null,
+              drift: painted
+                ? Math.max(Math.abs(sb.left - painted.x), Math.abs(sb.top - painted.y),
+                           Math.abs(sb.width - painted.w), Math.abs(sb.height - painted.h))
+                : null,
+              pinned: getComputedStyle(stage).position === "absolute",
+            };
+          })(),
           vh: window.innerHeight,
           headline: (() => {
             const h = panel && panel.querySelector("h2");
@@ -1307,6 +1355,33 @@ async function main() {
         "D2-video",
         `the map rests at ${rest.t.toFixed(2)}s of ${rest.dur.toFixed(2)}s — the shot never finished`,
       );
+
+    /* ── slide 3 — the map, named ─────────────────────────────────────── */
+    if (!rest.f3) fail(where, "D1-text", "slide 3 is not in the DOM");
+    else {
+      const f3 = rest.f3;
+      if (!f3.active) fail(where, "D1-text", "slide 3 never became active");
+      if (f3.notes !== 8) fail(where, "D1-text", `slide 3 has ${f3.notes} callouts, expected 8`);
+      if (f3.blank) fail(where, "D5-lang", `${f3.blank} callout(s) have no text in this locale`);
+      if (!(f3.minNoteR > 0.99))
+        fail(where, "D1-text", `the last callout rests at --r ${f3.minNoteR}`);
+      if (!(f3.closeR > 0.99))
+        fail(where, "D1-text", `slide 3's closing lines rest at --r ${f3.closeR}`);
+      if (f3.offscreen)
+        fail(where, "D3-layout", `${f3.offscreen} callout(s) sit outside the viewport`);
+      if (!(f3.ready > 0)) fail(where, "D2-video", `the scatter plate is at readyState ${f3.ready}`);
+      if (f3.dur && !(f3.t >= f3.dur - 0.12))
+        fail(where, "D2-video",
+          `the scatter plate rests at ${f3.t.toFixed(2)}s of ${f3.dur.toFixed(2)}s`);
+      /*
+       * The callouts are pinned to the picture, so the box they are pinned
+       * inside has to *be* the picture. Two pixels of tolerance for subpixel
+       * layout; anything more is the whole annotation layer sliding off the map.
+       */
+      if (f3.pinned && f3.drift !== null && f3.drift > 2)
+        fail(where, "D3-layout",
+          `the callout layer is ${Math.round(f3.drift)}px off the painted plate`);
+    }
 
     // The bar takes a solid ground below the film. This film has nothing below
     // it, so the last half-screen is still footage and the bar stays clear.

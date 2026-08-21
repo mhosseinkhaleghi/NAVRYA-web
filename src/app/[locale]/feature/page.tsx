@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { FeaturePanel } from "@/components/feature/FeaturePanel";
+import { MapNotes } from "@/components/feature/MapNotes";
 import { Hero } from "@/components/hero/Hero";
 import { Scene } from "@/components/frame/Scene";
 import { Stage } from "@/components/frame/Stage";
@@ -53,10 +54,20 @@ export async function generateMetadata({
   };
 }
 
-/** The plates, on the same terms as the home page's. */
+/**
+ * The plates, on the same terms as the home page's.
+ *
+ * `scatter` is a continuation of `battlemap`, not a new shot: measured on the
+ * encoded files, the map's closing frame and this one's opening frame differ by
+ * more than 12/255 on 0.04% of pixels. So the handover is a cut on the same
+ * frame, which is the rule every plate change on this site already follows —
+ * exactly one plate is composited at a time and at the instant of the cut the
+ * two frames are the same picture, so nothing moves.
+ */
 const PLATES = [
   { id: "commander", slug: "commander-clarity", lead: true, codecs: ["webm", "mp4"] },
   { id: "battlemap", slug: "commander-map", lead: false, codecs: ["webm", "mp4"] },
+  { id: "scatter", slug: "commander-scatter", lead: false, codecs: ["webm", "mp4"] },
 ] as const;
 
 /*
@@ -79,29 +90,59 @@ const PLATES = [
  *                          opening on screen past the point where this slide's
  *                          own headline has arrived underneath it.
  *   cues[0]   0.45         the head, over a map that has just opened out.
- *   cues[1]   0.85         the frame, drawing itself around a shot that is
- *                          still running.
+ *   cues[1]   0.85         the rule under it.
  *
  * The second cue is 0.85 and not a rounder number because `REST_SPAN` is 0.15:
- * the film rests where a panel has finished arriving, so a last scene that
- * completes at 0.85 + 0.15 rests exactly at the end of its shot — which, on a
- * film with nothing after it, is the foot of the page. Any earlier and the
- * wheel would stop at a magnetic point with document still below it and no way
- * to reach it.
+ * the film rests where a panel has finished arriving, so a scene completing at
+ * 0.85 + 0.15 rests exactly at the end of its own shot. On the *last* scene
+ * that is also the foot of the page — any earlier and the wheel would stop at a
+ * magnetic point with document still below it and no way to reach it.
+ *
+ * Slide 3 gets 230vh against slide 2's 380 because its shot is 3.04s against
+ * 5.04s, and this page's rule is 380vh per five seconds — so both slides scroll
+ * at the same rate and the film does not change pace at the cut.
  */
 const SEQUENCE = {
-  beats: [["battlemap", 380]],
-  beatSeconds: [["battlemap", 5.041667]],
-  plates: ["commander", "battlemap"],
-  plateBeat: [null, "battlemap"],
+  beats: [
+    ["battlemap", 380],
+    ["scatter", 230],
+  ],
+  beatSeconds: [
+    ["battlemap", 5.041667],
+    ["scatter", 3.041995],
+  ],
+  plates: ["commander", "battlemap", "scatter"],
+  plateBeat: [null, "battlemap", "scatter"],
   heroExit: [0.2, 0.36],
   scenes: [
     {
       plate: "battlemap",
       beat: "battlemap",
       panel: "f2",
+      /*
+       * No exit. Slide 2's headline is slide 3's headline — the map is named
+       * *under* the sentence that introduced it, which is what the composition
+       * is — so the panel stays up over the cut instead of leaving and being
+       * replaced by an identical one.
+       */
       exit: null,
       cues: [0.45, 0.85],
+    },
+    {
+      plate: "scatter",
+      beat: "scatter",
+      panel: "f3",
+      exit: null,
+      /*
+       * Everything on this slide is one staggered arrival, so it is all in the
+       * `rest` group and `cues[0]` drives nothing — there is no title here, the
+       * headline above belongs to the scene before. The frame draws itself
+       * first, then the eight callouts in turn, then the sentence they add up
+       * to, and the stagger the controller applies across ten steps completes
+       * exactly at `cues[1] + REST_SPAN` — the film's last stop, and the foot of
+       * the document.
+       */
+      cues: [0.05, 0.85],
     },
   ],
 } as const;
@@ -133,6 +174,11 @@ export default async function FeaturePage({
         className={slide.slide}
       />
       <FeaturePanel id="f2" headline={dictionary.feature.battlemap.headline} />
+      <MapNotes
+        id="f3"
+        notes={dictionary.feature.scatter.notes}
+        closing={dictionary.feature.scatter.closing}
+      />
     </Stage>
   );
 }

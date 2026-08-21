@@ -10,10 +10,11 @@ import styles from "./FeaturePanel.module.css";
  * listens to the scroll; every value is a function of those two properties.
  *
  * The headline and its rule, and nothing else. There was a gold ornamental
- * frame drawn around the map here; it is gone, and the map is the whole
- * picture. `BattleFrame` went with it rather than being left behind unused —
- * `git show ec1bc11:src/components/feature/BattleFrame.tsx` has it if a later
- * slide wants one.
+ * frame drawn around the map here; it is gone from this slide and from the one
+ * after it, and the map is the whole picture on both. `BattleFrame` went with
+ * it rather than being left behind unused — it is at
+ * `git show ec1bc11:src/components/feature/BattleFrame.tsx` if it is ever
+ * wanted again.
  */
 export function FeaturePanel({
   id,

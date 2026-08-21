@@ -323,6 +323,22 @@
     ],
     "battlemap": {
       "headline": "The Battlefield Is Never Missing Data."
+    },
+    "scatter": {
+      "notes": {
+        "price": "Price.",
+        "sessions": "Market sessions.",
+        "timeframes": "Timeframes.",
+        "setups": "Setups.",
+        "emotions": "Emotions.",
+        "execution": "Execution.",
+        "risk": "Risk.",
+        "history": "History."
+      },
+      "closing": [
+        "A trader’s problem isn’t a lack of data.",
+        "It’s that everything is scattered."
+      ]
     }
   }
 }

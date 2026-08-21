@@ -323,6 +323,22 @@
     ],
     "battlemap": {
       "headline": "Al Campo de Batalla Nunca le Faltan Datos."
+    },
+    "scatter": {
+      "notes": {
+        "price": "Precio.",
+        "sessions": "Sesiones de mercado.",
+        "timeframes": "Marcos temporales.",
+        "setups": "Setups.",
+        "emotions": "Emociones.",
+        "execution": "Ejecución.",
+        "risk": "Riesgo.",
+        "history": "Historial."
+      },
+      "closing": [
+        "El problema del trader no es la falta de datos.",
+        "Es que todo está disperso."
+      ]
     }
   }
 }

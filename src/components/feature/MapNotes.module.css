@@ -1,0 +1,247 @@
+/* -----------------------------------------------------------------------------
+ * The features page's third slide — the map, named.
+ *
+ * Same construction as every other panel: a screen-sized layer over the plate,
+ * arriving on `--r`, leaving on `--exit`, reading nothing from the scroll
+ * itself. What is particular here is that its contents are pinned to the
+ * *picture* rather than to the screen — see `.stage`.
+ * -------------------------------------------------------------------------- */
+
+.panel {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: calc(1 - var(--exit, 0));
+  pointer-events: none;
+  /*
+   * A size container, so `.stage` can be sized against *this box* rather than
+   * against the viewport. `100vw` is the wrong number the moment a classic
+   * scrollbar is present — it counts the scrollbar, the plate does not, and the
+   * whole picture would be offset by its width.
+   */
+  container-type: size;
+}
+
+.panel:not([data-active]) {
+  visibility: hidden;
+}
+
+/*
+ * The plate's painted box, reproduced.
+ *
+ * `Scene`'s video is `object-fit: contain`, so the picture is letterboxed on
+ * any frame that is not exactly 16:9 and its edges are nowhere near the
+ * viewport's. `aspect-ratio` with both maxima and `place-self: center` is the
+ * same arithmetic `contain` does, so this element lands exactly on the picture
+ * and a percentage inside it is a percentage of the map.
+ *
+ * Get this wrong and nothing looks broken — the labels simply point at empty
+ * ground, differently on every viewport, which is far worse than an obvious
+ * fault because it survives a screenshot check on one frame size.
+ */
+.stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  /*
+   * `contain`, done in arithmetic rather than hoped for.
+   *
+   * These two lines are exactly what the browser computes for
+   * `object-fit: contain` on a 16:9 source: the picture is as wide as the box
+   * unless that would make it taller than the box, in which case height wins
+   * and width follows. Stated with container units so it is measured against
+   * the panel, which is the plate's own box.
+   *
+   * `aspect-ratio` with a `max-block-size` clamp was the obvious way to write
+   * this and it is not equivalent: a definite `inline-size` wins over the
+   * ratio, so the box keeps full width and simply gets shorter — letterboxing
+   * the labels but not the picture, which is the drift this whole element
+   * exists to prevent.
+   */
+  inline-size: min(100cqw, calc(100cqh * 16 / 9));
+  block-size: min(100cqh, calc(100cqw * 9 / 16));
+}
+
+/* ── The leaders ──────────────────────────────────────────────────────────── */
+
+/*
+ * One SVG over the whole picture, in the plate's own coordinates, so a line
+ * drawn to "1920×1080 space" lands on the pixel of the map it was measured
+ * from. No `preserveAspectRatio="none"` here — the box already *is* 16:9, so
+ * the default mapping is 1:1 and the diamonds stay square.
+ */
+.leaders {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+}
+
+/* The whole callout fades in together with its words. */
+.leaderGroup {
+  opacity: var(--r, 0);
+}
+
+/*
+ * The line draws itself.
+ *
+ * Each path carries `pathLength="1"` in the markup — an SVG attribute, not a
+ * CSS property — so all eight leaders measure 1 unit long whatever their real
+ * geometry. One dash rule then covers every one of them: at `--r: 0` the offset
+ * is the whole length and nothing is painted, at 1 the line is complete.
+ */
+.leaderLine {
+  stroke: var(--c-gold-line-strong);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(1 - var(--r, 0));
+}
+
+.leaderNode {
+  fill: none;
+  stroke: var(--c-gold);
+  stroke-width: 2.2;
+}
+
+/* ── The labels ───────────────────────────────────────────────────────────── */
+
+/*
+ * Set on the picture at the point the leader starts from, with the words
+ * sitting just above that point — the line runs along their baseline, which is
+ * what makes the two read as one callout rather than as a caption near a line.
+ */
+.note {
+  position: absolute;
+  left: var(--nx);
+  top: var(--ny);
+  transform: translate(0, -100%);
+  padding-inline-end: 0.4em;
+  color: var(--c-cream);
+  /*
+   * The quote face upright, not the display face.
+   *
+   * Cinzel has no lowercase — it answers one with small capitals — so
+   * `--font-display` set every callout as PRICE. and MARKET SESSIONS. against a
+   * design that reads Price. and Market sessions. These are labels on a map,
+   * and a map's labels are mixed case; the upright EB Garamond is the face the
+   * design uses and it is now loaded for exactly this.
+   */
+  font-family: var(--font-quote);
+  font-style: normal;
+  font-size: var(--fs-f3-note);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  text-shadow: var(--text-lift);
+  opacity: var(--r, 0);
+}
+
+/*
+ * Mirrored for right-to-left.
+ *
+ * `left` is physical, and it has to stay physical: the anchor is a point on a
+ * *picture*, and the picture is itself mirrored under RTL by `Scene`. So the
+ * label's own x becomes `100% - nx`, and the text then hangs the other way from
+ * it — which is the same callout, read the other way round.
+ */
+[dir="rtl"] .note {
+  left: auto;
+  right: var(--nx);
+  padding-inline-end: 0;
+  padding-inline-start: 0.4em;
+}
+
+/* ── The closing sentence ─────────────────────────────────────────────────── */
+
+/* Set over the foot of the map, clear of its lower edge. */
+.closing {
+  position: absolute;
+  inset-inline: var(--gutter);
+  inset-block-end: var(--f3-closing-bottom);
+  margin: 0;
+  display: grid;
+  justify-items: center;
+  gap: 0.28em;
+  padding-inline: var(--gutter);
+  color: var(--c-text);
+  font-family: var(--font-quote);
+  /* Stated, not inherited from the family having had only one cut. The upright
+   * exists now, and this line is the italic one. */
+  font-style: italic;
+  font-size: var(--fs-f3-closing);
+  line-height: 1.35;
+  text-align: center;
+  text-shadow: var(--text-lift);
+  opacity: var(--r, 0);
+  transform: translateY(calc((1 - var(--r, 0)) * 0.6em));
+}
+
+/* The one emphasis the slide makes: the half of the sentence that is the point. */
+.closingLead {
+  color: var(--gold-warm);
+}
+
+/* -----------------------------------------------------------------------------
+ * Compact frames.
+ *
+ * Two things change below 1024, and the second is not cosmetic.
+ *
+ * The bar becomes a row of the stage's own grid rather than an overlay, so the
+ * panel stops reserving `--header-h` — the same override every other panel on
+ * the site makes at this width.
+ *
+ * And below 1:1 the plate switches from `contain` to `cover`, which means the
+ * picture is *cropped* rather than letterboxed and `.stage` can no longer stand
+ * for it: a label pinned to 19.9% of the plate would sit somewhere else
+ * entirely. Eight callouts with leader lines are unreadable at a phone's width
+ * regardless. So the map goes back to being a backdrop and the eight names are
+ * set as what they are — a list of scattered things — which is the sentence
+ * underneath them made visible.
+ * -------------------------------------------------------------------------- */
+
+@media (max-width: 1023px) {
+  .panel {
+    position: relative;
+    inset: auto;
+    grid-row: 2;
+    grid-column: 1;
+    min-block-size: 0;
+  }
+}
+
+@media (max-aspect-ratio: 1 / 1) {
+  .stage {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    inline-size: 100%;
+    block-size: 100%;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: clamp(0.9rem, 2.4vh, 1.8rem);
+    padding: var(--gutter);
+  }
+
+  .leaders {
+    display: none;
+  }
+
+  .note {
+    position: static;
+    transform: none;
+    padding-inline: 0;
+    font-size: var(--fs-f3-note-compact);
+  }
+
+  .closing {
+    position: static;
+    padding-inline: 0;
+  }
+}

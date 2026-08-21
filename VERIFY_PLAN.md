@@ -85,6 +85,37 @@ the opening gesture and glided back to the top. What is asserted:
   film, and this film has no page below it, so the closing half-screen is still
   footage.
 
+**Slide 3 — the map, named.** The same shot continued: the map's closing frame
+and this plate's opening frame differ by more than 12/255 on 0.04% of pixels, so
+the handover is a cut nobody sees. Eight callouts and a closing sentence arrive
+staggered over it, and the film's last stop is the foot of the document. What is
+asserted at that stop:
+
+- the panel is active, all eight callouts and the closing lines have reached
+  `--r > 0.99`, and no callout is empty in any locale;
+- the scatter plate has decoded and run to its end;
+- no callout sits outside the viewport;
+- **the callout layer lands on the painted plate, within 2px on every edge.**
+  This is the one that matters. The labels are pinned to percentages of the
+  *picture*, and the picture is `object-fit: contain` — so its box is only the
+  element's box when the viewport happens to be 16:9. Any drift and all eight
+  point at empty ground, differently at every width, with nothing about a single
+  screenshot to give it away. Below 1:1 the plate switches to `cover` and cannot
+  be tracked at all, so the slide changes to a list there and the check does not
+  apply.
+
+**The plates carry no burned-in lettering.** `scripts/check-plate-clean.mjs`,
+run separately from the browser suite because it is a property of the files
+rather than of the page. The source for slide 3 draws its own English callouts
+into the footage from frame 22 on; shipped whole, a Persian reader would get a
+Persian page with English words painted into the picture, and no stylesheet
+could reach them. The plate is trimmed to the clean run before them and the
+words are set as text — which is what lets one video serve five languages. The
+check counts near-white pixels, because the lettering is cream while the map is
+only ever bright in red and gold: the lit keep and the gold columns peak at four
+such pixels, the first word brings twenty. Proved both ways — it passes on the
+shipped plate and fails on the untrimmed one at 20 and 35.
+
 **One exemption, and its evidence.** `net::ERR_ABORTED` on a `.webm` or `.mp4`
 is not counted, on either route. A media element opens an unbounded range
 request and closes it the moment it holds the whole resource; the home page

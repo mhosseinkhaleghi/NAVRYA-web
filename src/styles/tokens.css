@@ -121,6 +121,14 @@
    * centred line rather than a headline set against a left rail. */
   --f2-rule: clamp(6rem, 15vw, 17rem);
 
+  /* ── The features page, slide 3 — the map, named ────────────────────────── */
+  /* The callouts. Smaller than any headline on the site — they are labels on a
+   * map, and a map's labels are the smallest type on it. */
+  --fs-f3-note: clamp(0.62rem, min(1.02vw, 1.82vh), 1.18rem);
+  --fs-f3-note-compact: clamp(0.85rem, 3.6vw, 1.15rem);
+  --fs-f3-closing: clamp(0.85rem, min(1.42vw, 2.53vh), 1.6rem);
+  --f3-closing-bottom: clamp(2rem, 6vh, 4.5rem);
+
   /* ── Section 7 — the black ground, and the orb ──────────────────────────── */
   /* Centred over nothing, so it is set like section 5's statement rather than
    * like a railed panel. */
