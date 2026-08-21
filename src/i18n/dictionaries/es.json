@@ -339,6 +339,31 @@
         "El problema del trader no es la falta de datos.",
         "Es que todo está disperso."
       ]
+    },
+    "council": {
+      "headline": "Más Información no Genera Mejores Decisiones.",
+      "subline": [
+        "Los estudios muestran que, cuando crece la sobrecarga",
+        "de información, decae la racionalidad del inversor."
+      ],
+      "cta": "Descubre el enfoque Navrya",
+      "pillars": [
+        {
+          "key": "noise",
+          "label": "Ruido",
+          "body": "Filtramos el ruido."
+        },
+        {
+          "key": "clarity",
+          "label": "Claridad",
+          "body": "Revelamos lo que importa."
+        },
+        {
+          "key": "decisions",
+          "label": "Decisiones",
+          "body": "Actúas con convicción."
+        }
+      ]
     }
   }
 }

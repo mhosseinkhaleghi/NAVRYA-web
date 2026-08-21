@@ -45,6 +45,14 @@ overflows, `dir` is right, and the bar marks the page it is on and still offers
 a way back. If the two pages ever stop sharing an implementation, this is what
 notices.
 
+**Each slide is judged at its own resting stop.** The walk samples every step
+and, for each slide, the assertions run against the sample where that slide is
+up and furthest arrived — not against the film's last frame. They all read off
+the final sample once, which held for exactly as long as the last slide was the
+only slide; when a fourth arrived, fourteen runs reported "slide 2 never became
+active" about a slide that had been complete several stops earlier. The site was
+right and the check was looking in the wrong place.
+
 **Slide 2 — the battle map.** Reached with real wheel events, never `scrollTo`,
 because the two are not the same test and the difference is what a whole round
 of debugging turned on: the page was perfectly scrollable by script while every
@@ -111,6 +119,26 @@ asserted at that stop:
   be tracked at all, so the slide changes to a list there and the check does not
   apply.
 
+**Slide 4 — the council table.** Not a continuation but a cut to another room:
+its source arrives as a transition — the labelled map, a white flash at frame
+31, then a whip into the table — so the plate starts at source frame 37 and the
+opening belongs to slide 3. Asserted at the last stop:
+
+- the panel is active; the head, the call to action and all three pillars have
+  reached `--r > 0.99`; none of its blocks is empty in any locale;
+- nothing sits outside the viewport;
+- the council plate has decoded and run to its end;
+- **slide 2's headline has fully left.** That panel has no exit across slide 3
+  on purpose — the map is named under the sentence that introduced it — and when
+  a fourth slide arrived it was still up: "The Battlefield Is Never Missing
+  Data." over a different room. A panel with no exit is correct only until
+  something else takes the frame;
+- **the block is on the side of the frame the picture leaves empty.** The shot
+  is a table seen from above with the commander to its right, so the words go
+  left — and the plate mirrors under RTL, so in Persian and Arabic they must go
+  right with it. Checked as which half of the frame the block's centre falls in,
+  on wide frames only.
+
 **The plates carry no burned-in lettering.** `scripts/check-plate-clean.mjs`,
 run separately from the browser suite because it is a property of the files
 rather than of the page. The source for slide 3 draws its own English callouts
@@ -122,6 +150,14 @@ check counts near-white pixels, because the lettering is cream while the map is
 only ever bright in red and gold: the lit keep and the gold columns peak at four
 such pixels, the first word brings twenty. Proved both ways — it passes on the
 shipped plate and fails on the untrimmed one at 20 and 35.
+
+The council plate is guarded differently, because the cream test cannot see it:
+that shot is lit parchment and candlelight and is full of near-white pixels by
+nature. Its risk is a lost `START` rather than a lost trim — the source opens on
+the labelled map — so the test is aimed at one patch, the square where slide 3's
+"Price." callout sits. On this shot it is dark stone and never exceeds 7.3; on
+the labelled map it reads about 25. Proved both ways: re-encoding without
+`START` takes it to 86.2 and the guard fails.
 
 **One exemption, and its evidence.** `net::ERR_ABORTED` on a `.webm` or `.mp4`
 is not counted, on either route. A media element opens an unbounded range

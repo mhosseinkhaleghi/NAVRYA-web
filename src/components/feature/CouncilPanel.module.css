@@ -1,0 +1,340 @@
+/* -----------------------------------------------------------------------------
+ * The features page's fourth slide — the council table.
+ *
+ * The opening's composition, one page on: a block on the left rail over a shot
+ * that fills the frame. Same construction as every other panel — a screen-sized
+ * layer arriving on `--r`, leaving on `--exit`, reading nothing from the scroll.
+ * -------------------------------------------------------------------------- */
+
+.panel {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  /*
+   * The opening's grid, on this slide's own rail.
+   *
+   * The hero sets its block at 36.4% because the frame behind it is a landscape
+   * with its subject on the right. This shot is a table seen from above with
+   * the commander on *its* right and a wall of dark stone on the left, so the
+   * words go where the picture is empty — which is the near edge, not the
+   * middle. Same three bands, a different inset.
+   */
+  grid-template-columns:
+    max(var(--gutter), var(--f4-inline-start))
+    1fr
+    var(--rail-lane);
+  grid-template-rows:
+    calc(var(--header-h) + env(safe-area-inset-top, 0px))
+    minmax(0, 1fr);
+  opacity: calc(1 - var(--exit, 0));
+  pointer-events: none;
+}
+
+.panel:not([data-active]) {
+  visibility: hidden;
+}
+
+.block {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: center;
+  inline-size: 100%;
+  max-inline-size: var(--f4-measure);
+  display: grid;
+  justify-items: start;
+}
+
+/* ── The headline ─────────────────────────────────────────────────────────── */
+
+.head {
+  opacity: var(--r, 0);
+  transform: translateY(calc((1 - var(--r, 0)) * 0.7em));
+}
+
+/*
+ * Cream at the top, gold by the last line.
+ *
+ * The design sets this headline as a warm gradient rather than a flat colour —
+ * lighter where it starts, metal where it lands — and the two ends are the
+ * site's own `--c-cream` and `--gold-warm`, so it is the existing palette put
+ * on a slope rather than a new colour. `color` is declared first and stays the
+ * fallback: if `background-clip: text` is not honoured the words are simply
+ * cream, which is what every other headline on the site is.
+ */
+.headline {
+  margin: 0;
+  color: var(--c-cream);
+  background: linear-gradient(
+    180deg,
+    var(--c-cream) 0%,
+    var(--c-cream) 22%,
+    var(--gold-warm) 78%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-family: var(--font-display);
+  font-size: var(--fs-f4-display);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: var(--tracking-display);
+  text-align: start;
+  text-wrap: balance;
+}
+
+/*
+ * The shadow cannot go on the text.
+ *
+ * `text-shadow` paints behind the glyphs, and the glyphs here are a window onto
+ * a gradient — the shadow shows *through* them as a grey smear rather than
+ * lifting them off the footage. A drop-shadow filter on the element does the
+ * same job from outside, on the shape the letters actually make.
+ */
+.head {
+  filter: drop-shadow(0 2px 18px rgb(0 0 0 / 0.55));
+}
+
+[dir="rtl"] .headline {
+  line-height: 1.5;
+}
+
+/* ── The ruled break ──────────────────────────────────────────────────────── */
+
+/*
+ * A stopped line with its node, as everywhere else on the site — but drawn in
+ * three pieces here rather than as one gradient with a pseudo-element, because
+ * the design puts the node a third of the way along rather than at the middle
+ * and fades the run after it.
+ */
+.rule {
+  display: flex;
+  align-items: center;
+  inline-size: var(--f4-rule);
+  max-inline-size: 100%;
+  margin-block: var(--f4-gap-rule) var(--f4-gap-sub);
+  opacity: var(--r, 0);
+}
+
+.ruleLine,
+.ruleLineFaint {
+  block-size: var(--border-1);
+  background: var(--c-gold-line);
+}
+
+.ruleLine {
+  flex: 0 0 36%;
+}
+
+.ruleLineFaint {
+  flex: 1 1 auto;
+  background: linear-gradient(to right, var(--c-gold-line), transparent);
+}
+
+[dir="rtl"] .ruleLineFaint {
+  background: linear-gradient(to left, var(--c-gold-line), transparent);
+}
+
+.ruleNode {
+  flex: 0 0 auto;
+  inline-size: var(--node-size);
+  block-size: var(--node-size);
+  margin-inline: 0.6em;
+  border: var(--border-1) solid var(--c-gold);
+  transform: rotate(45deg);
+}
+
+/* ── The sub-headline ─────────────────────────────────────────────────────── */
+
+.subline {
+  margin: 0;
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-f4-sub);
+  font-weight: 300;
+  line-height: 1.65;
+  text-align: start;
+  text-shadow: var(--text-lift);
+  opacity: var(--r, 0);
+  transform: translateY(calc((1 - var(--r, 0)) * 0.5em));
+}
+
+/* Each localised line is authored as its own line and keeps its own row. */
+.sublineLine {
+  display: block;
+}
+
+/* ── The way onward ───────────────────────────────────────────────────────── */
+
+.cta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85em;
+  margin-block-start: var(--f4-gap-cta);
+  padding: 0 0 0.75em;
+  border: 0;
+  background: none;
+  color: var(--gold-warm);
+  font-family: var(--font-sans);
+  font-size: var(--fs-f4-cta);
+  font-weight: 500;
+  letter-spacing: var(--tracking-micro);
+  text-transform: uppercase;
+  text-shadow: var(--text-lift-micro);
+  cursor: pointer;
+  opacity: var(--r, 0);
+}
+
+.ctaLabel {
+  white-space: nowrap;
+}
+
+/* The site's diamond, at the end of the line rather than the middle of it. */
+.ctaNode {
+  inline-size: var(--node-size);
+  block-size: var(--node-size);
+  border: var(--border-1) solid var(--c-gold);
+  transform: rotate(45deg);
+}
+
+/* The underline is the control's own rule, drawn under the whole row. */
+.ctaRule {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  block-size: var(--border-1);
+  background: linear-gradient(to right, var(--c-gold-line), var(--c-gold-line-faint));
+  transition: background var(--dur-hover) var(--ease-out);
+}
+
+[dir="rtl"] .ctaRule {
+  background: linear-gradient(to left, var(--c-gold-line), var(--c-gold-line-faint));
+}
+
+.cta:hover .ctaRule {
+  background: var(--c-gold-line-strong);
+}
+
+/* ── The three pillars ────────────────────────────────────────────────────── */
+
+.pillars {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  margin: var(--f4-gap-pillars) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/*
+ * Divided by a rule between them, not around them: the first column has no
+ * leading edge and the last no trailing one, which is what the comp shows and
+ * what stops the row reading as three boxes.
+ */
+.pillar {
+  display: grid;
+  justify-items: start;
+  gap: 0.5rem;
+  padding-inline: var(--f4-pillar-gap);
+  opacity: var(--r, 0);
+  transform: translateY(calc((1 - var(--r, 0)) * 0.4em));
+}
+
+.pillar:first-child {
+  padding-inline-start: 0;
+}
+
+.pillar:last-child {
+  padding-inline-end: 0;
+}
+
+.pillar + .pillar {
+  border-inline-start: var(--border-1) solid var(--c-gold-line-faint);
+}
+
+/*
+ * The one crimson on the page.
+ *
+ * Everything else here is cream and gold; the marks are the ember the footage
+ * is lit by, which is why they read as belonging to the picture rather than
+ * sitting on it. Stroked, never filled — the same drawn-metal rule the rest of
+ * the site's ornament follows.
+ */
+.pillarIcon {
+  inline-size: var(--f4-icon);
+  block-size: var(--f4-icon);
+  fill: none;
+  stroke: var(--char-accent);
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 10px var(--char-glow));
+}
+
+.pillarLabel {
+  color: var(--gold-warm);
+  font-family: var(--font-sans);
+  font-size: var(--fs-f4-pillar);
+  font-weight: 500;
+  letter-spacing: var(--tracking-micro);
+  text-transform: uppercase;
+  text-shadow: var(--text-lift-micro);
+}
+
+.pillarBody {
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-f4-pillar-body);
+  font-weight: 300;
+  line-height: 1.5;
+  text-shadow: var(--text-lift);
+}
+
+/* -----------------------------------------------------------------------------
+ * Compact frames.
+ *
+ * Below 1024 the bar is a row of the stage's own grid rather than an overlay,
+ * so the panel stops reserving `--header-h` — the same override every panel on
+ * this site makes at that width.
+ *
+ * The pillars stop being a row at the point three columns of words no longer
+ * fit one: a `max-content` column that cannot have its content is a column of
+ * broken words. They stack, and the rule that divided them turns with them.
+ * -------------------------------------------------------------------------- */
+
+@media (max-width: 1023px) {
+  .panel {
+    position: relative;
+    inset: auto;
+    grid-row: 2;
+    grid-column: 1;
+    min-block-size: 0;
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr);
+    padding-inline: var(--gutter);
+  }
+
+  .block {
+    grid-column: 1;
+    grid-row: 1;
+  }
+}
+
+@media (max-width: 767px) {
+  .pillars {
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+    gap: 1.1rem;
+  }
+
+  .pillar {
+    padding-inline: 0;
+  }
+
+  .pillar + .pillar {
+    border-inline-start: 0;
+    border-block-start: var(--border-1) solid var(--c-gold-line-faint);
+    padding-block-start: 1.1rem;
+  }
+}

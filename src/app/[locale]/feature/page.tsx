@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { FeaturePanel } from "@/components/feature/FeaturePanel";
 import { MapNotes } from "@/components/feature/MapNotes";
+import { CouncilPanel } from "@/components/feature/CouncilPanel";
 import { Hero } from "@/components/hero/Hero";
 import { Scene } from "@/components/frame/Scene";
 import { Stage } from "@/components/frame/Stage";
@@ -68,6 +69,14 @@ const PLATES = [
   { id: "commander", slug: "commander-clarity", lead: true, codecs: ["webm", "mp4"] },
   { id: "battlemap", slug: "commander-map", lead: false, codecs: ["webm", "mp4"] },
   { id: "scatter", slug: "commander-scatter", lead: false, codecs: ["webm", "mp4"] },
+  /*
+   * `council` is not a continuation — it is a cut to somewhere else, and the
+   * source says so: it arrives as a transition, opening on the labelled map,
+   * flashing white at frame 31, and whipping into the council table. Only the
+   * last stretch is this plate, so it starts at source frame 37. The opening
+   * seconds belong to slide 3, English lettering and all.
+   */
+  { id: "council", slug: "commander-council", lead: false, codecs: ["webm", "mp4"] },
 ] as const;
 
 /*
@@ -106,13 +115,15 @@ const SEQUENCE = {
   beats: [
     ["battlemap", 380],
     ["scatter", 230],
+    ["council", 300],
   ],
   beatSeconds: [
     ["battlemap", 5.041667],
-    ["scatter", 3.041995],
+    ["scatter", 0.875],
+    ["council", 1.458333],
   ],
-  plates: ["commander", "battlemap", "scatter"],
-  plateBeat: [null, "battlemap", "scatter"],
+  plates: ["commander", "battlemap", "scatter", "council"],
+  plateBeat: [null, "battlemap", "scatter", "council"],
   heroExit: [0.2, 0.36],
   scenes: [
     {
@@ -120,29 +131,51 @@ const SEQUENCE = {
       beat: "battlemap",
       panel: "f2",
       /*
-       * No exit. Slide 2's headline is slide 3's headline — the map is named
-       * *under* the sentence that introduced it, which is what the composition
-       * is — so the panel stays up over the cut instead of leaving and being
-       * replaced by an identical one.
+       * Slide 2's headline is slide 3's headline too — the map is named *under*
+       * the sentence that introduced it, which is what the composition is — so
+       * it stays up across that cut instead of leaving and being replaced by an
+       * identical one. It leaves on the fourth beat, because slide 4 is a
+       * different subject in a different room and the battlefield's title has
+       * no business over it.
        */
-      exit: null,
+      exit: ["council", 0, 0.2],
       cues: [0.45, 0.85],
     },
     {
       plate: "scatter",
       beat: "scatter",
       panel: "f3",
-      exit: null,
       /*
        * Everything on this slide is one staggered arrival, so it is all in the
        * `rest` group and `cues[0]` drives nothing — there is no title here, the
        * headline above belongs to the scene before. The frame draws itself
        * first, then the eight callouts in turn, then the sentence they add up
        * to, and the stagger the controller applies across ten steps completes
-       * exactly at `cues[1] + REST_SPAN` — the film's last stop, and the foot of
-       * the document.
+       * exactly at `cues[1] + REST_SPAN`, which is the end of its own shot.
        */
       cues: [0.05, 0.85],
+      /*
+       * Slide 3 leaves over the shot that follows it, which is what every
+       * handover on the home film does: the callouts and their sentence go
+       * while the council shot is already rushing in, rather than blinking out
+       * against a frozen frame. Early in the beat, because the whip-in is the
+       * loudest thing in this film and nothing should still be readable across
+       * it.
+       */
+      exit: ["council", 0, 0.22],
+    },
+    {
+      plate: "council",
+      beat: "council",
+      panel: "f4",
+      exit: null,
+      /*
+       * The head lands once the camera has stopped moving — the shot settles by
+       * about two thirds — and the rest of the block follows it. The last stop
+       * is `cues[1] + REST_SPAN`, which at 0.85 is the end of the shot and the
+       * foot of the document.
+       */
+      cues: [0.62, 0.85],
     },
   ],
 } as const;
@@ -178,6 +211,13 @@ export default async function FeaturePage({
         id="f3"
         notes={dictionary.feature.scatter.notes}
         closing={dictionary.feature.scatter.closing}
+      />
+      <CouncilPanel
+        id="f4"
+        headline={dictionary.feature.council.headline}
+        subline={dictionary.feature.council.subline}
+        cta={dictionary.feature.council.cta}
+        pillars={dictionary.feature.council.pillars}
       />
     </Stage>
   );

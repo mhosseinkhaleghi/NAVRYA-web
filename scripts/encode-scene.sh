@@ -49,6 +49,18 @@
 #                 the plate stays one generation off the source. Cropping in a
 #                 separate pass first would make every rendition a second.
 #
+#   START=<s>     optional, in the environment: where the plate begins in the
+#                 source. A source can arrive as a *transition* — the shot
+#                 before it, a wipe, then the shot this plate actually is — so
+#                 its opening seconds belong to the previous slide, burned-in
+#                 lettering and all.
+#
+#                 Given as an output seek, after the input, so it is frame
+#                 accurate and stays in the same filter chain as the scale.
+#                 Seeking on the input side would land on the nearest keyframe
+#                 instead, and re-encoding a pre-trimmed file would make every
+#                 rendition a second generation.
+#
 #   seconds       optional: trim the plate to this length. Several of the
 #                 sources end on a run of identical frames, and shipping them
 #                 is pure weight — the timeline holds the last frame for as
@@ -77,6 +89,7 @@ SLUG=${2:?usage: encode-scene.sh <source> <slug> [play|scrub] [seconds]}
 MODE=${3:-play}
 TRIM=${4:-}
 CROP=${CROP:-}
+START=${START:-}
 
 # Prepended to every filter chain below, so the crop and the delivery encode
 # are one generation. Empty unless asked for.
@@ -95,17 +108,25 @@ esac
 # Applied to every encode below, so the trim and the delivery encode are the
 # same generation.
 CUT=()
-[ -n "$TRIM" ] && CUT=(-t "$TRIM")
+[ -n "$START" ] && CUT+=(-ss "$START")
+[ -n "$TRIM" ] && CUT+=(-t "$TRIM")
 
 DUR=$(ffprobe -v error -select_streams v:0 -show_entries format=duration -of csv=p=0 "$SRC")
 FPS=$(ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate -of csv=p=0 "$SRC")
 FRAMES=$(ffprobe -v error -select_streams v:0 -count_frames \
   -show_entries stream=nb_read_frames -of csv=p=0 "$SRC")
+# The stills are pulled by frame index straight from the source, so they need the
+# start expressed the same way — otherwise a plate beginning at 1.583s takes its
+# opening still from the source's frame 0, which is the shot before it.
+SKIP=0
+[ -n "$START" ] && SKIP=$(awk -v t="$START" -v f="$FPS" \
+  'BEGIN { split(f, a, "/"); printf "%d", t * a[1] / a[2] }')
+
 if [ -n "$TRIM" ]; then
   DUR=$TRIM
   FRAMES=$(awk -v t="$TRIM" -v f="$FPS" 'BEGIN { split(f, a, "/"); printf "%d", t * a[1] / a[2] }')
 fi
-echo "$SLUG · ${DUR}s · ${FRAMES} frames · mode=$MODE (gop=$GOP)"
+echo "$SLUG · ${DUR}s · ${FRAMES} frames from source frame ${SKIP} · mode=$MODE (gop=$GOP)"
 
 # Both codecs, always. VP9 is the smaller file when the GOP is long, H.264 wins
 # when it is short — but the browser only ever downloads one, so shipping the
@@ -158,14 +179,14 @@ ffmpeg -v error -y -i "$SRC" "${CUT[@]}" -an -vf "${CUTBOX}scale=854:480:flags=l
   -c:v libvpx-vp9 -crf 46 -b:v 0 -row-mt 1 -cpu-used 4 \
   -g 24 -keyint_min 24 -pix_fmt yuv420p "$OUT/$SLUG-proxy.webm"
 for edge in first last; do
-  [ "$edge" = first ] && n=0 || n=$((FRAMES - 1))
+  [ "$edge" = first ] && n=$SKIP || n=$((SKIP + FRAMES - 1))
   ffmpeg -v error -y -i "$SRC" -vf "select=eq(n\,$n),${CUTBOX}scale=854:480:flags=lanczos" \
     -frames:v 1 -q:v 5 "$OUT/$SLUG-$edge-proxy.jpg"
 done
 
-ffmpeg -v error -y -i "$SRC" -vf "select=eq(n\,0),${CUTBOX}scale=1920:1080:flags=lanczos" \
+ffmpeg -v error -y -i "$SRC" -vf "select=eq(n\,$SKIP),${CUTBOX}scale=1920:1080:flags=lanczos" \
   -frames:v 1 -q:v 5 "$OUT/$SLUG-first.jpg"
-ffmpeg -v error -y -i "$SRC" -vf "select=eq(n\,$((FRAMES - 1))),${CUTBOX}scale=1920:1080:flags=lanczos" \
+ffmpeg -v error -y -i "$SRC" -vf "select=eq(n\,$((SKIP + FRAMES - 1))),${CUTBOX}scale=1920:1080:flags=lanczos" \
   -frames:v 1 -q:v 5 "$OUT/$SLUG-last.jpg"
 
 echo

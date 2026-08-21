@@ -339,6 +339,31 @@
         "Bir yatırımcının sorunu veri eksikliği değil.",
         "Sorun, her şeyin dağınık olması."
       ]
+    },
+    "council": {
+      "headline": "Çok Fazla Bilgi Daha İyi Kararlar Doğurmaz.",
+      "subline": [
+        "Araştırmalar, bilgi yükü arttıkça yatırımcı",
+        "kararlarının rasyonelliğinin azaldığını gösteriyor."
+      ],
+      "cta": "Navrya yaklaşımını keşfedin",
+      "pillars": [
+        {
+          "key": "noise",
+          "label": "Gürültü",
+          "body": "Gürültüyü süzeriz."
+        },
+        {
+          "key": "clarity",
+          "label": "Netlik",
+          "body": "Önemli olanı ortaya çıkarırız."
+        },
+        {
+          "key": "decisions",
+          "label": "Kararlar",
+          "body": "Kararlılıkla hareket edersiniz."
+        }
+      ]
     }
   }
 }

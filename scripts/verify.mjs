@@ -1232,6 +1232,51 @@ async function main() {
            * points at empty ground — differently at every width, and never
            * obviously enough to notice in one screenshot.
            */
+          /*
+           * Slide 4 — the council table.
+           *
+           * `f2Exit` is here because slide 2's headline outstayed it once. That
+           * panel deliberately has no exit across the third slide — the map is
+           * named under the sentence that introduced it — and when a fourth
+           * slide arrived it was still up, "The Battlefield Is Never Missing
+           * Data." sitting over a different room. A panel with no exit is
+           * correct until the moment something else takes the frame.
+           */
+          f2Exit: (() => {
+            const p2 = document.querySelector('[data-panel="f2"]');
+            return p2 ? +getComputedStyle(p2).getPropertyValue("--exit") : null;
+          })(),
+          f4: (() => {
+            const panel = document.querySelector('[data-panel="f4"]');
+            if (!panel) return null;
+            const v = document.querySelector('[data-scene-video="council"]');
+            const r = (el) => (el ? +getComputedStyle(el).getPropertyValue("--r") : null);
+            const pillars = [...panel.querySelectorAll("li")];
+            const parts = [...panel.querySelectorAll("h2,p,button,li")];
+            const block = panel.querySelector('[class*="block"]');
+            const bb = block.getBoundingClientRect();
+            return {
+              active: panel.hasAttribute("data-active"),
+              headR: r(panel.querySelector('[data-reveal-group="title"]')),
+              ctaR: r(panel.querySelector("button")),
+              pillars: pillars.length,
+              minPillarR: pillars.length ? Math.min(...pillars.map((n) => r(n))) : null,
+              blank: parts.filter((n) => !(n.textContent || "").trim()).length,
+              offscreen: parts.filter((n) => {
+                const b = n.getBoundingClientRect();
+                return b.width === 0 || b.height === 0 || b.left < -1 ||
+                  b.right > innerWidth + 1 || b.top < -1 || b.bottom > innerHeight + 1;
+              }).length,
+              /* Which side of the frame the block is on. The words go where the
+               * picture is empty, and the picture mirrors with the writing
+               * direction — so on a wide frame the block has to mirror with it. */
+              centre: (bb.left + bb.right) / 2 / innerWidth,
+              wide: innerWidth >= 1024,
+              t: v ? v.currentTime : null,
+              dur: v && v.duration ? v.duration : null,
+              ready: v ? v.readyState : null,
+            };
+          })(),
           f3: (() => {
             const panel = document.querySelector('[data-panel="f3"]');
             if (!panel) return null;
@@ -1309,10 +1354,39 @@ async function main() {
 
     // Both headlines on screen at once is the failure the opening's own exit
     // window guards against, and it is only visible while the film is moving.
+    /*
+     * Wait for the film to stop moving.
+     *
+     * A magnetic step glides for between 620ms and about two seconds, and the
+     * walk's own cadence is 150ms — so a sample taken straight after a wheel is
+     * a sample of the *travel*, which is what the doubled-headline check wants
+     * and the opposite of what the resting assertions want. On a phone the
+     * steps are large enough that no mid-glide sample ever landed on slide 3's
+     * stop at all: measured, the slide was still up with its plate at 0.77s and
+     * had already left by the time the plate reached 0.847.
+     */
+    const settle = async () => {
+      let last = -1;
+      for (let i = 0; i < 24; i++) {
+        const y = await page.evaluate(() => Math.round(window.scrollY));
+        if (y === last) return;
+        last = y;
+        await page.waitForTimeout(120);
+      }
+    };
+
     let doubled = 0;
+    const samples = [];
     for (let i = 0; i < 60; i++) {
+      // Mid-travel: the only place two headlines can be caught together.
+      const moving = await readSlide2();
+      if (moving.heroOp > 0.05 && moving.headR > 0.05) doubled++;
+
+      // At rest: what every per-slide assertion is actually about.
+      await settle();
       const s = await readSlide2();
-      if (s.heroOp > 0.05 && s.headR > 0.05) doubled++;
+      samples.push(s);
+
       if (s.y >= maxY - 4) break;
       await page.mouse.wheel(0, 240);
       await page.waitForTimeout(150);
@@ -1326,6 +1400,29 @@ async function main() {
 
     await page.waitForTimeout(500);
     const rest = await readSlide2();
+    samples.push(rest);
+
+    /*
+     * Each slide is judged at *its own* resting stop, not at the film's end.
+     *
+     * They were all read off the final sample, which worked for exactly as long
+     * as the last slide was the only slide: the film's foot was slide 2's
+     * resting stop. It is slide 4's now, and by then slides 2 and 3 have
+     * correctly left — so fourteen runs reported "slide 2 never became active"
+     * about a slide that had been on screen, complete, several stops earlier.
+     * The site was right and the check was looking in the wrong place.
+     *
+     * The walk already samples every step, so the stop is found rather than
+     * assumed: for each slide, the sample where it is up and its *own shot* has
+     * run furthest. Scoring on the reveal instead was the obvious thing and it
+     * is wrong — a panel finishes arriving well before its plate finishes
+     * playing, so the first sample at `--r: 1` won and the map was reported
+     * resting at 2.63s of 5.04.
+     */
+    const bestBy = (score) =>
+      samples.reduce((best, s) => (score(s) > score(best ?? s) || !best ? s : best), null) ?? rest;
+    const at2 = bestBy((s) => (s.active ? (s.t ?? -1) : -1));
+    const at3 = bestBy((s) => (s.f3 && s.f3.active ? (s.f3.t ?? -1) : -1));
 
     // No stretch of document below the last magnetic stop: the wheel would
     // refuse to travel it while the scrollbar said there was more.
@@ -1335,9 +1432,9 @@ async function main() {
         "interaction",
         `the film rests at ${rest.y} of ${maxY} — ${maxY - rest.y}px the wheel cannot reach`,
       );
-    if (rest.active !== true) fail(where, "D1-text", "slide 2 never became active");
-    if (!(rest.headR > 0.99))
-      fail(where, "D1-text", `the slide's head rests at --r ${rest.headR}`);
+    if (at2.active !== true) fail(where, "D1-text", "slide 2 never became active");
+    if (!(at2.headR > 0.99))
+      fail(where, "D1-text", `the slide's head rests at --r ${at2.headR}`);
     /*
      * The rule under the headline — the site's own punctuation, and the only
      * ornament this slide has now that the gold frame is gone.
@@ -1347,35 +1444,35 @@ async function main() {
      * pixels *above* the bottom of the glyphs and struck through the words,
      * while every box-based measure reported a clean stack.
      */
-    if (!rest.ruleBox) fail(where, "D1-text", "slide 2 has no rule under its headline");
+    if (!at2.ruleBox) fail(where, "D1-text", "slide 2 has no rule under its headline");
     else {
-      if (rest.ruleBox.w < 24)
-        fail(where, "D3-layout", `the rule is ${rest.ruleBox.w}px wide — its token is missing`);
-      if (rest.headInk !== null && rest.ruleBox.top < rest.headInk)
+      if (at2.ruleBox.w < 24)
+        fail(where, "D3-layout", `the rule is ${at2.ruleBox.w}px wide — its token is missing`);
+      if (at2.headInk !== null && at2.ruleBox.top < at2.headInk)
         fail(
           where,
           "D3-layout",
-          `the rule crosses the headline: it sits ${rest.headInk - rest.ruleBox.top}px above the ink`,
+          `the rule crosses the headline: it sits ${at2.headInk - at2.ruleBox.top}px above the ink`,
         );
     }
-    if (!rest.headline) fail(where, "D1-text", "slide 2 has no headline");
+    if (!at2.headline) fail(where, "D1-text", "slide 2 has no headline");
     else {
-      if (rest.headline.op <= 0.05)
-        fail(where, "D1-text", `slide 2's headline is at opacity ${rest.headline.op}`);
-      if (rest.headline.w === 0 || rest.headline.h === 0)
-        fail(where, "D3-layout", `slide 2's headline box is ${rest.headline.w}×${rest.headline.h}`);
+      if (at2.headline.op <= 0.05)
+        fail(where, "D1-text", `slide 2's headline is at opacity ${at2.headline.op}`);
+      if (at2.headline.w === 0 || at2.headline.h === 0)
+        fail(where, "D3-layout", `slide 2's headline box is ${at2.headline.w}×${at2.headline.h}`);
     }
-    if (rest.dur && rest.t < rest.dur * 0.9)
+    if (at2.dur && at2.t < at2.dur * 0.9)
       fail(
         where,
         "D2-video",
-        `the map rests at ${rest.t.toFixed(2)}s of ${rest.dur.toFixed(2)}s — the shot never finished`,
+        `the map rests at ${at2.t.toFixed(2)}s of ${at2.dur.toFixed(2)}s — the shot never finished`,
       );
 
     /* ── slide 3 — the map, named ─────────────────────────────────────── */
-    if (!rest.f3) fail(where, "D1-text", "slide 3 is not in the DOM");
+    if (!at3.f3) fail(where, "D1-text", "slide 3 is not in the DOM");
     else {
-      const f3 = rest.f3;
+      const f3 = at3.f3;
       if (!f3.active) fail(where, "D1-text", "slide 3 never became active");
       if (f3.notes !== 8) fail(where, "D1-text", `slide 3 has ${f3.notes} callouts, expected 8`);
       if (f3.blank) fail(where, "D5-lang", `${f3.blank} callout(s) have no text in this locale`);
@@ -1399,6 +1496,36 @@ async function main() {
       if (f3.pinned && f3.drift !== null && f3.drift > 2)
         fail(where, "D3-layout",
           `the callout layer is ${Math.round(f3.drift)}px off the painted plate`);
+    }
+
+    /* ── slide 4 — the council table ──────────────────────────────────── */
+    if (rest.f2Exit !== null && rest.f2Exit < 0.99)
+      fail(where, "D1-text", `slide 2's headline is still up at --exit ${rest.f2Exit}`);
+
+    if (!rest.f4) fail(where, "D1-text", "slide 4 is not in the DOM");
+    else {
+      const f4 = rest.f4;
+      if (!f4.active) fail(where, "D1-text", "slide 4 never became active");
+      if (!(f4.headR > 0.99)) fail(where, "D1-text", `slide 4's head rests at --r ${f4.headR}`);
+      if (!(f4.ctaR > 0.99)) fail(where, "D1-text", `slide 4's call to action rests at --r ${f4.ctaR}`);
+      if (f4.pillars !== 3) fail(where, "D1-text", `slide 4 has ${f4.pillars} pillars, expected 3`);
+      if (!(f4.minPillarR > 0.99))
+        fail(where, "D1-text", `slide 4's last pillar rests at --r ${f4.minPillarR}`);
+      if (f4.blank) fail(where, "D5-lang", `${f4.blank} block(s) of slide 4 have no text`);
+      if (f4.offscreen)
+        fail(where, "D3-layout", `${f4.offscreen} block(s) of slide 4 sit outside the viewport`);
+      if (!(f4.ready > 0)) fail(where, "D2-video", `the council plate is at readyState ${f4.ready}`);
+      if (f4.dur && !(f4.t >= f4.dur - 0.12))
+        fail(where, "D2-video",
+          `the council plate rests at ${f4.t.toFixed(2)}s of ${f4.dur.toFixed(2)}s`);
+      if (f4.wide) {
+        const shouldBeLeft = where.locale !== "fa" && where.locale !== "ar";
+        const isLeft = f4.centre < 0.5;
+        if (isLeft !== shouldBeLeft)
+          fail(where, "D3-layout",
+            `slide 4's block sits on the ${isLeft ? "left" : "right"} at centre ` +
+            `${f4.centre.toFixed(2)} — the shot mirrors, so the words must too`);
+      }
     }
 
     // The bar takes a solid ground below the film. This film has nothing below

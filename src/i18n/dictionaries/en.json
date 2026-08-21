@@ -339,6 +339,31 @@
         "A trader’s problem isn’t a lack of data.",
         "It’s that everything is scattered."
       ]
+    },
+    "council": {
+      "headline": "Too Much Information Doesn’t Create Better Decisions.",
+      "subline": [
+        "Research shows that when information overload rises,",
+        "the rationality of investor decisions declines."
+      ],
+      "cta": "Discover the Navrya approach",
+      "pillars": [
+        {
+          "key": "noise",
+          "label": "Noise",
+          "body": "We filter the noise."
+        },
+        {
+          "key": "clarity",
+          "label": "Clarity",
+          "body": "We reveal what matters."
+        },
+        {
+          "key": "decisions",
+          "label": "Decisions",
+          "body": "You act with conviction."
+        }
+      ]
     }
   }
 }

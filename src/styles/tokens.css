@@ -129,6 +129,25 @@
   --fs-f3-closing: clamp(0.85rem, min(1.42vw, 2.53vh), 1.6rem);
   --f3-closing-bottom: clamp(2rem, 6vh, 4.5rem);
 
+  /* ── The features page, slide 4 — the council table ─────────────────────── */
+  /* The block sits on the opening's rail, so it is measured like the opening's
+   * block rather than like a centred panel: a measure it wraps inside, and a
+   * stack of gaps between its parts. */
+  --f4-inline-start: 6.8%;
+  --f4-measure: min(40rem, 44vw);
+  --fs-f4-display: clamp(1.6rem, min(3.35vw, 5.95vh), 4.35rem);
+  --fs-f4-sub: clamp(0.85rem, min(1.16vw, 2.06vh), 1.28rem);
+  --fs-f4-cta: clamp(0.62rem, min(0.83vw, 1.48vh), 0.86rem);
+  --fs-f4-pillar: clamp(0.66rem, min(0.9vw, 1.6vh), 0.95rem);
+  --fs-f4-pillar-body: clamp(0.7rem, min(0.93vw, 1.65vh), 0.98rem);
+  --f4-rule: clamp(10rem, 27vw, 26rem);
+  --f4-icon: clamp(1.35rem, 2.2vw, 2rem);
+  --f4-pillar-gap: clamp(1rem, 2.6vw, 2.75rem);
+  --f4-gap-rule: clamp(1.1rem, 3.2vh, 2.6rem);
+  --f4-gap-sub: clamp(1.1rem, 3.2vh, 2.6rem);
+  --f4-gap-cta: clamp(1.2rem, 3.6vh, 3rem);
+  --f4-gap-pillars: clamp(2rem, 7vh, 5.5rem);
+
   /* ── Section 7 — the black ground, and the orb ──────────────────────────── */
   /* Centred over nothing, so it is set like section 5's statement rather than
    * like a railed panel. */
