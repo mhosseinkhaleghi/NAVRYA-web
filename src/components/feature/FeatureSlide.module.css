@@ -18,25 +18,34 @@
   --hero-inline-start: 43.8%;
 
   /*
-   * This slide's headline is a sentence, not a title.
+   * The opening's own type, one rung down, and the reason is measurable.
    *
-   * "Become the Hunter." is three words and can carry the full display size —
-   * it is a statement, and at 6.4vw it fills the frame the way a title card
-   * does. This one is sixty characters of argument, and at that size it came
-   * out six lines deep and ran from under the bar to the scroll cue. The comp
-   * sets it at 64px on its 1672 frame, which is 3.83vw and lands it on three,
-   * with the break falling where the sentence breaks.
+   * This slide takes the hero's sub-headline exactly — `--fs-body-1`, the rung
+   * the home page's opening uses — and its headline from the same ladder one
+   * step below. At `--fs-title-1` the two pages match to the pixel and the
+   * words do not fit: this headline is a sentence of sixty characters, not
+   * "Become the Hunter.", and at 92px it runs to six lines in English and seven
+   * in Spanish. Measured at 1440×900, the Spanish block began 26px *above* the
+   * top of the frame and ended 99px past the scroll cue.
    *
-   * Paired with its own value in vh on the same 16:9 rule as every other
-   * vertical figure in tokens.css — 1vw is 1.778vh at the comp's aspect, so
-   * this changes nothing there and scales by height on a shorter frame.
+   * `--fs-title-2` is the largest rung that fits every language on every frame
+   * measured, down to 1280×720.
    */
-  --fs-display: clamp(1.9rem, min(3.83vw, 6.81vh), 5.25rem);
+  --fs-display: var(--fs-title-2);
 
-  /* The comp's sub-headline is 19px against that same frame. It sits closer to
-   * the headline here than on the home page because there are only two things
-   * in the block and the second is doing the explaining. */
-  --fs-sub: clamp(0.9rem, min(1.14vw, 2.03vh), 1.45rem);
+  /*
+   * And its own breathing room, because the block is five lines rather than
+   * one.
+   *
+   * The hero's gaps are set for a headline of a line or two, where a generous
+   * break between the words and the rule is most of the composition. Kept at
+   * that size here they left the Spanish block two pixels clear of the scroll
+   * cue — fitting, but not by any margin worth shipping. These are spacing,
+   * not type: the sizes above still match the ladder, and only the air between
+   * them is proportioned to a longer sentence.
+   */
+  --hero-gap-headline-rule: clamp(0.75rem, min(1.4vw, 2.49vh), 1.6rem);
+  --hero-gap-rule-sub: clamp(0.8rem, min(1.5vw, 2.67vh), 1.75rem);
 }
 
 /* The compact band gives the block the full measure between the gutters, as

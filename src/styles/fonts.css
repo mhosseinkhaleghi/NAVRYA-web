@@ -93,11 +93,21 @@
  * `font-style: italic` outright, so they keep asking for the face they always
  * had rather than silently standing up.
  *
- * The extended slice is cut to Latin Extended-A and -B rather than to the whole
- * of Google's range: 553 glyphs against 787, 61KB against 108. Everything the
- * Latin dictionaries reach for in that range is 'ğİŞş' — Turkish — and the
- * declared range below is narrowed to match what the file actually holds, so a
- * reader never fetches it to find the glyph missing.
+ * Both extended slices are cut to Latin Extended-A rather than to the whole of
+ * Google's range, and the declared ranges below are narrowed to match what the
+ * files actually hold, so a reader never fetches one to find the glyph missing.
+ *
+ * Extended-A is every European Latin orthography — Turkish, Polish, Czech,
+ * Croatian, Romanian, Hungarian — so this is a cut by alphabet, not by the
+ * strings that happen to be in the dictionaries today; new copy in any of those
+ * languages is already covered. What goes is Extended-B, Vietnamese and the IPA
+ * blocks, which no dictionary this site could plausibly carry will reach for.
+ *
+ * That is 63KB→27 for the upright and 53KB→20 for the italic, and it lands
+ * entirely on Turkish: it is the only locale whose text crosses U+0100 at all,
+ * so it was the only one paying for the other 380 glyphs. Every string in all
+ * five dictionaries was rendered through both cascades and compared pixel for
+ * pixel first — 6210 rasters, zero differences.
  */
 @font-face {
   font-family: 'EB Garamond';
@@ -105,7 +115,7 @@
   font-weight: 400 600;
   font-display: swap;
   src: url('/fonts/eb-garamond-latin-ext.woff2') format('woff2');
-  unicode-range: U+0100-024F, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113;
+  unicode-range: U+0100-017F, U+0192, U+01FA-01FF, U+0218-021B, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1E9E, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113;
 }
 @font-face {
   font-family: 'EB Garamond';
@@ -121,7 +131,7 @@
   font-weight: 400 600;
   font-display: swap;
   src: url('/fonts/eb-garamond-italic-latin-ext.woff2') format('woff2');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  unicode-range: U+0100-017F, U+0192, U+01FA-01FF, U+0218-021B, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1E9E, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113;
 }
 @font-face {
   font-family: 'EB Garamond';

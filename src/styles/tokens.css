@@ -60,7 +60,34 @@
   --brand-mark: calc(var(--fs-wordmark) * 1.12);
   --brand-gap: calc(var(--fs-wordmark) * 0.42);
   --fs-nav: clamp(0.8125rem, min(1.1vw, 1.96vh), 1.3rem);
-  --fs-display: clamp(2.6rem, min(6.4vw, 11.38vh), 9.5rem);
+  /* ── The type ladder ────────────────────────────────────────────────────── */
+  /*
+   * One set of steps, and every page takes its sizes from them.
+   *
+   * The home page grew its scale a section at a time and each one is sound on
+   * its own; the features page then did the same again and drifted, because
+   * "what looks right on this slide" is not a system. Its three headlines came
+   * out at 3.83, 3.10 and 3.35vw — all smaller than any title on the home page,
+   * and none of them the same as each other for no reason anybody could name.
+   *
+   * The rungs below are the home page's own figures, unchanged, so nothing
+   * there moves: `title-1` is the opening's, `title-2` a film panel's, `title-3`
+   * a section's, `title-4` the smallest title on the site. Each pairs a vw with
+   * a vh on the comp's 16:9 rule, so a step holds its proportion on a frame of
+   * any shape. The sections that sit between rungs keep their own values rather
+   * than being nudged onto one — the ladder exists to stop new drift, not to
+   * restyle what is already approved.
+   */
+  --fs-title-1: clamp(2.6rem, min(6.4vw, 11.38vh), 9.5rem);
+  --fs-title-2: clamp(2rem, min(5.38vw, 9.19vh), 7.5rem);
+  --fs-title-3: clamp(1.85rem, min(4.5vw, 7.69vh), 6.5rem);
+  --fs-title-4: clamp(1.7rem, min(3.9vw, 6.66vh), 5.25rem);
+  --fs-body-1: clamp(0.95rem, min(1.5vw, 2.67vh), 1.8rem);
+  --fs-body-2: clamp(0.95rem, min(1.32vw, 2.26vh), 1.6rem);
+  --fs-body-3: clamp(0.875rem, min(1.14vw, 1.95vh), 1.35rem);
+  --fs-label: clamp(0.8rem, min(1.02vw, 1.74vh), 1.2rem);
+
+  --fs-display: var(--fs-title-1);
   /* The sub-headline under the hero.
    *
    * 2.04vw put it at 29px against a 92px headline — barely a third of the size
@@ -68,7 +95,7 @@
    * second headline rather than as the line explaining the first. Down to a
    * quarter, which is where the design system's own display-to-body step sits,
    * and it now also has a button under it competing for the same attention. */
-  --fs-sub: clamp(0.95rem, min(1.5vw, 2.67vh), 1.8rem);
+  --fs-sub: var(--fs-body-1);
   --fs-micro: clamp(0.625rem, min(0.837vw, 1.49vh), 0.95rem);
 
   --lh-sub: 1.6;
@@ -85,8 +112,8 @@
   /* Its own rail: the comp sets this block's leading edge at 758 / 1672, further
    * in than the hero's, so it clears the deer's path across the meadow. */
   --s2-inline-start: 45.3%;
-  --fs-s2-display: clamp(2rem, min(5.38vw, 9.19vh), 7.5rem);
-  --fs-s2-sub: clamp(0.875rem, min(1.14vw, 1.95vh), 1.35rem);
+  --fs-s2-display: var(--fs-title-2);
+  --fs-s2-sub: var(--fs-body-3);
   --fs-s2-index: clamp(1.6rem, min(3.17vw, 5.41vh), 4rem);
   --fs-s2-feature: clamp(1rem, min(1.55vw, 2.65vh), 1.85rem);
   --s2-rule-eyebrow: clamp(4.5rem, 9.7vw, 11rem);
@@ -106,7 +133,7 @@
 
   /* ── Section 6 — the miss, and the psychology features ──────────────────── */
   --fs-s6-display: clamp(2rem, min(5.5vw, 9.4vh), 7.75rem);
-  --fs-s6-sub: clamp(0.95rem, min(1.32vw, 2.26vh), 1.6rem);
+  --fs-s6-sub: var(--fs-body-2);
   --fs-s6-trait: clamp(1.5rem, min(3.35vw, 5.72vh), 4.5rem);
   --s6-measure: clamp(20rem, 58vw, 62rem);
   --s6-rule: clamp(7rem, 14.2vw, 16rem);
@@ -116,7 +143,7 @@
   /* ── The features page, slide 2 — the battle map ────────────────────────── */
   /* Its headline is a sentence at rest over a shot, not a title filling the
    * screen, so it sits between the panels' scale and the sub-headline's. */
-  --fs-f2-display: clamp(1.5rem, min(3.1vw, 5.51vh), 4rem);
+  --fs-f2-display: var(--fs-title-4);
   /* The rule under it. Shorter than the opening's, because it closes a single
    * centred line rather than a headline set against a left rail. */
   --f2-rule: clamp(6rem, 15vw, 17rem);
@@ -124,9 +151,9 @@
   /* ── The features page, slide 3 — the map, named ────────────────────────── */
   /* The callouts. Smaller than any headline on the site — they are labels on a
    * map, and a map's labels are the smallest type on it. */
-  --fs-f3-note: clamp(0.62rem, min(1.02vw, 1.82vh), 1.18rem);
+  --fs-f3-note: var(--fs-label);
   --fs-f3-note-compact: clamp(0.85rem, 3.6vw, 1.15rem);
-  --fs-f3-closing: clamp(0.85rem, min(1.42vw, 2.53vh), 1.6rem);
+  --fs-f3-closing: var(--fs-body-2);
   --f3-closing-bottom: clamp(2rem, 6vh, 4.5rem);
 
   /* ── The features page, slide 4 — the council table ─────────────────────── */
@@ -135,11 +162,11 @@
    * stack of gaps between its parts. */
   --f4-inline-start: 6.8%;
   --f4-measure: min(40rem, 44vw);
-  --fs-f4-display: clamp(1.6rem, min(3.35vw, 5.95vh), 4.35rem);
-  --fs-f4-sub: clamp(0.85rem, min(1.16vw, 2.06vh), 1.28rem);
-  --fs-f4-cta: clamp(0.62rem, min(0.83vw, 1.48vh), 0.86rem);
-  --fs-f4-pillar: clamp(0.66rem, min(0.9vw, 1.6vh), 0.95rem);
-  --fs-f4-pillar-body: clamp(0.7rem, min(0.93vw, 1.65vh), 0.98rem);
+  --fs-f4-display: var(--fs-title-4);
+  --fs-f4-sub: var(--fs-body-3);
+  --fs-f4-cta: var(--fs-micro);
+  --fs-f4-pillar: var(--fs-micro);
+  --fs-f4-pillar-body: var(--fs-body-3);
   --f4-rule: clamp(10rem, 27vw, 26rem);
   --f4-icon: clamp(1.35rem, 2.2vw, 2rem);
   --f4-pillar-gap: clamp(1rem, 2.6vw, 2.75rem);
@@ -153,7 +180,7 @@
    * like a railed panel. */
   /* Set so the comp's two lines stay two lines: "Meet the AI Trading Journal"
    * is 27 characters and has to hold one line at the measure below. */
-  --fs-s7-display: clamp(1.85rem, min(4.5vw, 7.69vh), 6.5rem);
+  --fs-s7-display: var(--fs-title-3);
   --fs-s7-body: clamp(1rem, min(1.5vw, 2.56vh), 1.75rem);
   --s7-measure: clamp(20rem, 66vw, 74rem);
   --s7-rule: clamp(8rem, 15.2vw, 17rem);
@@ -201,7 +228,7 @@
   --fs-s8-display: clamp(1.75rem, min(4.1vw, 7vh), 5.5rem);
   --fs-s8-sub: clamp(0.9rem, min(1.22vw, 2.08vh), 1.4rem);
   --fs-s8-name: clamp(0.95rem, min(1.32vw, 2.26vh), 1.55rem);
-  --fs-s8-tag: clamp(0.8rem, min(1.02vw, 1.74vh), 1.2rem);
+  --fs-s8-tag: var(--fs-label);
   --s8-measure: clamp(20rem, 62vw, 70rem);
   --s8-emblem: clamp(3.4rem, 5.2vw, 5.6rem);
   --s8-firm: clamp(9rem, 14vw, 15rem);
@@ -213,7 +240,7 @@
   --s8-drift: 110s;
 
   /* ── Section 9 — what the traders say ───────────────────────────────────── */
-  --fs-s9-display: clamp(1.7rem, min(3.9vw, 6.66vh), 5.25rem);
+  --fs-s9-display: var(--fs-title-4);
   --fs-s9-sub: clamp(0.875rem, min(1.16vw, 1.98vh), 1.3rem);
   --fs-s9-quote: clamp(0.8125rem, min(1.02vw, 1.74vh), 1.15rem);
   --fs-s9-name: clamp(0.875rem, min(1.14vw, 1.95vh), 1.3rem);

@@ -973,10 +973,22 @@ async function main() {
   // and the plates are WebM/VP9 precisely so it can. An explicit
   // `executablePath` also lets a pre-installed Chromium stand in for one whose
   // revision does not match this Playwright build.
-  // Chromium does not read HTTPS_PROXY from the environment the way curl does;
-  // behind an egress proxy it just resets the connection. Hand it over
-  // explicitly, and keep loopback off it so a local target still resolves.
-  const proxyServer = process.env.HTTPS_PROXY || process.env.https_proxy;
+  /*
+   * Chromium does not read HTTPS_PROXY from the environment the way curl does;
+   * behind an egress proxy it just resets the connection, so a live run has to
+   * be handed one explicitly.
+   *
+   * A local run gets none at all. The obvious version of this was to pass the
+   * proxy always and list loopback in `bypass`, and it does not work: with an
+   * explicit proxy set, this sandbox's Chromium sent `http://127.0.0.1:4173`
+   * to the gateway anyway and every navigation came back 405, which reads
+   * downstream as a site that renders nothing — 526 failures, an empty <html>,
+   * no <video>, no title. Nothing is reachable through a proxy on a local
+   * target that is not reachable without one, so the safe direction is not to
+   * offer it the choice.
+   */
+  const proxyServer =
+    TARGET === "local" ? undefined : process.env.HTTPS_PROXY || process.env.https_proxy;
   const launchArgs = ["--autoplay-policy=no-user-gesture-required"];
 
   /*
@@ -1164,6 +1176,39 @@ async function main() {
      * two stops the first one is also `length - 2` and the film took the home
      * page's hand-off-to-section-7 branch on the very first gesture.
      */
+    /*
+     * The opening block fits between the bar and the scroll cue.
+     *
+     * This slide takes the home page's type ladder, and its copy is a sentence
+     * of sixty characters where the home page's is three words — so the same
+     * rung is five or six lines here instead of one. At the opening's own rung
+     * the Spanish block began 26px above the top of the frame; one rung down it
+     * cleared the cue by two pixels, which is fitting but not by any margin.
+     * Checked in every locale, because which language is the longest is not a
+     * thing to assume.
+     */
+    {
+      const fit = await page.evaluate(() => {
+        const hero = document.querySelector("[data-hero]");
+        if (!hero) return null;
+        const parts = document.querySelectorAll("[data-hero-part]");
+        const block = parts[0].getBoundingClientRect();
+        const cue = parts[1].getBoundingClientRect();
+        const bar = parseFloat(
+          getComputedStyle(document.documentElement).getPropertyValue("--header-h")) || 0;
+        return { top: Math.round(block.top), bottom: Math.round(block.bottom),
+                 cue: Math.round(cue.top), bar: Math.round(bar) };
+      });
+      if (fit) {
+        if (fit.top < fit.bar)
+          fail(where, "D3-layout",
+            `the opening block starts at y=${fit.top}, above the bar at ${fit.bar}`);
+        if (fit.bottom > fit.cue)
+          fail(where, "D3-layout",
+            `the opening block ends at y=${fit.bottom}, past the scroll cue at ${fit.cue}`);
+      }
+    }
+
     where.at = "slide-2";
     const maxY = await page.evaluate(() =>
       Math.round(document.scrollingElement.scrollHeight - window.innerHeight),

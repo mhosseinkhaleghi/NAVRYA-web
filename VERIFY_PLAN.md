@@ -53,6 +53,16 @@ only slide; when a fourth arrived, fourteen runs reported "slide 2 never became
 active" about a slide that had been complete several stops earlier. The site was
 right and the check was looking in the wrong place.
 
+**Slide 1 — the opening.** Its type comes from the shared ladder in
+`tokens.css`, the same rungs the home page's opening uses: the sub-headline is
+`--fs-body-1` exactly, the headline one step below at `--fs-title-2`. The step
+is measured, not chosen: this slide's copy is a sentence of sixty characters
+where the home page's is three words, so at `--fs-title-1` it runs to six lines
+in English and seven in Spanish — the Spanish block began 26px *above* the top
+of the frame and ended 99px past the scroll cue at 1440×900. Asserted in every
+locale, because which language is longest is not a thing to assume: the block
+must start below the bar and end above the cue.
+
 **Slide 2 — the battle map.** Reached with real wheel events, never `scrollTo`,
 because the two are not the same test and the difference is what a whole round
 of debugging turned on: the page was perfectly scrollable by script while every
@@ -192,8 +202,24 @@ checked to end with the element at `readyState 4`, `networkState` idle, and
 separately by fetching it and reading its status, and any non-media failure or
 any 4xx/5xx is still a failure.
 
-**Targets.** `local` (production build, `next start`) and `live`
-(`https://navrya.com`). Local green with live broken is a failed run.
+**Targets.** `local` and `live` (`https://navrya.com`). Local green with live
+broken is a failed run.
+
+Local means the production build served the way production serves it —
+`node .next/standalone/server.js`, with `public/` and `.next/static` beside it
+exactly as the Dockerfile arranges them. Not `next start`: this project builds
+with `output: standalone`, and `next start` says so and serves from a different
+tree. A local target that is not the artefact being shipped is a local target
+that can agree with itself and still disagree with the site.
+
+Local also gets no proxy. Chromium is handed this sandbox's egress proxy for a
+live run because it does not read `HTTPS_PROXY` the way `curl` does; handing it
+one for a local run made it send `http://127.0.0.1:4173` to the gateway despite
+loopback being in `bypass`, and every navigation came back `405`. That reads
+downstream as a site rendering nothing — 526 failures, empty `<html>`, no
+`<video>`, no title — so it is worth naming: a total wipe-out across every
+locale and breakpoint at once is far more likely to be the harness than the
+site, and the first thing to check is whether anything was fetched at all.
 
 ## Sections, in scroll order
 
@@ -298,6 +324,51 @@ Checked on both routes, in every locale, at every breakpoint.
 - failed network requests (4xx, 5xx, blocked, CORS)
 - fonts: `document.fonts.check` for Peyda at the RTL locales, so a Persian
   regression is caught rather than eyeballed
+
+### What a locale costs to load
+
+Measured on the standalone server over an emulated 12 Mbps line, best of three,
+time from navigation to the timeline unlocking:
+
+| | en | es | tr | fa | ar |
+|---|---|---|---|---|---|
+| home | 5823 | 5767 | 5737 | 5863 | 5870 |
+| features | 5545 | 5532 | 5499 | 5649 | 5668 |
+| fonts, home | 159K | 159K | 193K | 302K | 302K |
+
+The languages are already even — 133ms covers all five on the home page — and
+the reason is that the clock is not measuring loading. Unthrottled, the same
+page unlocks at 5313ms against 5772ms: only ~460ms of the six seconds is
+network, and the rest is the opening shot, which is the same length in every
+language. Blocking every font file outright moves `en` by 7ms and `tr` by −12ms,
+which is noise; it moves `fa` by 108ms, which is the only real language-specific
+cost on the site and is bytes, not blocking — the faces are `font-display: swap`
+and compete with the plate for the line rather than holding up paint.
+
+So the optimisation available here was weight, and it was taken: 45K off fa/ar
+(Peyda's four weights, 47K each → 36K) and 33K off `tr` home / 68K off
+`tr/feature` (the two EB Garamond extended slices). Both cuts drop alphabets the
+family stacks guarantee are never reached, never strings — see the notes in
+`brand.css` and `fonts.css`.
+
+**Subsetting an Arabic face is verified, never assumed.** The initial, medial and
+final forms are reached through GSUB rather than the character map, so a subset
+can carry every codepoint on the page and still set every word wrong, silently.
+The evidence for this one, kept because the next person to touch these files will
+need the same: no Arabic codepoint dropped and no GSUB or GPOS feature lost in
+any weight; every string in the Persian and Arabic dictionaries rasterised in
+both versions at four sizes in all four weights, 6624 images, zero differing
+pixels; both RTL pages re-measured after the swap with a `Range` over each text
+node, 627 shaped runs identical to the hundredth of a pixel; and the painted
+face confirmed through CDP as Peyda, so a subset that failed to resolve could not
+pass by quietly matching Amiri. The same raster test over all five dictionaries
+covers the Latin cut — 6210 images, zero differences.
+
+That first run was not clean, and the failure is the point: 32 rasters differed,
+all of them the copyright line, all of them one character — `©`, which lives in
+Latin-1 and had gone out with the Latin alphabet. On the page it would have
+fallen through to Satoshi and nobody would ever have seen it. The check caught a
+glyph the page itself would have hidden.
 
 ## Interactions
 

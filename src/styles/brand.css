@@ -23,6 +23,22 @@
  * sub-headings, 600 for the tracked micro-labels, 700 for headlines. Each
  * `src` lists the name the Pro package actually shipped first and the other
  * spellings after it, so a re-upload under any of them still resolves.
+ *
+ * The four files here are cut down from the Pro package's: 47KB each to 36, or
+ * 45KB off the two locales that load them. What came out is Peyda's Latin
+ * alphabet, which the stack above guarantees is never reached — Cinzel, Satoshi
+ * and Garamond are all in front of it and all have Latin. What stayed is the
+ * whole of Peyda's Arabic-script coverage, untouched, plus the symbols that can
+ * turn up inside a Persian or Arabic run (© in the copyright line is a real
+ * one) — a cut by alphabet, so a change of copy cannot outrun it.
+ *
+ * Arabic shaping is the thing a careless subset breaks, and it breaks quietly:
+ * the initial, medial and final forms are reached through GSUB, not through the
+ * character map, so a file can look complete and still set every word wrong. It
+ * was checked, not assumed. Every string in the Persian and Arabic dictionaries
+ * was rasterised in both versions at four sizes in all four weights — 6624
+ * images, zero differing pixels — and both pages re-measured afterwards, all
+ * 627 shaped runs identical to the hundredth of a pixel.
  * -------------------------------------------------------------------------- */
 
 @font-face {
