@@ -63,6 +63,26 @@ of the frame and ended 99px past the scroll cue at 1440×900. Asserted in every
 locale, because which language is longest is not a thing to assume: the block
 must start below the bar and end above the cue.
 
+**The bar in that check is measured, not read from a token.** The first version
+of it took `--header-h` off the root with `getPropertyValue`, and custom
+properties are substituted rather than computed — so what came back was the
+literal string `clamp(4rem, min(6.04vw, 10.74vh), 6.75rem)`, which `parseFloat`
+reads as `NaN`, which `|| 0` turns into a floor of zero. It compared every block
+against y=0 and passed. It read 0 in all 22 runs of a green suite and nothing
+said so, and the geometry it was blind to was real: Spanish at 1440×900
+overlapped the bar by 0.7px. Two rules follow. A check whose reference value can
+silently become zero must assert the reference too — this one now fails if the
+bar measures 0 tall. And a fit check should measure the element the reader sees
+rather than the token that is supposed to place it.
+
+The overlap was fixed by giving the block the width it needs, not by shrinking
+the type below the ladder: the rail moves from 43.8% to 41%, Spanish falls from
+six lines to five, and the block loses 87px. Clearance above the bar across
+seven frames × five locales, after: 42.6px at 1440×900 (from −0.7), 5.8px at
+1280×720 and 6.4px at 1366×768 — those two are the tightest on the site and are
+short frames where English and Spanish wrap identically, unchanged by this and
+worth watching if the copy grows.
+
 **Slide 2 — the battle map.** Reached with real wheel events, never `scrollTo`,
 because the two are not the same test and the difference is what a whole round
 of debugging turned on: the page was perfectly scrollable by script while every
@@ -206,11 +226,24 @@ any 4xx/5xx is still a failure.
 broken is a failed run.
 
 Local means the production build served the way production serves it —
-`node .next/standalone/server.js`, with `public/` and `.next/static` beside it
-exactly as the Dockerfile arranges them. Not `next start`: this project builds
-with `output: standalone`, and `next start` says so and serves from a different
-tree. A local target that is not the artefact being shipped is a local target
-that can agree with itself and still disagree with the site.
+`sh scripts/serve-local.sh`, which is `node .next/standalone/server.js` with
+`public/` and `.next/static` beside it exactly as the Dockerfile arranges them.
+Not `next start`: this project builds with `output: standalone`, and `next
+start` says so on startup and serves from a different tree. A local target that
+is not the artefact being shipped is a local target that can agree with itself
+and still disagree with the site.
+
+Use the script rather than assembling it by hand, because two of its steps fail
+quietly. `next build` rewrites `.next/standalone` wholesale and deletes the two
+links, after which the server starts, every page returns 200 and every
+stylesheet 404s — which presents as a layout catastrophe (a `<header>` measuring
+10538px, a hero block 76px tall) rather than as a missing file. And a server
+left over from an earlier run holds the port, so the new one exits on
+`EADDRINUSE` while the stale one keeps answering: the measurements look
+plausible and describe the previous build. Both cost a round of chasing numbers
+that were never about the site. If a whole matrix goes strange at once, check
+what is actually listening and whether the CSS resolves before reading anything
+into the numbers.
 
 Local also gets no proxy. Chromium is handed this sandbox's egress proxy for a
 live run because it does not read `HTTPS_PROXY` the way `curl` does; handing it

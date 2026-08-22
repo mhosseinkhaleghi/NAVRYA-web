@@ -1186,23 +1186,35 @@ async function main() {
      * cleared the cue by two pixels, which is fitting but not by any margin.
      * Checked in every locale, because which language is the longest is not a
      * thing to assume.
+     *
+     * The bar is measured, not read from `--header-h`. Custom properties are
+     * substituted rather than computed, so `getPropertyValue` hands back the
+     * literal string "clamp(4rem, min(6.04vw, 10.74vh), 6.75rem)" — which
+     * `parseFloat` reads as NaN, which `|| 0` turns into a floor of zero, which
+     * is a check that passes for everything except a block literally off the
+     * top of the window. It read 0 in all 22 runs and nothing said so. The
+     * element's own box cannot be wrong in that way, and it is the bar the
+     * reader actually sees rather than the token that is supposed to place it.
      */
     {
       const fit = await page.evaluate(() => {
         const hero = document.querySelector("[data-hero]");
-        if (!hero) return null;
+        const bar = document.querySelector("header");
+        if (!hero || !bar) return null;
         const parts = document.querySelectorAll("[data-hero-part]");
         const block = parts[0].getBoundingClientRect();
         const cue = parts[1].getBoundingClientRect();
-        const bar = parseFloat(
-          getComputedStyle(document.documentElement).getPropertyValue("--header-h")) || 0;
         return { top: Math.round(block.top), bottom: Math.round(block.bottom),
-                 cue: Math.round(cue.top), bar: Math.round(bar) };
+                 cue: Math.round(cue.top),
+                 bar: Math.round(bar.getBoundingClientRect().bottom) };
       });
-      if (fit) {
+      if (!fit) fail(where, "D3-layout", "no opening block, or no bar to measure it against");
+      else {
+        if (!fit.bar)
+          fail(where, "D3-layout", "the bar measured 0 tall — nothing was actually compared");
         if (fit.top < fit.bar)
           fail(where, "D3-layout",
-            `the opening block starts at y=${fit.top}, above the bar at ${fit.bar}`);
+            `the opening block starts at y=${fit.top}, under the bar which ends at ${fit.bar}`);
         if (fit.bottom > fit.cue)
           fail(where, "D3-layout",
             `the opening block ends at y=${fit.bottom}, past the scroll cue at ${fit.cue}`);

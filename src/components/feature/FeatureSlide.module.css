@@ -10,12 +10,23 @@
  * The rail. The home page's block sits at 36.4% of the frame because the hunter
  * stands to its left and the block starts where he stops. This slide's plate is
  * darker and emptier on the leading side and the light is gathered on the
- * trailing one, so the block moves in to 43.8% — the same figure the film's
- * panels use for the same reason, measured off the comp at 733 / 1672.
+ * trailing one, so the block moves in — the film's panels take 43.8% for the
+ * same reason, measured off the comp at 733 / 1672.
+ *
+ * This slide stops at 41% rather than 43.8%, and the 2.8 points are Spanish.
+ * At 43.8% the measure is 722px and "Un Comandante no Empieza con la Acción.
+ * Empieza con la Claridad." breaks to six lines where English takes five; at
+ * 1440×900 that made the block 667px tall against a 680px band, and it
+ * overlapped the bar by 0.7px. 41% gives 762px, Spanish falls to five lines,
+ * and the block loses 87px. Nothing else moves: English is five lines at both
+ * and Turkish is four at both.
+ *
+ * The direction is the safe one for this plate — leading is its dark, empty
+ * side, so the block gains contrast rather than competing with the light.
  * -------------------------------------------------------------------------- */
 
 .slide {
-  --hero-inline-start: 43.8%;
+  --hero-inline-start: 41%;
 
   /*
    * The opening's own type, one rung down, and the reason is measurable.
