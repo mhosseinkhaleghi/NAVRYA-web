@@ -11,26 +11,38 @@
 #   mode = scrub  the plate is driven by scroll position, so it needs keyframes
 #                 often enough that a seek never has far to decode.
 #
-#                 A keyframe every 24 frames rather than every 12 — one second
-#                 rather than half of one. Worst case the decoder walks 23
-#                 frames, which is tens of milliseconds against a scrub that
-#                 animates over one to fifteen seconds, and it is a third of the
-#                 file. Measured on the heaviest plate against the highest
-#                 fidelity copy that exists, SSIM over the whole clip:
+#                 A keyframe every 4 frames. This was every 24, and the reason
+#                 given for it was wrong in a way worth keeping, because it is
+#                 an easy mistake to make twice: "worst case the decoder walks
+#                 23 frames, tens of milliseconds against a scrub that animates
+#                 over one to fifteen seconds." The premise is false. A scrub
+#                 here is not a slow continuous drag — it is a magnetic glide
+#                 that crosses a whole beat in a couple of seconds, and the
+#                 seeks are serialised, each waiting for `seeked` before the
+#                 next is issued. What the viewer sees is glide-duration ÷
+#                 seek-cost frames and nothing else, so tens of milliseconds is
+#                 not a rounding error against fifteen seconds. It is the entire
+#                 budget.
 #
-#                   gop 12 · 1920 · crf 28   5.38 MB   0.95593   ← used to ship
-#                   gop 24 · 1920 · crf 28   4.14 MB   0.95656
-#                   gop 24 · 1920 · crf 30   3.68 MB   0.95576   ← ships now
-#                   gop 24 · 1920 · crf 31   3.41 MB   0.95521
-#                   gop 24 · 1792 · crf 29   3.64 MB   0.95500
-#                   gop 24 · 1600 · crf 28   3.42 MB   0.95452
+#                 Measured in the browser on the council plate — median seek,
+#                 and the frames a reader really sees over the whole shot when
+#                 scrolling it one gesture at a time:
 #
-#                 A third smaller at a quality difference of 0.0002 SSIM, which
-#                 is not a difference. Note the last two rows: dropping
-#                 resolution and dropping the quantiser cost about the same
-#                 bytes, and the quantiser gives the better picture — so the
-#                 plates stay at full resolution and the saving is spent there.
-#                 Nothing is upscaled on any display.
+#                   gop 24 · 1920   995 KB   47 ms   13 of 51 frames  ← shipped
+#                   gop  8 · 1920  1222 KB   26 ms
+#                   gop  4 · 1920  1740 KB   22 ms   23 of 51 frames  ← ships now
+#                   gop  2 · 1920  3029 KB   21 ms
+#                   gop  1 · 1920  5474 KB   24 ms
+#
+#                 Four is the knee: below it the file keeps growing and the seek
+#                 stops getting faster, because past that point the cost is the
+#                 round trip rather than the frames being decoded.
+#
+#                 This halves the seek; it does not on its own make the shot
+#                 continuous, and the rest of that fix is not an encoding
+#                 question — see `data-plate-behind` in stage-script.ts, which
+#                 lets the light tier carry the motion whenever the shipping
+#                 plate cannot follow.
 #
 #                 AV1 was measured here too and is not worth it: at gop 6 SVT-AV1
 #                 came out at 5.63 MB against H.264's 5.33 and VP9's 4.98. A GOP
@@ -101,7 +113,7 @@ mkdir -p "$OUT"
 
 case "$MODE" in
   play)  GOP=48; H_1080=23; H_720=25; V_1080=32; V_720=35 ;;
-  scrub) GOP=24; H_1080=21; H_720=24; V_1080=30; V_720=32 ;;
+  scrub) GOP=4;  H_1080=21; H_720=24; V_1080=30; V_720=32 ;;
   *) echo "unknown mode: $MODE (want play or scrub)" >&2; exit 1 ;;
 esac
 
@@ -185,7 +197,7 @@ enc 1280 720  "$H_720"  "$V_720"  720
 # times it went unnoticed until the opening slowed down.
 ffmpeg -v error -y -i "$SRC" "${CUT[@]}" -an -vf "${CUTBOX}scale=854:480:flags=lanczos" \
   -c:v libvpx-vp9 -crf 46 -b:v 0 -row-mt 1 -cpu-used 4 \
-  -g 24 -keyint_min 24 -pix_fmt yuv420p "$OUT/$SLUG-proxy.webm"
+  -g 4 -keyint_min 4 -pix_fmt yuv420p "$OUT/$SLUG-proxy.webm"
 for edge in first last; do
   [ "$edge" = first ] && n=$SKIP || n=$((SKIP + FRAMES - 1))
   ffmpeg -v error -y -i "$SRC" -vf "select=eq(n\,$n),${CUTBOX}scale=854:480:flags=lanczos" \

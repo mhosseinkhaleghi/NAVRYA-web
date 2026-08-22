@@ -105,6 +105,22 @@
   transition: opacity 420ms var(--ease-out);
 }
 
+/*
+ * And it hides again whenever it has fallen behind the position it is being
+ * asked for — see `bindPlate`. The proxy underneath is on identical rules and
+ * answers three and a half times as many seeks a second, so what shows through
+ * is the same frame at a lower resolution rather than the wrong frame at full
+ * resolution.
+ *
+ * Out quickly and back on the rule above's own 420ms: leaving has to beat the
+ * next seek or the stale frame is still what gets painted, while returning is
+ * the moment the picture sharpens and should read as a focus pull.
+ */
+.video[data-plate-ready][data-plate-behind] {
+  opacity: 0;
+  transition: opacity 90ms linear;
+}
+
 /* RTL moves the text block to the other side of the frame, so the footage
  * mirrors with it — the figure keeps the closed side and the text keeps the
  * open valley, exactly as the composition intends in either direction. */

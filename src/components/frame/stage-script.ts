@@ -963,10 +963,47 @@ export const stageScript = `
      * nothing to recover it. Seen on the deployed build, 100% buffered with no
      * attribute. Asking directly costs one property read and cannot be missed.
      */
+    /*
+     * When the shipping plate cannot follow, it gets out of the way.
+     *
+     * The two tiers exist so the light one can carry motion the heavy one
+     * cannot, and until now the heavy one covered it the whole time — so what
+     * the viewer saw during a travel was whatever the 1080p decoder managed,
+     * and nothing better. Measured on the features page's fourth slide, on the
+     * real page with the real compositor running: the shipping plate answers 37
+     * seeks a second, the proxy 133. A magnetic travel crosses that whole shot
+     * in about 1850ms and the shot is 51 frames — so the proxy has three and a
+     * half times the throughput it needs and the plate has half of it. What
+     * arrived was thirteen stills of a fifty-one frame dive.
+     *
+     * The signal is the plate's own lag, not the page's velocity. A plate that
+     * is keeping up is never touched, on any machine, at any speed — this only
+     * fires where the alternative was a frame that is simply wrong, because a
+     * plate two frames behind is showing the viewer the past either way. Better
+     * the right frame slightly soft than the wrong frame sharp, and while it is
+     * engaged the footage is moving fast enough to be motion-blurred in the
+     * source, which is what makes the substitution invisible.
+     *
+     * Hysteresis, because a threshold with one edge oscillates: it steps aside
+     * two frames behind and does not come back until it is within half of one.
+     */
+    var BEHIND_OUT = 2 / 24, BEHIND_IN = 0.5 / 24, behind = false;
+    function follow(fraction) {
+      if (!full || !full.duration || !proxy) return;
+      var lag = Math.abs(full.currentTime - clamp01(fraction) * (full.duration - 0.02));
+      if (!behind && lag > BEHIND_OUT) {
+        behind = true;
+        full.setAttribute('data-plate-behind', '');
+      } else if (behind && lag < BEHIND_IN) {
+        behind = false;
+        full.removeAttribute('data-plate-behind');
+      }
+    }
     return function (fraction) {
       if (full && !full.hasAttribute('data-plate-ready')) markReady();
       seekProxy(fraction);
       seekFull(fraction);
+      follow(fraction);
     };
   }
 
