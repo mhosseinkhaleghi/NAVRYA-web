@@ -1373,59 +1373,76 @@ async function main() {
             const on = [...document.querySelectorAll("[data-plate-id][data-plate-on]")];
             return on.map((p) => p.getAttribute("data-plate-id")).join("+");
           })(),
+          /*
+           * Slide 3 carries no words any more.
+           *
+           * Eight callouts and a closing sentence were pinned over the map in
+           * HTML, and they are gone by decision, not by accident: the camera has
+           * to leave the map and reach the room as one movement, and text
+           * anchored to points on a map cannot survive the camera moving. The
+           * checks that measured their arrival, their stagger and their drift
+           * against the painted plate went with them — there is nothing left for
+           * them to measure.
+           *
+           * What replaces them is the guarantee that keeps this true: the panel
+           * must be *absent*, so the layer cannot come back unnoticed, and the
+           * map must still be scrubbed rather than skipped.
+           */
           f3: (() => {
-            const panel = document.querySelector('[data-panel="f3"]');
-            if (!panel) return null;
-            const stage = panel.querySelector('[class*="stage"]');
             const v = document.querySelector('[data-scene-video="scatter"]');
-            const notes = [...panel.querySelectorAll("span[data-side]")];
-            const close = panel.querySelector("p");
+            return {
+              panel: !!document.querySelector('[data-panel="f3"]'),
+              pinned: document.querySelectorAll('[data-panel="f3"] span[data-side]').length,
+              ready: v ? v.readyState : -1,
+              t: v ? v.currentTime : null,
+            };
+          })(),
+          f4: (() => {
+            const panel = document.querySelector('[data-panel="f4"]');
+            if (!panel) return null;
+            const v = document.querySelector('[data-scene-video="council"]');
             const r = (el) => (el ? +getComputedStyle(el).getPropertyValue("--r") : null);
-            const sb = stage.getBoundingClientRect();
-            let painted = null;
-            if (v && v.videoWidth) {
-              const vb = v.getBoundingClientRect();
-              const ar = v.videoWidth / v.videoHeight;
-              const wide = vb.width / vb.height > ar;
-              const pw = wide ? vb.height * ar : vb.width;
-              const ph = wide ? vb.height : vb.width / ar;
-              painted = { x: vb.left + (vb.width - pw) / 2, y: vb.top + (vb.height - ph) / 2, w: pw, h: ph };
-            }
+            const pillars = [...panel.querySelectorAll("li")];
+            const parts = [...panel.querySelectorAll("h2,p,button,li")];
+            const block = panel.querySelector('[class*="block"]');
+            const bb = block.getBoundingClientRect();
             return {
               active: panel.hasAttribute("data-active"),
-              notes: notes.length,
-              minNoteR: notes.length ? Math.min(...notes.map((n) => r(n))) : null,
-              closeR: r(close),
-              /*
-               * The sentence has to be *on screen*, not merely painted.
-               *
-               * It is the stage's sibling rather than its child — on a wide
-               * frame it is set over the foot of the picture, not pinned to a
-               * point on it — so the portrait layout has to stack the two, and
-               * when it did not the sentence went absolute against a panel it
-               * no longer filled: measured at y=844 in an 844-tall viewport and
-               * y=1024 in a 1024. Fully opaque, correct `--r`, flush against
-               * the bottom edge and invisible. Only a box test sees that.
-               */
-              closeOffscreen: (() => {
-                if (!close) return null;
-                const b = close.getBoundingClientRect();
-                return b.width === 0 || b.height === 0 || b.top < 0 || b.bottom > innerHeight;
-              })(),
-              blank: notes.filter((n) => !(n.textContent || "").trim()).length,
-              offscreen: notes.filter((n) => {
+              headR: r(panel.querySelector('[data-reveal-group="title"]')),
+              ctaR: r(panel.querySelector("button")),
+              pillars: pillars.length,
+              minPillarR: pillars.length ? Math.min(...pillars.map((n) => r(n))) : null,
+              blank: parts.filter((n) => !(n.textContent || "").trim()).length,
+              offscreen: parts.filter((n) => {
                 const b = n.getBoundingClientRect();
-                return b.left < 0 || b.right > innerWidth || b.top < 0 || b.bottom > innerHeight;
+                return b.width === 0 || b.height === 0 || b.left < -1 ||
+                  b.right > innerWidth + 1 || b.top < -1 || b.bottom > innerHeight + 1;
               }).length,
+              /* Which side of the frame the block is on. The words go where the
+               * picture is empty, and the picture mirrors with the writing
+               * direction — so on a wide frame the block has to mirror with it. */
+              centre: (bb.left + bb.right) / 2 / innerWidth,
+              wide: innerWidth >= 1024,
               t: v ? v.currentTime : null,
               dur: v && v.duration ? v.duration : null,
               ready: v ? v.readyState : null,
-              drift: painted
-                ? Math.max(Math.abs(sb.left - painted.x), Math.abs(sb.top - painted.y),
-                           Math.abs(sb.width - painted.w), Math.abs(sb.height - painted.h))
-                : null,
-              pinned: getComputedStyle(stage).position === "absolute",
             };
+          })(),
+          /*
+           * Which plate the frame is actually showing at this stop.
+           *
+           * A slide rests where its panel has finished arriving, and that point
+           * has to fall *inside* its own beat. Slide 3's landed exactly on the
+           * boundary — `cues[1] + REST_SPAN` came to 1.0 — so the next plate
+           * took the frame on the same tick: the slide came to rest with its
+           * eight callouts pinned over the first frame of the dive, naming a map
+           * that was no longer under them. The number was right while that slide
+           * was the last one and the end of its beat was the foot of the page;
+           * adding a fourth slide made the same number wrong, silently.
+           */
+          shown: (() => {
+            const on = [...document.querySelectorAll("[data-plate-id][data-plate-on]")];
+            return on.map((p) => p.getAttribute("data-plate-id")).join("+");
           })(),
           vh: window.innerHeight,
           headline: (() => {
@@ -1518,7 +1535,6 @@ async function main() {
     const bestBy = (score) =>
       samples.reduce((best, s) => (score(s) > score(best ?? s) || !best ? s : best), null) ?? rest;
     const at2 = bestBy((s) => (s.active ? (s.t ?? -1) : -1));
-    const at3 = bestBy((s) => (s.f3 && s.f3.active ? (s.f3.t ?? -1) : -1));
 
     // No stretch of document below the last magnetic stop: the wheel would
     // refuse to travel it while the scrollbar said there was more.
@@ -1580,62 +1596,29 @@ async function main() {
           `${Math.round(s.plate.covered * 100)}% buffered, so this is the proxy`);
     }
 
-    /* ── slide 3 — the map, named ─────────────────────────────────────── */
-    if (!at3.f3) fail(where, "D1-text", "slide 3 is not in the DOM");
-    else {
-      const f3 = at3.f3;
-      if (!f3.active) fail(where, "D1-text", "slide 3 never became active");
-      if (f3.notes !== 8) fail(where, "D1-text", `slide 3 has ${f3.notes} callouts, expected 8`);
-      if (f3.blank) fail(where, "D5-lang", `${f3.blank} callout(s) have no text in this locale`);
-      if (!(f3.minNoteR > 0.99))
-        fail(where, "D1-text", `the last callout rests at --r ${f3.minNoteR}`);
-      if (!(f3.closeR > 0.99))
-        fail(where, "D1-text", `slide 3's closing lines rest at --r ${f3.closeR}`);
-      if (f3.closeOffscreen)
-        fail(where, "D3-layout", "slide 3's closing lines are outside the viewport");
-      if (f3.offscreen)
-        fail(where, "D3-layout", `${f3.offscreen} callout(s) sit outside the viewport`);
-      if (!(f3.ready > 0)) fail(where, "D2-video", `the scatter plate is at readyState ${f3.ready}`);
-      /*
-       * The shot must have run to the slide's resting cue — not to its end.
-       *
-       * It used to be asserted to the end, and that was right while this was the
-       * last slide: its rest was `cues[1] + REST_SPAN` = 1.0, the end of the
-       * beat and the foot of the page, all the same point. A fourth slide made
-       * that arrangement wrong — resting on the boundary handed the frame to the
-       * next plate on the same tick — so the rest moved back inside the beat and
-       * the shot now settles at 0.87 of itself. Ending is no longer the
-       * property to check; reaching the resting cue is, and that the frame is
-       * still this slide's, which `shown` above tests.
-       */
-      const REST_AT = 0.87;
-      if (f3.dur && !(f3.t >= f3.dur * REST_AT - 0.12))
-        fail(where, "D2-video",
-          `the scatter plate rests at ${f3.t.toFixed(2)}s of ${f3.dur.toFixed(2)}s — ` +
-          `short of its resting cue at ${(f3.dur * REST_AT).toFixed(2)}s`);
-      /*
-       * The callouts are pinned to the picture, so the box they are pinned
-       * inside has to *be* the picture. Two pixels of tolerance for subpixel
-       * layout; anything more is the whole annotation layer sliding off the map.
-       */
-      if (f3.pinned && f3.drift !== null && f3.drift > 2)
-        fail(where, "D3-layout",
-          `the callout layer is ${Math.round(f3.drift)}px off the painted plate`);
-    }
-
-    /*
-     * Slide 3 rests on its own shot.
-     *
-     * Found at the stop before the end: the resting point sat on the beat
-     * boundary and the frame had already handed over.
-     */
+    /* ── slide 3 — the map, no longer named ───────────────────────────── */
     {
-      const at3 = samples.find((s) => s.f3 && s.f3.active && s.f3.minNoteR > 0.99 &&
-        s.f4 && !s.f4.active);
-      if (at3 && at3.shown && at3.shown !== "scatter")
-        fail(where, "D3-layout",
-          `slide 3 rests showing the ${at3.shown} plate — its labels are over a shot ` +
-          `that is not the map they name`);
+      const f3 = samples.map((x) => x.f3).find(Boolean);
+      if (!f3) fail(where, "D2-video", "the scatter plate is not in the DOM");
+      else {
+        if (f3.panel || f3.pinned)
+          fail(where, "D1-text",
+            `slide 3 has an HTML layer over the map again (${f3.pinned} callouts) — ` +
+            `the map belongs to the video alone, so nothing may be pinned to it`);
+        if (!(f3.ready > 0))
+          fail(where, "D2-video", `the scatter plate is at readyState ${f3.ready}`);
+      }
+      /*
+       * The map is passed through, not skipped. With no panel this scene
+       * contributes no magnetic stop, so the film glides from slide 2 straight
+       * to the council table — but its plate still has to be scrubbed on the
+       * way, or that beat is dead scroll over a frozen frame.
+       */
+      const seen = samples.filter((x) => x.f3 && x.f3.t !== null).map((x) => x.f3.t);
+      if (seen.length && Math.max(...seen) - Math.min(...seen) < 0.1)
+        fail(where, "D2-video",
+          `the scatter plate never moves — ${Math.min(...seen).toFixed(2)}s to ` +
+          `${Math.max(...seen).toFixed(2)}s across the whole walk`);
     }
 
     /* ── slide 4 — the council table ──────────────────────────────────── */

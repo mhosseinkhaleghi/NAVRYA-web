@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { FeaturePanel } from "@/components/feature/FeaturePanel";
-import { MapNotes } from "@/components/feature/MapNotes";
 import { CouncilPanel } from "@/components/feature/CouncilPanel";
 import { Hero } from "@/components/hero/Hero";
 import { Scene } from "@/components/frame/Scene";
@@ -158,48 +157,27 @@ const SEQUENCE = {
     {
       plate: "scatter",
       beat: "scatter",
-      panel: "f3",
       /*
-       * Everything on this slide is one staggered arrival, so it is all in the
-       * `rest` group and `cues[0]` drives nothing — there is no title here, the
-       * headline above belongs to the scene before. The eight callouts arrive in
-       * turn and then the sentence they add up to, the stagger completing at
-       * `cues[1] + REST_SPAN`.
+       * The map carries no words of its own any more.
        *
-       * That sum has to land *inside* this beat, not at the end of it. At 0.85
-       * it came to exactly 1.0 — the boundary where the next plate takes the
-       * frame — so the slide came to rest on the first frame of the dive with
-       * its labels pinned over it, naming a map that was no longer there. It
-       * was right while this was the last slide and the end of the beat was the
-       * foot of the document; adding a fourth made the same number wrong.
+       * Eight callouts and a closing sentence used to be pinned over it in
+       * HTML, translated per locale, because the footage has none burned in.
+       * They are gone at the client's direction: what matters here is that the
+       * camera leaves the map and arrives in the room as one movement, and text
+       * anchored to points on a map is the thing that cannot survive the camera
+       * moving. Their strings are still in the dictionaries under
+       * `feature.scatter`, which is where they would be restored from.
        *
-       * 0.72 rests at 0.87 of the beat: the shot is settled, the map is under
-       * the words that name it, and the last eighth is a hold to read it in
-       * before the camera leaves.
+       * With no panel this scene contributes no magnetic stop — `filmStates`
+       * takes stops from scenes that carry one — so the film no longer pauses
+       * on a map with nothing to read. Slide 2 rests, and the next gesture
+       * carries the whole descent through to the council table in one travel,
+       * which is the smoothness that was asked for. The plate still scrubs on
+       * its own beat: the map is passed through, not skipped.
        */
-      cues: [0.05, 0.72],
-      /*
-       * Slide 3 leaves inside its own beat, over the map it is naming.
-       *
-       * Every other handover on this site leaves *over* the following shot
-       * rather than against a frozen frame, and that was tried here twice. Over
-       * 22% of the next beat the eight labels sat sharp and still on top of a
-       * picture in full motion. Cut to 10% they no longer sat there going
-       * forward — but a window is a position, not a direction, and scrolling
-       * back through it fades them *in* over that same moving picture. Caught on
-       * the way back from slide 4: the headline arrived at full opacity with the
-       * dive still blurring past underneath it, before the map had returned.
-       *
-       * So it belongs before the boundary, not after. The stagger completes at
-       * `cues[1] + REST_SPAN` = 0.87 and the exit runs from there to the end of
-       * the beat, which means the words only ever exist while the map is on
-       * screen — leaving over it going forward, arriving over it coming back.
-       * It costs the eighth of a beat that used to be a hold to read the
-       * sentence in; the sentence is legible for the whole of the stagger before
-       * it, and a hold that can only be spent going one direction was not worth
-       * a handover that was wrong going the other.
-       */
-      exit: ["scatter", 0.87, 1],
+      panel: null,
+      cues: null,
+      exit: null,
     },
     {
       plate: "council",
@@ -265,11 +243,6 @@ export default async function FeaturePage({
         className={slide.slide}
       />
       <FeaturePanel id="f2" headline={dictionary.feature.battlemap.headline} />
-      <MapNotes
-        id="f3"
-        notes={dictionary.feature.scatter.notes}
-        closing={dictionary.feature.scatter.closing}
-      />
       <CouncilPanel
         id="f4"
         headline={dictionary.feature.council.headline}
