@@ -349,8 +349,24 @@ const GLIDE_MS = [620, 1400];
 
 /** One intentional scroll travels to one complete story state. */
 const STORY_INPUT_HOLD_MS = 650;
-const STORY_ACCELERATE_AFTER = 0.3;
-const STORY_ACCELERATE_MULTIPLIER = 3.5;
+
+/*
+ * A held gesture used to run the film at 3.5x once it was 30% through a travel.
+ *
+ * It is gone, and the reason is the whole point of the thing it was speeding
+ * up. A magnetic travel already takes exactly as long as the footage it crosses
+ * — `travelStory` sets its duration from `filmSecondsAt`, so the shot plays at
+ * its own rate and the scroll is the projector. Multiplying that is not "faster
+ * navigation", it is running the film at 3.5x, and on the features page's dive
+ * it meant the entire descent from above the map into the council room went
+ * past in a third of a second. Measured at 2.91x through the shot on a
+ * continuous gesture against 1.13x on single ones: the same footage, and only
+ * one of those is a shot anybody can watch.
+ *
+ * A held gesture still moves continuously — `storyDirection` chains straight
+ * into the next state when one completes, which is the behaviour that was
+ * wanted. What it no longer does is skip the pictures on the way.
+ */
 
 /**
  * The opening plate is never started until it can run without stalling.
@@ -423,8 +439,6 @@ export const stageScript = `
   var FLOW_SECTIONS = ${JSON.stringify(FLOW_SECTIONS)};
   var GLIDE_MS = ${JSON.stringify(GLIDE_MS)};
   var STORY_INPUT_HOLD_MS = ${STORY_INPUT_HOLD_MS};
-  var STORY_ACCELERATE_AFTER = ${STORY_ACCELERATE_AFTER};
-  var STORY_ACCELERATE_MULTIPLIER = ${STORY_ACCELERATE_MULTIPLIER};
 
   var reduced = window.matchMedia
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1192,6 +1206,51 @@ export const stageScript = `
       return seconds;
     }
 
+    /*
+     * The inverse of \`filmSecondsAt\`: where in the document a given second of
+     * the film lives. Both walk the same table, so they cannot disagree.
+     */
+    function filmPositionAtSeconds(seconds) {
+      var acc = 0;
+      for (var b = 0; b < BEATS.length; b++) {
+        var beat = BEATS[b][0], bounds = edge[beat], duration = beatSeconds(beat);
+        if (seconds <= acc + duration || b === BEATS.length - 1) {
+          var within = duration > 0 ? clamp01((seconds - acc) / duration) : 0;
+          return (bounds[0] + (bounds[1] - bounds[0]) * within) * filmMax;
+        }
+        acc += duration;
+      }
+      return filmMax;
+    }
+
+    /*
+     * The travel's shape, in film time.
+     *
+     * \`ease\` is \`1 - (1-t)^3\`, an ease-out, and its velocity is 3x the average
+     * at t=0. Applied to a travel that is carrying a shot, that means the film
+     * starts every move at *three times its own speed* and decelerates through
+     * it — measured on the features page's dive at 2.91x, and it is why the
+     * frames a reader saw were sparse at the head of the shot and bunched at the
+     * tail. It reads exactly as the complaint describes: the camera leaves
+     * before you have seen it go.
+     *
+     * A trapezoid instead: ramp in, run the film at exactly its own rate, ramp
+     * out. The plateau is 1x by construction, which is what makes this "the
+     * video's speed" rather than a nicer-looking guess — the ramps only exist so
+     * a travel does not start and stop with a jerk.
+     *
+     * The duration is divided by (1 - FILM_RAMP) for the same reason: the ramps
+     * cover less ground than the plateau would, so the move has to last slightly
+     * longer for the middle of it to still run at 1x.
+     */
+    var FILM_RAMP = 0.15;
+    function filmEase(t) {
+      var r = FILM_RAMP, k = 2 * r * (1 - r);
+      if (t <= r) return (t * t) / k;
+      if (t >= 1 - r) { var u = 1 - t; return 1 - (u * u) / k; }
+      return (t - r / 2) / (1 - r);
+    }
+
     function filmStates() {
       var states = [{ at: 0, heavy: false }];
       var state = function (at, heavy) { states.push({ at: at, heavy: heavy }); };
@@ -1513,8 +1572,8 @@ export const stageScript = `
     var storyGlide = null, storyLocked = false, touchY = null;
     var storyStarted = 0, storyDuration = 0;
     var storyFrom = 0, storyTo = 0, storyStartStop = 0, storyEndStop = 0;
-    var storyDirection = 0, storyInputUntil = 0, storyContinuousUntil = 0;
-    var storyTravelDirection = 0, storySpeed = 1;
+    var storyDirection = 0, storyInputUntil = 0;
+    var storyTravelDirection = 0;
 
     function storyStops() {
       var max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
@@ -1581,8 +1640,6 @@ export const stageScript = `
       var from = window.scrollY, to = target, distance = Math.abs(to - from);
       storyLocked = true;
       storyTravelDirection = direction;
-      storySpeed = 1;
-      storyContinuousUntil = 0;
       storyStartStop = typeof origin === 'number' ? origin : from;
       storyEndStop = to;
       if (reduced || distance < 2) {
@@ -1591,19 +1648,41 @@ export const stageScript = `
         return;
       }
 
-      var ms = Math.max(1, Math.abs(filmSecondsAt(to) - filmSecondsAt(from)) * 1000);
+      /*
+       * A travel that carries footage is driven in film time; one that does not
+       * keeps the old pixel tween.
+       *
+       * The difference matters because the beats are not the same length in
+       * pixels as they are in seconds — a short shot can own a long stretch of
+       * track — so interpolating pixels runs the film at whatever rate that
+       * particular beat's exchange happens to be. Interpolating seconds is what
+       * makes the shot play at its own speed wherever it sits.
+       *
+       * Below the film there is nothing to keep in time with, so those travels
+       * stay on the pixel tween and its ease-out, which is the right shape for
+       * moving a page.
+       */
+      var filmFrom = filmSecondsAt(from), filmTo = filmSecondsAt(to);
+      var carriesFilm = Math.abs(filmTo - filmFrom) > 0.05
+        && Math.max(from, to) <= filmMax + 1;
+      var ms = Math.max(1, Math.abs(filmTo - filmFrom) * 1000
+        / (carriesFilm ? (1 - FILM_RAMP) : 1));
       storyStarted = performance.now();
       storyDuration = ms;
       storyFrom = from;
       storyTo = to;
       (function step(now) {
-        var travelled = Math.abs(window.scrollY - storyStartStop);
-        var totalTravel = Math.abs(storyEndStop - storyStartStop);
-        var pastAccelerationPoint = totalTravel && travelled / totalTravel >= STORY_ACCELERATE_AFTER;
-        var continuous = now < storyContinuousUntil;
-        setStorySpeed(continuous && pastAccelerationPoint ? STORY_ACCELERATE_MULTIPLIER : 1, now);
         var progress = clamp01((now - storyStarted) / storyDuration);
-        window.scrollTo(0, storyFrom + (storyTo - storyFrom) * ease(progress));
+        if (carriesFilm) {
+          var at = filmPositionAtSeconds(filmFrom + (filmTo - filmFrom) * filmEase(progress));
+          // The endpoints are the stops, not whatever the table rounds to: a
+          // resting position that is a pixel off is a resting position the next
+          // gesture measures from.
+          if (progress >= 1) at = storyTo;
+          window.scrollTo(0, at);
+        } else {
+          window.scrollTo(0, storyFrom + (storyTo - storyFrom) * ease(progress));
+        }
         if (progress < 1) {
           storyGlide = requestAnimationFrame(step);
           return;
@@ -1623,27 +1702,12 @@ export const stageScript = `
       })(storyStarted);
     }
 
-    function noteStoryInput(direction, allowAcceleration) {
+    function noteStoryInput(direction) {
       var now = performance.now();
-      if (allowAcceleration && storyLocked && direction === storyTravelDirection) {
-        storyContinuousUntil = now + STORY_INPUT_HOLD_MS;
-      }
       storyDirection = direction;
       storyInputUntil = now + STORY_INPUT_HOLD_MS;
     }
 
-    function setStorySpeed(speed, now) {
-      if (!storyLocked || speed === storySpeed) return;
-
-      // Rebase from the displayed frame. This makes sustained input play the
-      // remaining shot faster, then restores its normal rate on release with
-      // no snap or change to the completed endpoint.
-      storyFrom = window.scrollY;
-      storyStarted = now;
-      storyDuration = Math.max(1,
-        Math.abs(filmSecondsAt(storyTo) - filmSecondsAt(storyFrom)) * 1000 / speed);
-      storySpeed = speed;
-    }
 
     function redirectStory(direction) {
       if (!storyLocked || direction === storyTravelDirection) return;
@@ -1657,8 +1721,8 @@ export const stageScript = `
       travelStory(direction, true, target, origin);
     }
 
-    function handleStoryInput(direction, allowAcceleration) {
-      noteStoryInput(direction, allowAcceleration);
+    function handleStoryInput(direction) {
+      noteStoryInput(direction);
       if (!storyLocked) { travelStory(direction); return; }
       if (direction !== storyTravelDirection) { redirectStory(direction); return; }
     }
@@ -1671,7 +1735,7 @@ export const stageScript = `
       var direction = e.deltaY > 0 ? 1 : -1;
       // Trackpads emit a stream of pixel wheel events for one physical swipe.
       // They still continue through endpoints, but never enable fast playback.
-      handleStoryInput(direction, e.deltaMode !== 0 || Math.abs(e.deltaY) >= 80);
+      handleStoryInput(direction);
     }
 
     function storyKey(e) {
@@ -1685,7 +1749,7 @@ export const stageScript = `
       if (window.scrollY >= filmMax && down) return;
       e.preventDefault();
       var direction = down ? 1 : -1;
-      handleStoryInput(direction, true);
+      handleStoryInput(direction);
     }
 
     window.addEventListener('wheel', storyWheel, { passive: false, capture: true });
@@ -1702,7 +1766,7 @@ export const stageScript = `
       e.preventDefault();
       touchY = y;
       var direction = delta > 0 ? 1 : -1;
-      handleStoryInput(direction, false);
+      handleStoryInput(direction);
     }, { passive: false, capture: true });
     window.addEventListener('touchend', function () { touchY = null; }, { passive: true, capture: true });
 

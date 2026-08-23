@@ -172,17 +172,27 @@ const SEQUENCE = {
        */
       cues: [0.05, 0.72],
       /*
-       * Slide 3 leaves at the very top of the next beat, and quickly.
+       * Slide 3 leaves inside its own beat, over the map it is naming.
        *
-       * It leaves *over* the following shot rather than against a frozen frame,
-       * which is what every handover on this site does — but the following shot
-       * here is a dive, and a callout pinned to a point on a map that is rushing
-       * past is not a handover, it is a mistake. Over 22% of the beat the eight
-       * labels sat sharp and still on top of a picture in full motion, with the
-       * map they name already gone. A tenth is enough to read as a fade and
-       * short enough that nothing is still legible once the camera moves.
+       * Every other handover on this site leaves *over* the following shot
+       * rather than against a frozen frame, and that was tried here twice. Over
+       * 22% of the next beat the eight labels sat sharp and still on top of a
+       * picture in full motion. Cut to 10% they no longer sat there going
+       * forward — but a window is a position, not a direction, and scrolling
+       * back through it fades them *in* over that same moving picture. Caught on
+       * the way back from slide 4: the headline arrived at full opacity with the
+       * dive still blurring past underneath it, before the map had returned.
+       *
+       * So it belongs before the boundary, not after. The stagger completes at
+       * `cues[1] + REST_SPAN` = 0.87 and the exit runs from there to the end of
+       * the beat, which means the words only ever exist while the map is on
+       * screen — leaving over it going forward, arriving over it coming back.
+       * It costs the eighth of a beat that used to be a hold to read the
+       * sentence in; the sentence is legible for the whole of the stagger before
+       * it, and a hold that can only be spent going one direction was not worth
+       * a handover that was wrong going the other.
        */
-      exit: ["council", 0, 0.1],
+      exit: ["scatter", 0.87, 1],
     },
     {
       plate: "council",
