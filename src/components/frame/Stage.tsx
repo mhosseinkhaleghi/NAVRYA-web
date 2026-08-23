@@ -60,6 +60,17 @@ export function Stage({
       panel: string | null;
       exit: readonly [string, number, number] | null;
       cues: readonly [number, number] | null;
+      /**
+       * Fraction of this scene's beat over which its plate fades up from the
+       * one before, instead of cutting.
+       *
+       * An exception, and it has to be asked for. Plates cut because they are
+       * pieces of one render and the two frames either side of a handover are
+       * the same frame — dissolving there would show one figure twice. Set this
+       * only where that is untrue and the cut is a real jump between different
+       * pictures.
+       */
+      dissolve?: number;
     }[];
   };
 }) {

@@ -1809,6 +1809,50 @@ export const stageScript = `
       var opacity = [];
       for (i = 0; i < plateEls.length; i++) opacity.push(i === top ? 1 : 0);
 
+      /*
+       * A handover whose two frames are not the same picture cannot be a cut.
+       *
+       * The rule above — one plate, always, no dissolve — is right wherever the
+       * clips are pieces of one continuous render, and on the home film they
+       * are: a plate's closing frame and the next plate's opening frame are the
+       * same frame, so cutting moves nothing and dissolving would show the same
+       * figure twice a few frames apart.
+       *
+       * The features film breaks that premise at one handover. Slide 3 ends on
+       * the wide, still map; slide 4 opens already deep in the plunge, because
+       * the first 22 frames of its source — the acceleration from the map down
+       * into the dive — carry burned-in English lettering and had to go. The two
+       * frames measure SSIM 0.194 against each other: not the same picture by
+       * any reading, and a hard cut between them is exactly the break that was
+       * reported.
+       *
+       * It was there all along and the film's own speed is what exposed it. At
+       * the old 3x launch the cut went by in a couple of frames and read as part
+       * of the violence; at 1x you watch it happen.
+       *
+       * So this dissolves, and the ghosting the note above warns about cannot
+       * occur here for the same reason the cut fails: there is no near-duplicate
+       * to double. The window is short and lands where the incoming shot is at
+       * its most motion-blurred, so what it reads as is the camera taking off
+       * rather than a fade.
+       *
+       * Declared per scene, so it stays an exception that has to be asked for.
+       */
+      for (s = 0; s < scenes.length; s++) {
+        var dcfg = scenes[s].cfg;
+        if (!shown || !dcfg.dissolve) continue;
+        var dIdx = -1;
+        for (i = 0; i < PLATES.length; i++) if (PLATES[i] === dcfg.plate) dIdx = i;
+        if (dIdx < 1 || dIdx !== top) continue;
+        var dBeat = edge[dcfg.beat];
+        if (!dBeat) continue;
+        var into = span(p, dBeat[0], dBeat[0] + dcfg.dissolve * (dBeat[1] - dBeat[0]));
+        if (into < 1) {
+          opacity[dIdx] = into;
+          opacity[dIdx - 1] = 1 - into;
+        }
+      }
+
       // The one handover that is not a cut. The closing plate is a black studio
       // frame and the plate after it is a forest at dawn, so there is nothing
       // continuous to cut on. It dips through black instead: the arrow fades

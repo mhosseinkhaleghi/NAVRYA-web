@@ -141,11 +141,18 @@ const SEQUENCE = {
        * Slide 2's headline is slide 3's headline too — the map is named *under*
        * the sentence that introduced it, which is what the composition is — so
        * it stays up across that cut instead of leaving and being replaced by an
-       * identical one. It leaves on the fourth beat, because slide 4 is a
+       * identical one. It leaves at the end of the map, because slide 4 is a
        * different subject in a different room and the battlefield's title has
        * no business over it.
+       *
+       * It left over the first fifth of the *next* beat until the dissolve made
+       * that visible: at the film's own speed the title sat at half opacity over
+       * the dive for a fifth of a second, and coming back it faded in there. The
+       * same fault, and the same fix, as the callouts below it — the window
+       * belongs before the boundary, not after, so both leave together over the
+       * map they name and the camera dives on a clean frame.
        */
-      exit: ["council", 0, 0.2],
+      exit: ["scatter", 0.87, 1],
       cues: [0.45, 0.85],
     },
     {
@@ -199,6 +206,27 @@ const SEQUENCE = {
       beat: "council",
       panel: "f4",
       exit: null,
+      /*
+       * The one handover on this film that is not a cut.
+       *
+       * Slide 3 rests on the wide, still map and this shot opens already deep
+       * in the plunge — SSIM 0.194 between the two frames, which is not a
+       * handover, it is a jump. The frames that would join them are the first
+       * 22 of this plate's source, the camera gathering speed over the map, and
+       * they carry burned-in English lettering that cannot ship in five
+       * languages.
+       *
+       * A tenth of the beat, which at the film's own rate is about 210ms and
+       * renders over a dozen frames — measured, because the number that matters
+       * is not the fraction but how many frames the travel actually paints
+       * inside it, and at six percent that was six. Long enough to read as the
+       * camera taking off, short enough that the dive is still accelerating
+       * when it lands: the incoming frames are heavily motion-blurred right
+       * there, which is what lets a dissolve stand in for the movement that is
+       * missing. Replace it with the real frames the moment a source without
+       * the lettering exists; this is a repair, not a design.
+       */
+      dissolve: 0.1,
       /*
        * The head lands once the camera has stopped moving — the shot settles by
        * about two thirds — and the rest of the block follows it. The last stop
