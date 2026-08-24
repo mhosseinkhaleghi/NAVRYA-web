@@ -38,6 +38,32 @@ const PILLAR_ICON: Record<string, React.ReactNode> = {
       <path d="M3.5 20.5h17" opacity="0.7" />
     </>
   ),
+
+  /* ── the fifth slide's three ──────────────────────────────────────────── */
+
+  /* A spoken line, and the spark that files it. */
+  aifill: (
+    <>
+      <path d="M4 5.5h13.5v9H10l-4 3.5v-3.5H4v-9z" />
+      <path d="M19.4 3l.7 1.9 1.9.7-1.9.7-.7 1.9-.7-1.9L16.8 5.6l1.9-.7L19.4 3z" opacity="0.75" />
+      <path d="M7.5 9h6.5" opacity="0.55" />
+    </>
+  ),
+  /* A clock: the session is the unit. */
+  session: (
+    <>
+      <path d="M12 3.5a8.5 8.5 0 110 17 8.5 8.5 0 010-17z" />
+      <path d="M12 7.4V12l3.2 1.9" opacity="0.75" />
+    </>
+  ),
+  /* A line that ends higher than it started. */
+  review: (
+    <>
+      <path d="M3.5 19.5h17" opacity="0.7" />
+      <path d="M5 15.6l4.2-4.4 3.1 2.6L19 6.5" />
+      <path d="M15.4 6.5H19v3.6" opacity="0.75" />
+    </>
+  ),
 };
 
 export function CouncilPanel({

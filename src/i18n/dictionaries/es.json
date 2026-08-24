@@ -364,6 +364,31 @@
           "body": "Actúas con convicción."
         }
       ]
+    },
+    "desk": {
+      "headline": "Un Trader Debe Operar, no Alimentar una Base de Datos.",
+      "subline": [
+        "Sesiones, setups, riesgo, ejecución, emociones, revisiones — el cuadro completo importa.",
+        "Pero registrarlo no debería volverse otro trabajo a tiempo completo."
+      ],
+      "cta": "Descubre el enfoque Navrya",
+      "pillars": [
+        {
+          "key": "aifill",
+          "label": "Registro con IA",
+          "body": "Cuéntalo. La IA lo registra por ti."
+        },
+        {
+          "key": "session",
+          "label": "Por sesión",
+          "body": "Opera y revisa según la sesión del mercado."
+        },
+        {
+          "key": "review",
+          "label": "Revisión automática",
+          "body": "Convierte cada operación en información útil."
+        }
+      ]
     }
   }
 }

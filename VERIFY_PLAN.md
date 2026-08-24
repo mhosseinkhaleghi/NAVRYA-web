@@ -178,6 +178,40 @@ opening belongs to slide 3. Asserted at the last stop:
   right with it. Checked as which half of the frame the block's centre falls in,
   on wide frames only.
 
+**Slide 5 — the desk.** The fourth slide's composition again, over the same room
+a few seconds later, so it is the same component with its own copy and its own
+three marks rather than a second implementation of one layout.
+
+Its plate is a continuation and that is measured, not assumed: slide 4's closing
+frame and this one's opening frame come out at SSIM 0.968, so the handover is a
+cut on the same picture — the rule every plate change here follows, and the
+reason this seam needs no dissolve where the map-to-dive jump did.
+
+Being last is a property, not an accident, and it is asserted as one. Its stop is
+`cues[1] + REST_SPAN` = 1.0 exactly, which is the end of its shot and the foot of
+the document at the same point; anything short of that is scroll the wheel
+refuses to travel while the scrollbar says there is more.
+
+**Adding it broke slide 4's checks, in the way this file has now been wrong
+twice.** Slide 4 was judged at `rest` — the film's final sample — which was
+correct for exactly as long as it was the last slide. A fifth made every run
+report "slide 4 never became active" about a slide that had been complete two
+stops earlier. Slides 2 and 3 were moved off `rest` for this same reason when
+slide 4 arrived; slide 4 was left on it only because it was still last. It now
+reads `bestBy`, and its plate is asserted against its resting cue of 0.95 rather
+than its end, because its rest moved back inside its own beat when it stopped
+being the film's last stop.
+
+The lesson is worth stating plainly, because it will come round again: **a check
+written against "the last slide" is a check with an expiry date.** Whichever
+slide is last should say so in a comment, and the next slide added is the moment
+to move the one before it onto its own stop.
+
+Contrast on this slide is measured against the footage rather than a declared
+background, because there is no declared background — the words sit on the plate.
+Sampled from the painted pixels either side of every line, the lowest is 7.23:1
+in English and 8.69:1 in Persian, both above AAA.
+
 **Every stop shows its own plate, not the stand-in.** Checked at each resting
 stop of the features walk: the composited shipping plate must carry
 `data-plate-ready`. The proxy is 854×480 and exists to cover the moment before

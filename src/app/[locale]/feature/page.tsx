@@ -84,6 +84,14 @@ const PLATES = [
    * the full dive is also what makes it play at the speed it was cut at.
    */
   { id: "council", slug: "commander-council", lead: false, codecs: ["webm", "mp4"] },
+  /*
+   * `desk` is a continuation, and measurably so: slide 4's closing frame and
+   * this one's opening frame come out at SSIM 0.968 against each other. The
+   * camera has arrived and simply keeps drifting, so the handover is a cut on
+   * the same picture — the rule every plate change here follows, and the reason
+   * this one needs no dissolve where the map-to-dive jump did.
+   */
+  { id: "desk", slug: "commander-desk", lead: false, codecs: ["webm", "mp4"] },
 ] as const;
 
 /*
@@ -123,14 +131,21 @@ const SEQUENCE = {
     ["battlemap", 380],
     ["scatter", 230],
     ["council", 300],
+    /*
+     * 3.04s at this page's rate of 380vh per five seconds is 231, rounded to
+     * 230 — the same arithmetic slide 3 gets, so the film does not change pace
+     * at the seam.
+     */
+    ["desk", 230],
   ],
   beatSeconds: [
     ["battlemap", 5.041667],
     ["scatter", 0.875],
     ["council", 2.1256],
+    ["desk", 3.042],
   ],
-  plates: ["commander", "battlemap", "scatter", "council"],
-  plateBeat: [null, "battlemap", "scatter", "council"],
+  plates: ["commander", "battlemap", "scatter", "council", "desk"],
+  plateBeat: [null, "battlemap", "scatter", "council", "desk"],
   heroExit: [0.2, 0.36],
   scenes: [
     {
@@ -205,7 +220,15 @@ const SEQUENCE = {
       plate: "council",
       beat: "council",
       panel: "f4",
-      exit: null,
+      /*
+       * It leaves over the shot that follows, which is the arrangement every
+       * handover on this site prefers and which slide 3 could not have: the
+       * desk plate is this room still drifting, not a different picture, so
+       * text over its opening is text over the same place. That is what makes a
+       * long window safe here — 18% of the next beat is about half a second,
+       * and the same half second reads correctly scrolling back through it.
+       */
+      exit: ["desk", 0, 0.18],
       /*
        * The one handover on this film that is not a cut.
        *
@@ -229,11 +252,34 @@ const SEQUENCE = {
       dissolve: 0.1,
       /*
        * The head lands once the camera has stopped moving — the shot settles by
-       * about two thirds — and the rest of the block follows it. The last stop
-       * is `cues[1] + REST_SPAN`, which at 0.85 is the end of the shot and the
-       * foot of the document.
+       * about two thirds — and the rest of the block follows it.
+       *
+       * `cues[1]` is 0.80 and not 0.85 because a fifth slide arrived. At 0.85
+       * the stop came to `cues[1] + REST_SPAN` = 1.0 exactly, which was right
+       * while this was the last scene and the end of its beat was the foot of
+       * the page — and becomes a stop sitting on a beat boundary the moment
+       * anything follows it, which is the fault slide 3 had and the same
+       * arithmetic. 0.80 rests at 0.95, inside its own shot.
        */
-      cues: [0.62, 0.85],
+      cues: [0.62, 0.8],
+    },
+    {
+      plate: "desk",
+      beat: "desk",
+      panel: "f5",
+      exit: null,
+      /*
+       * The last scene, so `cues[1] + REST_SPAN` has to come to exactly 1.0:
+       * the film's final magnetic stop is the foot of the document, and
+       * anything short of it is scroll the wheel refuses to travel while the
+       * scrollbar still says there is more.
+       *
+       * The head at 0.35 rather than the council's 0.62 because this shot has
+       * nowhere to arrive — the camera is already in the room and only drifts,
+       * so there is no settling to wait for. It reads as the words appearing
+       * over a scene that was already there.
+       */
+      cues: [0.35, 0.85],
     },
   ],
 } as const;
@@ -276,6 +322,19 @@ export default async function FeaturePage({
         subline={dictionary.feature.council.subline}
         cta={dictionary.feature.council.cta}
         pillars={dictionary.feature.council.pillars}
+      />
+      {/*
+       * The fifth slide is the fourth's composition again, over the same room a
+       * few seconds later — so it is the same component with its own copy and
+       * its own three marks, not a second implementation of one layout. If the
+       * block ever needs to change, it changes once.
+       */}
+      <CouncilPanel
+        id="f5"
+        headline={dictionary.feature.desk.headline}
+        subline={dictionary.feature.desk.subline}
+        cta={dictionary.feature.desk.cta}
+        pillars={dictionary.feature.desk.pillars}
       />
     </Stage>
   );

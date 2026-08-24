@@ -1357,6 +1357,37 @@ async function main() {
               ready: v ? v.readyState : null,
             };
           })(),
+          f5: (() => {
+            const panel = document.querySelector('[data-panel="f5"]');
+            if (!panel) return null;
+            const v = document.querySelector('[data-scene-video="desk"]');
+            const r = (el) => (el ? +getComputedStyle(el).getPropertyValue("--r") : null);
+            const pillars = [...panel.querySelectorAll("li")];
+            const parts = [...panel.querySelectorAll("h2,p,button,li")];
+            const block = panel.querySelector('[class*="block"]');
+            const bb = block.getBoundingClientRect();
+            return {
+              active: panel.hasAttribute("data-active"),
+              headR: r(panel.querySelector('[data-reveal-group="title"]')),
+              ctaR: r(panel.querySelector("button")),
+              pillars: pillars.length,
+              minPillarR: pillars.length ? Math.min(...pillars.map((n) => r(n))) : null,
+              blank: parts.filter((n) => !(n.textContent || "").trim()).length,
+              offscreen: parts.filter((n) => {
+                const b = n.getBoundingClientRect();
+                return b.width === 0 || b.height === 0 || b.left < -1 ||
+                  b.right > innerWidth + 1 || b.top < -1 || b.bottom > innerHeight + 1;
+              }).length,
+              /* Which side of the frame the block is on. The words go where the
+               * picture is empty, and the picture mirrors with the writing
+               * direction — so on a wide frame the block has to mirror with it. */
+              centre: (bb.left + bb.right) / 2 / innerWidth,
+              wide: innerWidth >= 1024,
+              t: v ? v.currentTime : null,
+              dur: v && v.duration ? v.duration : null,
+              ready: v ? v.readyState : null,
+            };
+          })(),
           /*
            * Which plate the frame is actually showing at this stop.
            *
@@ -1642,9 +1673,20 @@ async function main() {
     if (rest.f2Exit !== null && rest.f2Exit < 0.99)
       fail(where, "D1-text", `slide 2's headline is still up at --exit ${rest.f2Exit}`);
 
-    if (!rest.f4) fail(where, "D1-text", "slide 4 is not in the DOM");
+    /*
+     * Judged where it is up and furthest arrived, not at the film's last frame.
+     *
+     * It read `rest` for as long as it was the last slide, and a fifth made
+     * that wrong in the one way this file has now been wrong twice: the final
+     * sample stopped being slide 4's resting sample, so every run reported
+     * "slide 4 never became active" about a slide that had been complete two
+     * stops earlier. Slides 2 and 3 were moved off `rest` for exactly this when
+     * slide 4 arrived — slide 4 was left on it only because it was still last.
+     */
+    const at4 = bestBy((x) => (x.f4 && x.f4.active ? (x.f4.headR ?? -1) : -1));
+    if (!at4.f4) fail(where, "D1-text", "slide 4 is not in the DOM");
     else {
-      const f4 = rest.f4;
+      const f4 = at4.f4;
       if (!f4.active) fail(where, "D1-text", "slide 4 never became active");
       if (!(f4.headR > 0.99)) fail(where, "D1-text", `slide 4's head rests at --r ${f4.headR}`);
       if (!(f4.ctaR > 0.99)) fail(where, "D1-text", `slide 4's call to action rests at --r ${f4.ctaR}`);
@@ -1655,9 +1697,16 @@ async function main() {
       if (f4.offscreen)
         fail(where, "D3-layout", `${f4.offscreen} block(s) of slide 4 sit outside the viewport`);
       if (!(f4.ready > 0)) fail(where, "D2-video", `the council plate is at readyState ${f4.ready}`);
-      if (f4.dur && !(f4.t >= f4.dur - 0.12))
+      /*
+       * Its resting cue, not its end. `cues[1] + REST_SPAN` was 1.0 while this
+       * was the last scene and the foot of the page; with a fifth behind it the
+       * rest moved back inside the beat to 0.95, so the shot settles there.
+       */
+      const F4_REST = 0.95;
+      if (f4.dur && !(f4.t >= f4.dur * F4_REST - 0.12))
         fail(where, "D2-video",
-          `the council plate rests at ${f4.t.toFixed(2)}s of ${f4.dur.toFixed(2)}s`);
+          `the council plate rests at ${f4.t.toFixed(2)}s of ${f4.dur.toFixed(2)}s — ` +
+          `short of its resting cue at ${(f4.dur * F4_REST).toFixed(2)}s`);
       if (f4.wide) {
         const shouldBeLeft = where.locale !== "fa" && where.locale !== "ar";
         const isLeft = f4.centre < 0.5;
@@ -1666,6 +1715,58 @@ async function main() {
             `slide 4's block sits on the ${isLeft ? "left" : "right"} at centre ` +
             `${f4.centre.toFixed(2)} — the shot mirrors, so the words must too`);
       }
+    }
+
+    /* ── slide 5 — the desk ───────────────────────────────────────────── */
+    /*
+     * The last scene, so this one *is* judged at the film's rest: its stop is
+     * `cues[1] + REST_SPAN` = 1.0, which is the end of its shot and the foot of
+     * the document, all the same point. That is the property being asserted as
+     * much as the panel's — if this slide ever stops being last, this block
+     * moves onto `bestBy` like the four above it, and the note on slide 4 says
+     * what happens when it is forgotten.
+     */
+    if (!rest.f5) fail(where, "D1-text", "slide 5 is not in the DOM");
+    else {
+      const f5 = rest.f5;
+      if (!f5.active) fail(where, "D1-text", "slide 5 never became active");
+      if (!(f5.headR > 0.99)) fail(where, "D1-text", `slide 5's head rests at --r ${f5.headR}`);
+      if (!(f5.ctaR > 0.99)) fail(where, "D1-text", `slide 5's call to action rests at --r ${f5.ctaR}`);
+      if (f5.pillars !== 3) fail(where, "D1-text", `slide 5 has ${f5.pillars} pillars, expected 3`);
+      if (!(f5.minPillarR > 0.99))
+        fail(where, "D1-text", `slide 5's last pillar rests at --r ${f5.minPillarR}`);
+      if (f5.blank) fail(where, "D5-lang", `${f5.blank} block(s) of slide 5 have no text`);
+      if (f5.offscreen)
+        fail(where, "D3-layout", `${f5.offscreen} block(s) of slide 5 sit outside the viewport`);
+      if (!(f5.ready > 0)) fail(where, "D2-video", `the desk plate is at readyState ${f5.ready}`);
+      if (f5.dur && !(f5.t >= f5.dur - 0.12))
+        fail(where, "D2-video",
+          `the desk plate rests at ${f5.t.toFixed(2)}s of ${f5.dur.toFixed(2)}s — ` +
+          `the last shot has to reach its end, because its end is the foot of the page`);
+      if (f5.wide) {
+        const shouldBeLeft = where.locale !== "fa" && where.locale !== "ar";
+        const isLeft = f5.centre < 0.5;
+        if (isLeft !== shouldBeLeft)
+          fail(where, "D3-layout",
+            `slide 5's block sits on the ${isLeft ? "left" : "right"} at centre ` +
+            `${f5.centre.toFixed(2)} — the shot mirrors, so the words must too`);
+      }
+    }
+
+    /*
+     * Slide 4 hands over to a shot that is the same picture.
+     *
+     * Every other plate change on this film is a cut for that reason, and this
+     * one is measured rather than assumed: the council's closing frame and the
+     * desk's opening frame come out at SSIM 0.968. What the check can see from
+     * here is the consequence — slide 4 must be resting on its *own* plate when
+     * its panel is complete, exactly as slide 3 must.
+     */
+    {
+      const on = at4.shown;
+      if (at4.f4 && at4.f4.active && on && on !== "council")
+        fail(where, "D3-layout",
+          `slide 4 rests showing the ${on} plate rather than its own`);
     }
 
     // The bar takes a solid ground below the film. This film has nothing below

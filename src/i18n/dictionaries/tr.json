@@ -364,6 +364,31 @@
           "body": "Kararlılıkla hareket edersiniz."
         }
       ]
+    },
+    "desk": {
+      "headline": "Bir Tüccar Ticaret Yapmalı, Veritabanı Beslememeli.",
+      "subline": [
+        "Seanslar, kurulumlar, risk, uygulama, duygular, incelemeler — tam resim önemlidir.",
+        "Ama bunu kaydetmek ikinci bir tam zamanlı işe dönüşmemeli."
+      ],
+      "cta": "Navrya yaklaşımını keşfedin",
+      "pillars": [
+        {
+          "key": "aifill",
+          "label": "Yapay zekâ kaydı",
+          "body": "Siz anlatın; yapay zekâ sizin için kaydetsin."
+        },
+        {
+          "key": "session",
+          "label": "Seans temelli",
+          "body": "Piyasa seansına göre işlem yapın ve inceleyin."
+        },
+        {
+          "key": "review",
+          "label": "Otomatik inceleme",
+          "body": "Her işlemi kullanılabilir bir içgörüye çevirin."
+        }
+      ]
     }
   }
 }

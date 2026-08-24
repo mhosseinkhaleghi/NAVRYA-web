@@ -364,6 +364,31 @@
           "body": "You act with conviction."
         }
       ]
+    },
+    "desk": {
+      "headline": "A Trader Should Trade. Not Feed a Database.",
+      "subline": [
+        "Sessions, setups, risk, execution, emotions, reviews — the full picture matters.",
+        "But capturing it shouldn’t become another full-time job."
+      ],
+      "cta": "Discover the Navrya approach",
+      "pillars": [
+        {
+          "key": "aifill",
+          "label": "AI fill",
+          "body": "Talk it through. AI logs it for you."
+        },
+        {
+          "key": "session",
+          "label": "Session-based",
+          "body": "Trade and review by market session."
+        },
+        {
+          "key": "review",
+          "label": "Auto review",
+          "body": "Turn every trade into usable insight."
+        }
+      ]
     }
   }
 }
