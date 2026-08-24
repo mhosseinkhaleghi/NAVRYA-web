@@ -102,6 +102,11 @@ MODE=${3:-play}
 TRIM=${4:-}
 CROP=${CROP:-}
 START=${START:-}
+# Captured before the mode's case statement below assigns GOP, or the override
+# would be overwritten by the thing it is meant to override.
+GOP_SET=${GOP:-}
+CRF_SET=${CRF:-}
+PROXY_CRF_SET=${PROXY_CRF:-}
 
 # Prepended to every filter chain below, so the crop and the delivery encode
 # are one generation. Empty unless asked for.
@@ -116,6 +121,36 @@ case "$MODE" in
   scrub) GOP=4;  H_1080=21; H_720=24; V_1080=30; V_720=32 ;;
   *) echo "unknown mode: $MODE (want play or scrub)" >&2; exit 1 ;;
 esac
+
+# GOP= and CRF= in the environment override the mode, for a shot whose scrubbing
+# does not need what the mode assumes.
+#
+# The mode's gop of 4 is set by the hardest case: the dive, which crosses 51
+# frames in a single glide, where every frame the decoder can answer for is a
+# frame the reader sees. It is not free — it is nearly all-intra, and on a shot
+# with fine detail that is expensive. The desk plate came out at 4.05MB for
+# three seconds and very nearly doubled the features page, from 4,985K to
+# 9,608K.
+#
+# What makes the difference is how fast the shot has to be scrubbed and how much
+# adjacent frames differ. The desk drifts — motion between 0.2 and 2.3 per frame
+# against the dive's 15 to 24 — so a frame the decoder misses is a frame almost
+# identical to the one already on screen, and the proxy covers it anyway
+# whenever the plate falls behind. Measured on this plate, against the source at
+# delivery resolution:
+#
+#   crf 30 gop  4   4050 KB   SSIM 0.9894   ← what the mode gives
+#   crf 33 gop  8   1857 KB   SSIM 0.9861   ← ships
+#   crf 33 gop 12   1402 KB   SSIM 0.9856
+#   crf 36 gop 12   1170 KB   SSIM 0.9835
+#   crf 36 gop 24    761 KB   SSIM 0.9815
+#
+# Less than half the bytes for three thousandths of SSIM, and the seek cost goes
+# from 22ms to 26ms, which is four milliseconds against a budget of hundreds.
+# Use this only with the numbers to justify it; the mode's default is the right
+# answer wherever a shot is scrubbed hard.
+[ -n "$GOP_SET" ] && GOP=$GOP_SET
+if [ -n "$CRF_SET" ]; then V_1080=$CRF_SET; V_720=$((CRF_SET + 2)); fi
 
 # Applied to every encode below, so the trim and the delivery encode are the
 # same generation.
@@ -196,7 +231,7 @@ enc 1280 720  "$H_720"  "$V_720"  720
 # the script said 720p while the files that shipped were 854×480 — and both
 # times it went unnoticed until the opening slowed down.
 ffmpeg -v error -y -i "$SRC" "${CUT[@]}" -an -vf "${CUTBOX}scale=854:480:flags=lanczos" \
-  -c:v libvpx-vp9 -crf 46 -b:v 0 -row-mt 1 -cpu-used 4 \
+  -c:v libvpx-vp9 -crf "${PROXY_CRF_SET:-46}" -b:v 0 -row-mt 1 -cpu-used 4 \
   -g 4 -keyint_min 4 -pix_fmt yuv420p "$OUT/$SLUG-proxy.webm"
 for edge in first last; do
   [ "$edge" = first ] && n=$SKIP || n=$((SKIP + FRAMES - 1))

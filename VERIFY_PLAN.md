@@ -212,6 +212,26 @@ background, because there is no declared background — the words sit on the pla
 Sampled from the painted pixels either side of every line, the lowest is 7.23:1
 in English and 8.69:1 in Persian, both above AAA.
 
+**What a slide costs, and why this one was re-cut.** The first encode used the
+scrub mode's own settings — crf 30, a keyframe every 4 frames — and took the
+features page from 4,985K to 9,608K. Nearly doubling a page is a regression
+whatever the picture looks like, and it was reported as one before any check
+caught it: no assertion here measures page weight, which is the gap this note
+exists to record.
+
+The mode's gop of 4 is set by the hardest case, the dive, where every frame the
+decoder can answer for is a frame the reader sees. This shot is the opposite —
+it drifts, 0.2 to 2.3 of motion per frame against the dive's 15 to 24 — so a
+frame the decoder misses is nearly identical to the one already up, and the
+proxy covers it anyway. Re-cut at crf 33 and a keyframe every 8: 4,050KB to
+1,857KB for three thousandths of SSIM, and 22ms to 26ms of seek. Its proxy was
+over-specified too, at SSIM 0.962 against a fleet that sits at 0.939, so it came
+down to 0.944 and 564KB to 365KB.
+
+The page is 7,272K now against 4,985K before the slide. That 2.3MB is what a
+three-second 1080p shot honestly costs, and the numbers above are the evidence
+that it is not more than that.
+
 **Every stop shows its own plate, not the stand-in.** Checked at each resting
 stop of the features walk: the composited shipping plate must carry
 `data-plate-ready`. The proxy is 854×480 and exists to cover the moment before
