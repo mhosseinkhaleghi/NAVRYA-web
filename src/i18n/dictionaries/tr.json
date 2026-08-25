@@ -271,7 +271,8 @@
     "sectionNav": "Bölüm gezinmesi",
     "footerNav": "Alt bilgi gezinmesi",
     "newsletter": "Bülten kaydı",
-    "social": "Sosyal bağlantılar"
+    "social": "Sosyal bağlantılar",
+    "gallery": "Ürün ekranları. Daha fazlası için yana kaydırın."
   },
   "footer": {
     "cta": {
@@ -440,6 +441,54 @@
           "key": "history",
           "label": "Seans Geçmişi",
           "body": "Geçmiş seansları inceleyin, avantajınızı keskinleştirin."
+        }
+      ]
+    },
+    "scenario": {
+      "headline": [
+        "Fiyat Hareket Etmeden",
+        "Birden Fazla Senaryo Hazırlayın"
+      ],
+      "body": "Ne olabileceğini tanımlayın, her senaryonun nasıl geliştiğini izleyin, olasılığını güncelleyin, Desenleri bağlayın ve karar duygusallaşmadan önce bir uygulama planı hazırlayın.",
+      "cta": "Navrya yaklaşımını keşfedin",
+      "shots": [
+        {
+          "key": "planning",
+          "title": "Senaryo Planlama"
+        },
+        {
+          "key": "probability",
+          "title": "Olasılık Geçmişi"
+        },
+        {
+          "key": "patterns",
+          "title": "Desen Bağlama"
+        },
+        {
+          "key": "execution",
+          "title": "Uygulama Planları"
+        }
+      ],
+      "features": [
+        {
+          "key": "planning",
+          "label": "Senaryo Planlama",
+          "body": "Piyasa hareket etmeden tüm olası sonuçları haritalayın."
+        },
+        {
+          "key": "probability",
+          "label": "Olasılık Geçmişi",
+          "body": "Olasılıkların zamanla nasıl değiştiğini izleyin."
+        },
+        {
+          "key": "patterns",
+          "label": "Desen Bağlama",
+          "body": "Desenleri ve piyasa yapısını senaryolarla bağlayın."
+        },
+        {
+          "key": "execution",
+          "label": "Uygulama Planları",
+          "body": "Her senaryo için kesin uygulama planları hazırlayın."
         }
       ]
     }

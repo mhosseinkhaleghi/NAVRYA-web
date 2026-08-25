@@ -15,6 +15,26 @@ Worth stating up front, because it rules out most of the usual suspects:
 - **No GSAP, no ScrollTrigger, no Lenis, no Three.js, no canvas, no WebGL.**
   Scroll-driven reveals are plain CSS custom properties (`--head`, `--body`,
   `--r`) written onto elements by that one controller on `scroll`.
+
+  Two React Bits components have been asked for and neither was adopted as
+  shipped, for this reason. `CardSwap` (the session workspace's stack) drives
+  GSAP from `useEffect`; `CircularGallery` (the scenario gallery) renders through
+  `ogl` — a WebGL context, shaders and a `requestAnimationFrame` loop — and binds
+  `wheel`/`touchmove` on `window`, which would fight the film's controller for
+  the same gesture. Both designs were ported to CSS instead, keeping the
+  geometry and the motion and dropping the runtime. If either is ever adopted
+  as-is, this line and the "no client React" line above both stop being true and
+  the harness's assumptions go with them.
+- **One CSS mechanism the controller is not behind:** the scenario gallery's arc
+  is a scroll-driven animation (`animation-timeline: view(x)` on a native
+  horizontal scroller). Still plain CSS, no script and no library, but it is not
+  the `--r` custom-property mechanism the rest of the site uses, and it is opted
+  into behind `@supports (animation-timeline: view())` — without support the row
+  is flat and still fully scrollable. Note also that it does **not** survive a
+  scroll container whose content overflows leftward (an RTL scroller, or
+  `flex-direction: row-reverse`): the progress it reports is wrong, so the
+  gallery is mirrored around an LTR scroller rather than laid out RTL. See the
+  comment on `[dir="rtl"] .gallery` in `ScenarioSection.module.css`.
 - **CSS Modules only.** No Tailwind, no shadcn, no runtime CSS-in-JS.
 - **Assets are served from `public/`** at absolute root paths (`/scene/...`,
   `/cast/...`, `/fonts/...`). No bundler imports for media, no base path.

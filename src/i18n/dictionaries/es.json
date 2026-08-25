@@ -271,7 +271,8 @@
     "sectionNav": "Navegación por secciones",
     "footerNav": "Navegación del pie",
     "newsletter": "Suscripción al boletín",
-    "social": "Enlaces sociales"
+    "social": "Enlaces sociales",
+    "gallery": "Pantallas del producto. Desplázate lateralmente para ver más."
   },
   "footer": {
     "cta": {
@@ -440,6 +441,54 @@
           "key": "history",
           "label": "Historial de Sesiones",
           "body": "Revisa sesiones pasadas y afina tu ventaja."
+        }
+      ]
+    },
+    "scenario": {
+      "headline": [
+        "Prepara Múltiples Escenarios",
+        "Antes de que el Precio se Mueva"
+      ],
+      "body": "Define lo que puede ocurrir, sigue cómo evoluciona cada escenario, actualiza su probabilidad, conecta Patrones y prepara un plan de ejecución antes de que la decisión se vuelva emocional.",
+      "cta": "Descubre el enfoque Navrya",
+      "shots": [
+        {
+          "key": "planning",
+          "title": "Planificación de Escenarios"
+        },
+        {
+          "key": "probability",
+          "title": "Historial de Probabilidad"
+        },
+        {
+          "key": "patterns",
+          "title": "Vinculación de Patrones"
+        },
+        {
+          "key": "execution",
+          "title": "Planes de Ejecución"
+        }
+      ],
+      "features": [
+        {
+          "key": "planning",
+          "label": "Planificación de Escenarios",
+          "body": "Traza todos los resultados posibles antes de que el mercado se mueva."
+        },
+        {
+          "key": "probability",
+          "label": "Historial de Probabilidad",
+          "body": "Observa cómo evolucionan las probabilidades con el tiempo."
+        },
+        {
+          "key": "patterns",
+          "label": "Vinculación de Patrones",
+          "body": "Conecta patrones y estructura de mercado con los escenarios."
+        },
+        {
+          "key": "execution",
+          "label": "Planes de Ejecución",
+          "body": "Prepara planes de ejecución precisos para cada escenario."
         }
       ]
     }

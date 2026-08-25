@@ -1,0 +1,678 @@
+/* -----------------------------------------------------------------------------
+ * Scenarios — the second section below the film.
+ *
+ * Ordinary document, like the section above it. Nothing in this file reads a
+ * scroll position from the controller; the one thing that reacts to scroll does
+ * it natively, and is documented where it happens.
+ * -------------------------------------------------------------------------- */
+
+.section {
+  position: relative;
+  padding-block: var(--section-pad);
+  padding-inline: var(--gutter);
+
+  /* The page void, ruled — the same ground the CTA section and the footer sit
+   * on, attached to the viewport the way they attach it so the cells line up
+   * across all of them rather than each box starting a grid of its own. The
+   * section above this one is the commander's red; this one is the void, as
+   * the comp draws it, and the ruling is what carries across the seam. */
+  background-color: var(--c-bg);
+  background-image: var(--grid-image);
+  background-attachment: fixed;
+
+  overflow: hidden;
+}
+
+/*
+ * Words left, gallery right — and the gallery is allowed off the end.
+ *
+ * The second column is `1.15fr` rather than a measured width because the run of
+ * screens has no natural end: it is a scroller, and what the comp shows is a
+ * row that carries on past the frame. The negative end margin is what lets it,
+ * cancelling the section's gutter so the rail reaches the actual edge of the
+ * window and cards leave by sliding off rather than by stopping short of a
+ * margin.
+ */
+.top {
+  display: grid;
+  /* The words take the larger share, which is the opposite of the section
+   * above. The headline is the constraint here — see `.headline` — and the rail
+   * does not need a wide box to be wide: it bleeds past the frame's edge, so
+   * what its column sets is where the row starts, not how far it runs. */
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(1.5rem, 3.5vw, 3.5rem);
+  max-inline-size: var(--page-max);
+  margin-inline: auto;
+}
+
+/* ── the words ────────────────────────────────────────────────────────────── */
+
+.words {
+  min-inline-size: 0;
+}
+
+/*
+ * Sized so the copy's own two lines hold as two lines, which took measuring.
+ *
+ * The dictionary declares this headline as two lines and they are long ones:
+ * "Prepare Multiple Scenarios" is twenty-six characters where the longest line
+ * in the section above is fifteen. At `--fs-title-3` both wrapped and it came
+ * out five lines deep; at `--fs-title-4`, three.
+ *
+ * Copying the size straight off the comp does not work either, and the reason
+ * is worth writing down: the comp is set in a narrow serif and the site is set
+ * in Cinzel, which is a capitals face with wide letterforms and positive
+ * tracking. The same twenty-six characters need about 745px in Cinzel where the
+ * comp's face fits them in 612. Matching the comp's *size* and matching the
+ * comp's *line breaks* are two different requests and only one of them can be
+ * had — so this takes the line breaks, which are the composition, and gives up
+ * the last few points of size, which are an artefact of a mockup drawn in a
+ * font the site does not ship.
+ *
+ * 2.95vw is what fits: 42.5px in a 686px column at 1440, and it holds both
+ * lines whole every step down to 1024, below which the column goes full-width
+ * and the question stops arising.
+ */
+.headline {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.55rem, min(2.95vw, 5.05vh), 4rem);
+  font-weight: 400;
+  line-height: 1.14;
+  letter-spacing: var(--tracking-display);
+  color: var(--c-gold);
+  /* Each line is its own line. Where a frame is too narrow to hold one it may
+   * still wrap — that is the point of leaving it a normal paragraph — but it is
+   * never broken by the column being a little tight. */
+  text-wrap: balance;
+}
+
+.headlineLine {
+  display: block;
+}
+
+.rule {
+  display: flex;
+  align-items: center;
+  margin-block: clamp(1.5rem, 3.5vh, 2.5rem) clamp(1.25rem, 3vh, 2rem);
+}
+
+.ruleLine,
+.ruleLineFaint {
+  block-size: 1px;
+  background-color: var(--c-gold);
+}
+
+.ruleLine {
+  inline-size: clamp(5rem, 10vw, 9rem);
+}
+
+/* The site's ornamental diamond, at the size of the line it sits on. */
+.ruleNode {
+  inline-size: 0.6rem;
+  block-size: 0.6rem;
+  flex: none;
+  margin-inline: 0.75rem;
+  border: 1px solid var(--c-gold);
+  background-color: var(--char-accent, var(--c-gold));
+  transform: rotate(45deg);
+}
+
+/* The rule runs on past the diamond and fades, so it reads as an edge rather
+ * than a measured bar. */
+.ruleLineFaint {
+  inline-size: clamp(6rem, 13vw, 12rem);
+  background-image: linear-gradient(to right, var(--c-gold), transparent);
+  background-color: transparent;
+}
+
+[dir="rtl"] .ruleLineFaint {
+  background-image: linear-gradient(to left, var(--c-gold), transparent);
+}
+
+.body {
+  margin: 0;
+  max-inline-size: 32rem;
+  font-family: var(--font-sans);
+  font-size: var(--fs-body-3);
+  font-weight: 300;
+  line-height: 1.75;
+  color: var(--c-mist);
+}
+
+/* ── the call to action ───────────────────────────────────────────────────────
+ *
+ * The council and desk panels in the film already carry this control. It is
+ * repeated here rather than shared because those two are scrubbed by the stage
+ * controller and read `--r` for their reveal, which this one must not: it is on
+ * an ordinary page and has to be visible the moment it is scrolled to. Same
+ * shape, same rule, no opacity gate.
+ * -------------------------------------------------------------------------- */
+
+.cta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85em;
+  margin-block-start: clamp(1.75rem, 4vh, 2.75rem);
+  padding: 0 0 0.75em;
+  border: 0;
+  background: none;
+  color: var(--gold-warm);
+  font-family: var(--font-sans);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  letter-spacing: var(--tracking-micro);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.ctaLabel {
+  white-space: nowrap;
+}
+
+.ctaNode {
+  inline-size: 0.55em;
+  block-size: 0.55em;
+  flex: none;
+  border: 1px solid var(--c-gold);
+  transform: rotate(45deg);
+}
+
+.ctaRule {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  block-size: 1px;
+  background: linear-gradient(to right, var(--c-gold-line), var(--c-gold-line-faint));
+  transition: background var(--dur-hover) var(--ease-out);
+}
+
+[dir="rtl"] .ctaRule {
+  background: linear-gradient(to left, var(--c-gold-line), var(--c-gold-line-faint));
+}
+
+.cta:hover .ctaRule,
+.cta:focus-visible .ctaRule {
+  background: var(--c-gold-line-strong);
+}
+
+/* ── the gallery ──────────────────────────────────────────────────────────────
+ *
+ * React Bits' `CircularGallery`, without the WebGL.
+ *
+ * That component draws a row of textured planes through `ogl` and bends them
+ * onto a circle every frame, reading `wheel` and `touchmove` off `window` to
+ * move the row. None of that can be here: the page carries no canvas and no
+ * client React, and the vertical wheel on this page belongs to the film's
+ * controller.
+ *
+ * What it is instead is a native horizontal scroller. The browser does the
+ * scrolling — momentum on a touchscreen, trackpad, keyboard, scroll-snap, all
+ * of it for free and none of it listening for anything — and the bend is a
+ * scroll-driven animation on each card. See `@keyframes bend`.
+ * -------------------------------------------------------------------------- */
+
+.gallery {
+  /* The rail reaches the window edge rather than stopping at the section's
+   * gutter: the row is meant to carry on past the frame, and a card has to be
+   * able to leave. */
+  margin-inline-end: calc(var(--gutter) * -1);
+  min-inline-size: 0;
+}
+
+.gallery:focus-visible {
+  outline: 1px solid var(--c-gold);
+  outline-offset: 6px;
+}
+
+.rail {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--rail-gap);
+  margin: 0;
+  padding: 0;
+  /*
+   * Room for the bend, and only where the bend goes.
+   *
+   * A card never rises: the arc puts the middle one at zero and pushes every
+   * other one *down*, so the space below has to hold a whole `--arc` and the
+   * space above has to hold nothing but the corner the rotation lifts — about
+   * an eighth of the card's width at these angles. Reserving `--arc` at both
+   * ends, which is what this was, left ninety-odd pixels of empty ground above
+   * the row and made the section that much taller for nothing.
+   */
+  padding-block: calc(var(--frame-w) * 0.12) var(--bend-room);
+  /* Half a frame of lead-in and lead-out, so the first and last card can each
+   * reach the middle of the scrollport — which is where the bend puts a card
+   * upright, and where scroll-snap parks it. Without it the two ends could
+   * never be the centre card. */
+  padding-inline: calc(50% - (var(--frame-w) / 2));
+  list-style: none;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+
+  /*
+   * An ordinary left-to-right scroller, in every language — deliberately, and
+   * not as an oversight about mirroring. The mirroring happens around it, on
+   * `.gallery`. See `[dir="rtl"] .gallery` below for what goes wrong otherwise.
+   */
+  direction: ltr;
+
+  /* The row's own affordance is the bend and the cards leaving the frame; a
+   * scrollbar under it would sit across the reflections. */
+  scrollbar-width: none;
+
+  --frame-w: clamp(13rem, 21vw, 20rem);
+  /* The comp's proportion: a landscape well with the name in a band under it,
+   * a shade taller than it is wide overall. */
+  --frame-h: calc(var(--frame-w) * 1.16);
+  --rail-gap: clamp(1.25rem, 3vw, 2.75rem);
+  /* Room above and below for the arc to drop a card into without the section
+   * clipping it. Tied to `--arc` so the two cannot drift apart. */
+  --bend-room: calc(var(--arc) + 1rem);
+  --arc: clamp(2.5rem, 5vw, 4.5rem);
+  --tilt: 11deg;
+  --far: 0.82;
+  /* 1 normally, -1 under `[dir="rtl"]`, where the gallery around this
+   * scroller is mirrored and each card has to be turned back the right way. */
+  --flip: 1;
+}
+
+.rail::-webkit-scrollbar {
+  display: none;
+}
+
+/* -----------------------------------------------------------------------------
+ * The row in Persian and Arabic.
+ *
+ * This one took three attempts, so the dead ends are worth writing down.
+ *
+ * Leaving the rail `direction: rtl` with the rest of the page mirrors the
+ * layout correctly and breaks the bend. Chromium's scroll-driven timelines do
+ * not agree with such a scroller about where it is scrolled to: measured on the
+ * built page at 1440, the card sitting exactly in the middle of the scrollport —
+ * centre 329 of a 0..658 box — was drawn at the arc's *edge*, dimmed and
+ * tilted, while the card at the top of the arc was the one 859px off the left of
+ * the screen. Changing the timeline's axis from `inline` to `x` changes nothing.
+ * Neither does `flex-direction: row-reverse` on an otherwise LTR scroller, which
+ * produces a pixel-identical layout and a pixel-identical fault — and that is
+ * the tell. The writing direction was never the trigger. What both of those have
+ * in common is that the content overflows to the *left* of its origin, and that
+ * is the thing the timeline cannot follow.
+ *
+ * So the scroller is left alone. It is an ordinary left-to-right one in every
+ * language, its content overflows right, its scroll position starts at zero and
+ * the timeline is correct — and the whole gallery is mirrored around it. Card
+ * one lands on the right, the row runs leftward off the frame's left edge, and
+ * the row opens on card one exactly as it does in English, with no script
+ * setting a scroll position.
+ *
+ * The flip is undone on each card by `--flip` in the keyframes, or every label
+ * would read backwards. See `@keyframes bend`, where it rides along with the
+ * arc for the same reason the arc is there at all: a transform is replaced
+ * whole, so anything not restated at every step is dropped.
+ * -------------------------------------------------------------------------- */
+
+[dir="rtl"] .gallery {
+  transform: scaleX(-1);
+}
+
+[dir="rtl"] .rail {
+  --flip: -1;
+}
+
+.slide {
+  position: relative;
+  flex: none;
+  inline-size: var(--frame-w);
+  scroll-snap-align: center;
+}
+
+.frame {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  block-size: var(--frame-h);
+  border: 1px solid var(--c-gold-line);
+  border-radius: 10px;
+  background-color: #08070b;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 55%), 0 20px 44px rgb(0 0 0 / 50%);
+  overflow: hidden;
+}
+
+/* Where the screenshot goes. Empty on purpose — a ruled well at the right size,
+ * so the card, the row and the section are already laid out and adding a picture
+ * changes one property. */
+.well {
+  flex: 1;
+  margin: 0.55rem 0.55rem 0;
+  border: 1px dashed rgb(198 160 74 / 20%);
+  border-radius: 6px;
+  background-color: rgb(198 160 74 / 3%);
+  background-image: var(--shot, none);
+  background-size: cover;
+  background-position: center;
+}
+
+/* A well holding a picture is a frame, not a placeholder. */
+.well[style*="--shot"] {
+  border-style: solid;
+  border-color: rgb(198 160 74 / 28%);
+}
+
+.label {
+  padding: 0.85rem 0.9rem 0.95rem;
+  font-family: var(--font-sans);
+  font-size: var(--fs-label);
+  font-weight: 400;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--c-cream);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/*
+ * The reflection.
+ *
+ * Which half of the card it shows is the whole trick, and getting it wrong is
+ * easy: flipping the *outer* box would clip the card's top and then turn it
+ * over, so the reflection would be of the far edge rather than the near one.
+ * The flip goes on the copy of the frame and the clip goes on the box around
+ * it, in that order — so what survives is the bottom of the card, which is the
+ * part touching the surface, with its label the right way up in the mirror.
+ *
+ * Only the near two-fifths is kept, because that is as far as the fade carries
+ * anyway and there is no reason to lay out and paint the rest of an upside-down
+ * card nobody can see.
+ *
+ * The whole thing is opted into rather than out of. Without the mask the copy
+ * would be a solid inverted card sitting under every frame, which is worse than
+ * no reflection at all — so no mask, no reflection.
+ */
+.echo {
+  display: none;
+  block-size: calc(var(--frame-h) * 0.34);
+  margin-block-start: 2px;
+  overflow: hidden;
+  opacity: 0.17;
+  pointer-events: none;
+  user-select: none;
+}
+
+.echo .frame {
+  transform: scaleY(-1);
+  /* A reflection does not cast the shadow its object casts. */
+  box-shadow: none;
+}
+
+@supports (mask-image: linear-gradient(#000, transparent)) or
+  (-webkit-mask-image: linear-gradient(#000, transparent)) {
+  .echo {
+    display: block;
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 88%);
+    mask-image: linear-gradient(to bottom, #000 0%, transparent 88%);
+  }
+}
+
+/* -----------------------------------------------------------------------------
+ * The bend.
+ *
+ * `CircularGallery` puts the row on a circle of radius R and, for a card whose
+ * distance from the middle is x, drops it by `R - sqrt(R² - x²)` and turns it by
+ * `asin(x / R)`. The middle card is the top of the arc: highest, square, and
+ * nearest. Everything either side falls away and leans into the curve.
+ *
+ * `view(inline)` hands a card the one quantity that calculation needs — how far
+ * it is through the scrollport — as an animation timeline, so the same curve
+ * comes out of the compositor with nothing running. Progress 0 is the card
+ * entering at one edge, 0.5 is dead centre, 1 is leaving at the other.
+ *
+ * The samples below are `u = 2·(p - 0.5)` at every eighth, with drop ∝ u² and
+ * turn ∝ u. Over the top of a circle this wide a parabola is the same shape;
+ * the difference at the outermost sample is under a pixel.
+ *
+ * Opted into with `@supports`, and that is the whole fallback story: where
+ * scroll-driven animations are missing the block is skipped and the row is
+ * flat — still a gallery, still scrollable, still all four screens, no bend.
+ * Declaring it outside the guard would be worse than not declaring it, because
+ * an `animation` with no timeline runs on the clock instead, and with no
+ * duration it would snap every card to the last keyframe and hold it there.
+ * -------------------------------------------------------------------------- */
+
+@supports (animation-timeline: view()) {
+  .slide {
+    animation: bend linear both;
+    /*
+     * `x`, not `inline`, and this was a bug before it was a decision.
+     *
+     * The arc is a physical shape: a card left of the middle leans left and one
+     * right of it leans right, in every language, because that is what an arc
+     * looks like. `view(inline)` measures along the writing direction, so in
+     * Persian and Arabic it runs the progress backwards — and the result was not
+     * a mirrored arc, it was a broken one. Measured on the built page: the card
+     * sitting exactly in the middle of the scrollport (centre 329 of a 0..658
+     * box) was drawn at the arc's *edge*, dimmed to 0.5 and tilted, while the
+     * card at the top of the arc was the one 859px off the left of the screen.
+     *
+     * `x` is the same axis in both directions, so a card in the middle is at
+     * progress 0.5 wherever the page is written from, and the keyframes below —
+     * which are already symmetric about 0.5 — come out as the same arc either
+     * way. Nothing about the mirroring is lost: the row itself still runs
+     * right-to-left, because that is the rail's own layout doing its job.
+     */
+    animation-timeline: view(x);
+  }
+
+  @keyframes bend {
+    /* u = -1 */
+    0% {
+      transform: translateY(var(--arc)) rotate(calc(var(--tilt) * -1)) scale(var(--far)) scaleX(var(--flip));
+      opacity: 0.5;
+      z-index: 1;
+    }
+    /* u = -0.75 → u² = 0.5625 */
+    12.5% {
+      transform: translateY(calc(var(--arc) * 0.5625)) rotate(calc(var(--tilt) * -0.75))
+        scale(calc(1 - (1 - var(--far)) * 0.5625)) scaleX(var(--flip));
+      opacity: 0.63;
+      z-index: 2;
+    }
+    /* u = -0.5 → u² = 0.25 */
+    25% {
+      transform: translateY(calc(var(--arc) * 0.25)) rotate(calc(var(--tilt) * -0.5))
+        scale(calc(1 - (1 - var(--far)) * 0.25)) scaleX(var(--flip));
+      opacity: 0.78;
+      z-index: 3;
+    }
+    /* u = -0.25 → u² = 0.0625 */
+    37.5% {
+      transform: translateY(calc(var(--arc) * 0.0625)) rotate(calc(var(--tilt) * -0.25))
+        scale(calc(1 - (1 - var(--far)) * 0.0625)) scaleX(var(--flip));
+      opacity: 0.93;
+      z-index: 4;
+    }
+    /* the top of the arc */
+    50% {
+      transform: translateY(0) rotate(0deg) scale(1) scaleX(var(--flip));
+      opacity: 1;
+      z-index: 5;
+    }
+    62.5% {
+      transform: translateY(calc(var(--arc) * 0.0625)) rotate(calc(var(--tilt) * 0.25))
+        scale(calc(1 - (1 - var(--far)) * 0.0625)) scaleX(var(--flip));
+      opacity: 0.93;
+      z-index: 4;
+    }
+    75% {
+      transform: translateY(calc(var(--arc) * 0.25)) rotate(calc(var(--tilt) * 0.5))
+        scale(calc(1 - (1 - var(--far)) * 0.25)) scaleX(var(--flip));
+      opacity: 0.78;
+      z-index: 3;
+    }
+    87.5% {
+      transform: translateY(calc(var(--arc) * 0.5625)) rotate(calc(var(--tilt) * 0.75))
+        scale(calc(1 - (1 - var(--far)) * 0.5625)) scaleX(var(--flip));
+      opacity: 0.63;
+      z-index: 2;
+    }
+    100% {
+      transform: translateY(var(--arc)) rotate(var(--tilt)) scale(var(--far)) scaleX(var(--flip));
+      opacity: 0.5;
+      z-index: 1;
+    }
+  }
+}
+
+/* ── the four below ───────────────────────────────────────────────────────── */
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+  max-inline-size: var(--page-max);
+  margin: clamp(2.5rem, 5vh, 4rem) auto 0;
+  padding: clamp(2rem, 5vh, 3rem) 0 0;
+  border-block-start: 1px solid rgb(198 160 74 / 18%);
+  list-style: none;
+}
+
+/* The comp centres each note under its own mark, in a column. */
+.feature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-inline-size: 0;
+}
+
+/* The separators are rules between the columns, not borders on the items — so
+ * they go on the gap side and never on the first column. */
+.feature + .feature {
+  border-inline-start: 1px solid rgb(198 160 74 / 18%);
+  padding-inline-start: clamp(1.25rem, 3vw, 2.5rem);
+}
+
+.featureMark {
+  inline-size: clamp(2rem, 3.2vw, 2.75rem);
+  block-size: clamp(2rem, 3.2vw, 2.75rem);
+  flex: none;
+  fill: none;
+  stroke: var(--c-gold);
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.featureLabel {
+  margin: clamp(0.85rem, 2vh, 1.25rem) 0 0.5rem;
+  font-family: var(--font-display);
+  font-size: var(--fs-body-2);
+  font-weight: 400;
+  letter-spacing: var(--tracking-display);
+  color: var(--c-gold);
+}
+
+.featureBody {
+  margin: 0;
+  max-inline-size: 18rem;
+  font-family: var(--font-sans);
+  font-size: var(--fs-body-3);
+  font-weight: 300;
+  line-height: 1.6;
+  color: var(--c-mist);
+}
+
+/* -----------------------------------------------------------------------------
+ * Narrow frames.
+ *
+ * The two columns become one, the gallery goes full width under the words, and
+ * the four notes go two-up rather than four-up — four columns on a phone is
+ * four words a line.
+ *
+ * The gallery itself needs almost nothing: it is a scroller, and a scroller is
+ * already the right answer on a touchscreen. What changes is that it bleeds to
+ * both edges instead of one, because there is no words column beside it to
+ * anchor the near side any more.
+ * -------------------------------------------------------------------------- */
+
+@media (max-width: 1023px) {
+  .top {
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(2rem, 5vh, 3rem);
+  }
+
+  .gallery {
+    margin-inline: calc(var(--gutter) * -1);
+  }
+
+  .rail {
+    --frame-w: clamp(12.5rem, 54vw, 17rem);
+    --arc: clamp(1.75rem, 6vw, 3.5rem);
+    --tilt: 9deg;
+  }
+
+  .features {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(1.75rem, 4vh, 2.5rem) clamp(1.25rem, 3vw, 2rem);
+  }
+
+  /* Two-up: the rule belongs between the pair, so it is on the second of each
+   * row rather than on every item but the first. */
+  .feature + .feature {
+    border-inline-start: 0;
+    padding-inline-start: 0;
+  }
+
+  .feature:nth-child(even) {
+    border-inline-start: 1px solid rgb(198 160 74 / 18%);
+    padding-inline-start: clamp(1.25rem, 3vw, 2rem);
+  }
+
+  .feature:nth-child(n + 3) {
+    border-block-start: 1px solid rgb(198 160 74 / 18%);
+    padding-block-start: clamp(1.75rem, 4vh, 2.5rem);
+  }
+}
+
+/* One column of notes once two no longer fit a sentence on a line. */
+@media (max-width: 479px) {
+  .features {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .feature:nth-child(even) {
+    border-inline-start: 0;
+    padding-inline-start: 0;
+  }
+
+  .feature + .feature {
+    border-block-start: 1px solid rgb(198 160 74 / 18%);
+    padding-block-start: clamp(1.5rem, 4vh, 2rem);
+  }
+}
+
+/* -----------------------------------------------------------------------------
+ * Reduced motion.
+ *
+ * The bend is not decoration that can simply be switched off — it is what tells
+ * you which card is the current one, and it is driven by the reader's own
+ * scrolling rather than by a clock, so it never moves unless they move it.
+ * What does come off is the drop and the turn, which are the parts that read as
+ * motion; the emphasis stays, as scale and opacity alone.
+ * -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .rail {
+    --arc: 0px;
+    --tilt: 0deg;
+    --bend-room: 0.5rem;
+    scroll-behavior: auto;
+  }
+}

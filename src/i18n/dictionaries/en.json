@@ -271,7 +271,8 @@
     "sectionNav": "Section navigation",
     "footerNav": "Footer navigation",
     "newsletter": "Newsletter signup",
-    "social": "Social links"
+    "social": "Social links",
+    "gallery": "Product screens. Scroll sideways to see more."
   },
   "footer": {
     "cta": {
@@ -440,6 +441,54 @@
           "key": "history",
           "label": "Session History",
           "body": "Review past sessions and refine your edge."
+        }
+      ]
+    },
+    "scenario": {
+      "headline": [
+        "Prepare Multiple Scenarios",
+        "Before Price Moves"
+      ],
+      "body": "Define what may happen, track how each scenario develops, update its probability, connect Patterns, and prepare an execution plan before the decision becomes emotional.",
+      "cta": "Discover the Navrya approach",
+      "shots": [
+        {
+          "key": "planning",
+          "title": "Scenario Planning"
+        },
+        {
+          "key": "probability",
+          "title": "Probability History"
+        },
+        {
+          "key": "patterns",
+          "title": "Pattern Linking"
+        },
+        {
+          "key": "execution",
+          "title": "Execution Plans"
+        }
+      ],
+      "features": [
+        {
+          "key": "planning",
+          "label": "Scenario Planning",
+          "body": "Map all possible outcomes before the market moves."
+        },
+        {
+          "key": "probability",
+          "label": "Probability History",
+          "body": "Track how probabilities evolve over time."
+        },
+        {
+          "key": "patterns",
+          "label": "Pattern Linking",
+          "body": "Connect patterns and market structure with scenarios."
+        },
+        {
+          "key": "execution",
+          "label": "Execution Plans",
+          "body": "Prepare precise execution plans for every scenario."
         }
       ]
     }

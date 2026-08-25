@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { FeaturePanel } from "@/components/feature/FeaturePanel";
 import { MapNotes } from "@/components/feature/MapNotes";
 import { CouncilPanel } from "@/components/feature/CouncilPanel";
+import { ScenarioSection } from "@/components/feature/ScenarioSection";
 import { SessionSection } from "@/components/feature/SessionSection";
 import { SiteFooter } from "@/components/footer/SiteFooter";
 import { Hero } from "@/components/hero/Hero";
@@ -311,6 +312,10 @@ export default async function FeaturePage({
       after={
         <>
           <SessionSection session={dictionary.feature.session} />
+          <ScenarioSection
+            scenario={dictionary.feature.scenario}
+            galleryLabel={dictionary.a11y.gallery}
+          />
           <SiteFooter locale={locale} dictionary={dictionary} route="feature" />
         </>
       }
