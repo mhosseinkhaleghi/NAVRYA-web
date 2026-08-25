@@ -299,6 +299,17 @@ export default async function FeaturePage({
 
   return (
     <Stage
+      /*
+       * The whole page is the commander's.
+       *
+       * This is the one place the route's ground is named. `Stage` puts it on
+       * the film's block and on the document after it — which between them are
+       * the entire page — so the film's screen, both sections below it and the
+       * footer all paint `--char-atmosphere`, and it is the commander's red
+       * rather than the page void. Nothing else had to change: every one of
+       * those surfaces already read that token, whose default is the void.
+       */
+      character="commander"
       sequence={SEQUENCE}
       chrome={<SiteHeader locale={locale} dictionary={dictionary} active="feature" />}
       /*

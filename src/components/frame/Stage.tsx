@@ -23,11 +23,29 @@ export function Stage({
   children,
   after,
   chrome,
+  character,
   sequence,
 }: {
   children: ReactNode;
   after?: ReactNode;
   chrome?: ReactNode;
+  /**
+   * A character skin for the whole page, when the page belongs to one.
+   *
+   * The palette carries four and the marketing site runs none of them by
+   * default — it is on the neutral gold skin, and every surface that paints a
+   * ground reads `--char-atmosphere`, whose default *is* the page void. So
+   * naming a skin here re-grounds the entire route and leaving it off changes
+   * nothing anywhere.
+   *
+   * It goes on the three elements this renders rather than on one wrapper
+   * around them: the film's block and everything after it are the whole of the
+   * document flow, and the chrome is a fixed overlay beside them rather than
+   * inside them — so it needs telling separately, or the bar would resolve the
+   * token at `:root` and paint the page void over a page that is not it. A
+   * wrapper would be a fourth element existing only to carry an attribute.
+   */
+  character?: string;
   /**
    * This page's film, when it is not the home page's.
    *
@@ -85,6 +103,7 @@ export function Stage({
       <div
         className={styles.film}
         data-track=""
+        {...(character ? { "data-character": character } : {})}
         {...(sequence
           ? {
               /*
@@ -123,13 +142,27 @@ export function Stage({
           {children}
         </div>
       </div>
-      {after ? <div className={styles.flow}>{after}</div> : null}
+      {after ? (
+        <div
+          className={styles.flow}
+          {...(character ? { "data-character": character } : {})}
+        >
+          {after}
+        </div>
+      ) : null}
       {/*
        * The bar and the rail sit above everything, film and document alike.
        * They cannot stay inside the stage: it is a stacking context of its own,
        * so anything in it is trapped below the flow that scrolls over it.
        */}
-      {chrome ? <div className={styles.chrome}>{chrome}</div> : null}
+      {chrome ? (
+        <div
+          className={styles.chrome}
+          {...(character ? { "data-character": character } : {})}
+        >
+          {chrome}
+        </div>
+      ) : null}
     </>
   );
 }

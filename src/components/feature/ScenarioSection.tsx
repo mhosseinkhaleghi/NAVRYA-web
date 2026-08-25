@@ -36,11 +36,15 @@ import styles from "./ScenarioSection.module.css";
  * per card, how far the card is from the middle and bends it onto a circle:
  * `y = R - sqrt(R² - x²)`, with a matching rotation of `asin(x / R)`, so the
  * middle card sits highest and square and the ones either side drop away and
- * tilt. `animation-timeline: view(inline)` gives a card exactly that quantity —
- * its own progress across the scrollport — as the driver of a keyframe list, so
- * the same curve comes out of the compositor with no script running. The
- * keyframes are the parabola through nine samples; over the top of a circle the
- * two are indistinguishable at this radius.
+ * tilt. `animation-timeline: view(x)` gives a card exactly that quantity — its
+ * own progress across the scrollport — as the driver of a keyframe list, so the
+ * same curve comes out of the compositor with no script running. The keyframes
+ * are the parabola through nine samples; over the top of a circle the two are
+ * indistinguishable at this radius.
+ *
+ * The row is mirrored, rather than laid out, for Persian and Arabic: the
+ * timeline does not survive a scroll container whose content overflows leftward.
+ * That is measured and written up on `[dir="rtl"] .gallery` in the stylesheet.
  *
  * Where scroll-driven animations are not supported, the `@supports` block is
  * skipped and the row is flat: still a gallery, still scrollable, still all four
@@ -111,20 +115,7 @@ export function ScenarioSection({
   galleryLabel: string;
 }) {
   return (
-    <section
-      className={styles.section}
-      data-scenario=""
-      /*
-       * The commander's skin again, for one token and not for the ground.
-       *
-       * The section above uses it for `--char-atmosphere` and comes out red.
-       * This one is the page void, as the comp draws it — what it takes from the
-       * skin is `--char-accent`, the ember the diamond in the rule is drawn in.
-       * Leaving the skin off painted that diamond gold, and the comp is
-       * unambiguous that it is the red one.
-       */
-      data-character="commander"
-    >
+    <section className={styles.section} data-scenario="">
       <div className={styles.top}>
         <div className={styles.words}>
           <h2 className={styles.headline}>

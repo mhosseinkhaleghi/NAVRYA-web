@@ -16,7 +16,9 @@
   isolation: isolate;
   padding-block: clamp(3rem, 6vw, 6.5rem) clamp(1.5rem, 3vw, 2.75rem);
   padding-inline: var(--gutter);
-  background-color: var(--c-bg);
+  /* Follows the page's character skin where one is set, and is the page void
+   * everywhere else — the token's default is exactly `--c-bg`. */
+  background-color: var(--char-atmosphere);
   color: var(--c-text);
   font-family: var(--font-sans);
 

@@ -350,7 +350,10 @@
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: var(--c-bg);
+  /* The same ground the sections under the bar paint, so the bar does not
+   * become a black band across a page that is not black. Default is the page
+   * void, so nothing changes on a route with no skin. */
+  background: var(--char-atmosphere);
   opacity: 0;
   transition: opacity 420ms var(--ease-out);
   pointer-events: none;

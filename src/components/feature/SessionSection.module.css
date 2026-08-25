@@ -27,11 +27,13 @@
    *
    * Two things are going on here and they are separate.
    *
-   * The colour is the commander skin's `--char-atmosphere`, reached by putting
-   * `data-character="commander"` on the section itself — the same opt-in
-   * `CouncilPanel` already makes, and the mechanism the palette documents
-   * ("set data-character on any ancestor"). It is scoped to this element, so
-   * the neutral gold skin the rest of the marketing site runs is untouched.
+   * The colour is `--char-atmosphere`, which is not this section's to choose.
+   * It is whichever character skin the page is on, and the route names that
+   * once — `character="commander"` on `Stage`, which puts it on the film's block
+   * and on the document after it, so the film's screen, both sections and the
+   * footer all take the same ground. This section carried the attribute itself
+   * for one commit; the moment the ask became "the whole feature page", two
+   * places setting the same thing became a liability rather than a convenience.
    * Note what the skin carries besides the ground: `--char-accent` moves from
    * antique gold to the commander's red, which is what `.eyebrowNode` and
    * `.ruleNode` below are already written to follow.

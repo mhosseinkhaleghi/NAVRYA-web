@@ -142,23 +142,42 @@
   :root { --dur-hover: 0ms; --dur-progress: 0ms; --dur-expand: 0ms; }
 }
 
-/* The four character skins. Unused on the marketing site by default. */
-[data-character="hunter"] {
+/* The four character skins. Unused on the marketing site by default.
+ *
+ * Each is matched two ways. The plain selector is the documented one: put the
+ * attribute on any ancestor and everything under it re-skins. The `body:has()`
+ * selector beside it reaches *upward* instead, and it exists for exactly one
+ * surface — the canvas.
+ *
+ * `background-color` on the body paints the canvas, which is what an overscroll
+ * bounce reveals past the top and bottom of a page. A route that skins itself
+ * covers every pixel of the page proper, so the canvas is the only place the
+ * site's default ground would still show through, and it shows through as a
+ * flash of the wrong colour at the ends of the scroll. The hook is
+ * `[data-track]`, the film's own block: `Stage` is the only thing that marks it,
+ * and it marks it only when a page names a skin for its whole self — so a
+ * character-skinned *panel* somewhere inside a scene cannot re-ground the
+ * document by accident. */
+[data-character="hunter"],
+body:has([data-track][data-character="hunter"]) {
   --char-accent: #66C94E; --char-accent-strong: #2F8F43;
   --char-active-surface: #12331B; --char-atmosphere: #07150D;
   --char-glow: rgba(102, 201, 78, .18);
 }
-[data-character="commander"] {
+[data-character="commander"],
+body:has([data-track][data-character="commander"]) {
   --char-accent: #F04432; --char-accent-strong: #A82B21;
   --char-active-surface: #3A1714; --char-atmosphere: #160B09;
   --char-glow: rgba(240, 68, 50, .18);
 }
-[data-character="engineer"] {
+[data-character="engineer"],
+body:has([data-track][data-character="engineer"]) {
   --char-accent: #3A9AF8; --char-accent-strong: #1B65AA;
   --char-active-surface: #0B263D; --char-atmosphere: #061522;
   --char-glow: rgba(58, 154, 248, .18);
 }
-[data-character="master"] {
+[data-character="master"],
+body:has([data-track][data-character="master"]) {
   --char-accent: #A965D8; --char-accent-strong: #72409B;
   --char-active-surface: #26152F; --char-atmosphere: #120A18;
   --char-glow: rgba(169, 101, 216, .18);

@@ -10,7 +10,10 @@
   inset: 0;
   z-index: 0;
   overflow: hidden;
-  background-color: var(--c-bg);
+  /* The ground the plates are composited over. Follows the page's character
+   * skin, whose default is the page void — so this is the colour it always
+   * was, until a route names one. */
+  background-color: var(--char-atmosphere);
   pointer-events: none;
 }
 

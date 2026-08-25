@@ -11,12 +11,14 @@
   padding-block: var(--section-pad);
   padding-inline: var(--gutter);
 
-  /* The page void, ruled — the same ground the CTA section and the footer sit
-   * on, attached to the viewport the way they attach it so the cells line up
-   * across all of them rather than each box starting a grid of its own. The
-   * section above this one is the commander's red; this one is the void, as
-   * the comp draws it, and the ruling is what carries across the seam. */
-  background-color: var(--c-bg);
+  /* The page's ground, ruled — the same grid the CTA section and the footer
+   * sit on, attached to the viewport the way they attach it so the cells line
+   * up across all of them rather than each box starting a grid of its own.
+   *
+   * The colour is not this section's to choose: `--char-atmosphere` is whatever
+   * skin the page is on, which on this route is the commander's red, set once
+   * by `Stage` and inherited by every surface below it. */
+  background-color: var(--char-atmosphere);
   background-image: var(--grid-image);
   background-attachment: fixed;
 

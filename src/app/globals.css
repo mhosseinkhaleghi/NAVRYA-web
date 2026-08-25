@@ -121,7 +121,11 @@ html[data-timeline="held"] {
  * painted over everywhere it could be seen.
  */
 body {
-  background-color: var(--c-bg);
+  /* The page's ground, and the canvas behind it. `--char-atmosphere` defaults
+   * to exactly `--c-bg`, so this is the void on every route that has not named
+   * a character skin — see the skins in `navrya-tokens.css` for how one reaches
+   * up to here. */
+  background-color: var(--char-atmosphere);
   background-image: var(--grid-image);
   background-attachment: fixed;
   color: var(--c-text);
