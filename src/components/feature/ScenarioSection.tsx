@@ -28,27 +28,28 @@ import styles from "./ScenarioSection.module.css";
  *      things reading the same gesture is not a layout problem, it is a fight.
  *
  * So the composition and the motion are `CircularGallery`'s, and the mechanism
- * is this project's. The row is a native horizontal scroller — real momentum on
- * a touchscreen, real trackpad support, real keyboard support, no listeners at
- * all — and the arc is done with a scroll-driven CSS animation.
+ * is this project's: the rail travels on its own, on a fixed cadence, and every
+ * card walks the same path offset into its own place on it by a negative
+ * `animation-delay` of its index. That is the idiom the session workspace above
+ * already uses and the partners and testimonial marquees have used since long
+ * before either. No script, no timers, no hydration, and the browser runs the
+ * whole thing on the compositor.
  *
  * The arc is the interesting part. `CircularGallery` computes, per frame and
  * per card, how far the card is from the middle and bends it onto a circle:
  * `y = R - sqrt(R² - x²)`, with a matching rotation of `asin(x / R)`, so the
  * middle card sits highest and square and the ones either side drop away and
- * tilt. `animation-timeline: view(x)` gives a card exactly that quantity — its
- * own progress across the scrollport — as the driver of a keyframe list, so the
- * same curve comes out of the compositor with no script running. The keyframes
- * are the parabola through nine samples; over the top of a circle the two are
- * indistinguishable at this radius.
+ * tilt. Here the card's distance from the middle is just where it has got to in
+ * its cycle, so the same curve is nine keyframes of a parabola — which over the
+ * top of a circle this wide is the same shape to within a pixel.
  *
- * The row is mirrored, rather than laid out, for Persian and Arabic: the
- * timeline does not survive a scroll container whose content overflows leftward.
- * That is measured and written up on `[dir="rtl"] .gallery` in the stylesheet.
- *
- * Where scroll-driven animations are not supported, the `@supports` block is
- * skipped and the row is flat: still a gallery, still scrollable, still all four
- * screens, just without the bend. That is the whole fallback.
+ * This was a native horizontal scroller for one commit, with the bend driven by
+ * `animation-timeline: view()`, and the row was asked to move by itself instead.
+ * Losing the scroller took three problems with it: the `@supports` gate the bend
+ * needed (a time-based animation runs everywhere), a Chromium fault where
+ * scroll-driven timelines report the wrong progress inside a container whose
+ * content overflows leftward, and the mirroring workaround that fault forced on
+ * Persian and Arabic. Those two now cost one number, `--dir`.
  *
  * ── The pictures ────────────────────────────────────────────────────────────
  *
@@ -103,7 +104,6 @@ const MARK: Record<string, React.ReactNode> = {
 
 export function ScenarioSection({
   scenario,
-  galleryLabel,
 }: {
   scenario: {
     headline: readonly string[];
@@ -112,7 +112,6 @@ export function ScenarioSection({
     shots: readonly { key: string; title: string }[];
     features: readonly { key: string; label: string; body: string }[];
   };
-  galleryLabel: string;
 }) {
   return (
     <section className={styles.section} data-scenario="">
@@ -144,21 +143,26 @@ export function ScenarioSection({
         </div>
 
         {/*
-         * A scroll container, and therefore already operable: it is focusable in
-         * its own right, arrow keys move it, a touchscreen flicks it, and a
-         * trackpad swipe works because the browser is doing the scrolling rather
-         * than a listener imitating it. The `region` and the label are what make
-         * it findable — the same pair `CircularGallery` puts on its own root.
+         * `aria-hidden`, and it is the honest answer rather than a shortcut.
+         *
+         * The rail travels on its own now, so there is nothing here to operate:
+         * no scroll position, no focus target, nothing a keyboard could move. It
+         * would be worse than useless in a screen reader — every one of these
+         * four names is already in the list below this, in the reader's own
+         * language and in the same order, so walking the rail as well would
+         * read the same four names twice, the second time off a carousel that
+         * cannot be stopped.
          */}
-        <div
-          className={styles.gallery}
-          role="region"
-          aria-label={galleryLabel}
-          tabIndex={0}
-        >
+        <div className={styles.gallery} aria-hidden="true">
           <ul className={styles.rail}>
-            {scenario.shots.map((shot) => (
-              <li key={shot.key} className={styles.slide}>
+            {scenario.shots.map((shot, i) => (
+              <li
+                key={shot.key}
+                className={styles.slide}
+                /* Its place on the rail. One keyframe sequence walks all four;
+                   this is what offsets each into its own part of the journey. */
+                style={{ "--i": i } as React.CSSProperties}
+              >
                 <figure className={styles.frame}>
                   {/* The screenshot goes here. Empty until it does. */}
                   <div className={styles.well} data-shot={shot.key} />

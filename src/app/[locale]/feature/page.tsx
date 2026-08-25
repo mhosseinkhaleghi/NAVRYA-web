@@ -323,10 +323,7 @@ export default async function FeaturePage({
       after={
         <>
           <SessionSection session={dictionary.feature.session} />
-          <ScenarioSection
-            scenario={dictionary.feature.scenario}
-            galleryLabel={dictionary.a11y.gallery}
-          />
+          <ScenarioSection scenario={dictionary.feature.scenario} />
           <SiteFooter locale={locale} dictionary={dictionary} route="feature" />
         </>
       }

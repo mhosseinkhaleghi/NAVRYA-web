@@ -25,16 +25,15 @@ Worth stating up front, because it rules out most of the usual suspects:
   geometry and the motion and dropping the runtime. If either is ever adopted
   as-is, this line and the "no client React" line above both stop being true and
   the harness's assumptions go with them.
-- **One CSS mechanism the controller is not behind:** the scenario gallery's arc
-  is a scroll-driven animation (`animation-timeline: view(x)` on a native
-  horizontal scroller). Still plain CSS, no script and no library, but it is not
-  the `--r` custom-property mechanism the rest of the site uses, and it is opted
-  into behind `@supports (animation-timeline: view())` — without support the row
-  is flat and still fully scrollable. Note also that it does **not** survive a
-  scroll container whose content overflows leftward (an RTL scroller, or
-  `flex-direction: row-reverse`): the progress it reports is wrong, so the
-  gallery is mirrored around an LTR scroller rather than laid out RTL. See the
-  comment on `[dir="rtl"] .gallery` in `ScenarioSection.module.css`.
+- **Two looping CSS animations that no scroll drives:** the session workspace's
+  card stack and the scenario gallery's rail. Both are plain `@keyframes` on a
+  fixed cadence, with each card offset into its own place by a negative
+  `animation-delay` — the same idiom the partners and testimonial marquees use.
+  No script, no library, no timeline. The gallery's arc was a scroll-driven
+  animation (`animation-timeline: view()`) for one commit and is not any more;
+  if that approach is ever revisited, note that it reports the wrong progress
+  inside a scroll container whose content overflows leftward, which is every RTL
+  scroller and any `flex-direction: row-reverse` one.
 - **CSS Modules only.** No Tailwind, no shadcn, no runtime CSS-in-JS.
 - **Assets are served from `public/`** at absolute root paths (`/scene/...`,
   `/cast/...`, `/fonts/...`). No bundler imports for media, no base path.

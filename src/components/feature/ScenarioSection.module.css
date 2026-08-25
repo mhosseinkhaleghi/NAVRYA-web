@@ -202,7 +202,8 @@
 
 /* ── the gallery ──────────────────────────────────────────────────────────────
  *
- * React Bits' `CircularGallery`, without the WebGL.
+ * React Bits' `CircularGallery`, without the WebGL — and now without the
+ * scroller either.
  *
  * That component draws a row of textured planes through `ogl` and bends them
  * onto a circle every frame, reading `wheel` and `touchmove` off `window` to
@@ -210,10 +211,41 @@
  * client React, and the vertical wheel on this page belongs to the film's
  * controller.
  *
- * What it is instead is a native horizontal scroller. The browser does the
- * scrolling — momentum on a touchscreen, trackpad, keyboard, scroll-snap, all
- * of it for free and none of it listening for anything — and the bend is a
- * scroll-driven animation on each card. See `@keyframes bend`.
+ * This was a native horizontal scroller for one commit, with the bend driven by
+ * `animation-timeline: view()`. It worked and it is gone, because the row was
+ * asked to travel on its own rather than be pushed. What replaces it is the
+ * idiom the session workspace above already uses and the partners and
+ * testimonial marquees have used since long before either: every card walks the
+ * *same* path, and each is offset into its own place on it by a negative
+ * `animation-delay` of its index.
+ *
+ * Three things fell out of that change, and all three are worth having:
+ *
+ *   - No scroll timeline, so no `@supports` gate. The bend was previously opted
+ *     into behind `animation-timeline: view()` and simply did not happen in a
+ *     browser without it. A time-based animation runs everywhere.
+ *   - No scroll container, so the Chromium fault documented at length in the
+ *     last version of this file — scroll-driven timelines reporting the wrong
+ *     progress inside a container whose content overflows leftward — cannot
+ *     arise. Persian and Arabic are handled by `--dir` below, one number.
+ *   - No `overflow: auto`, so nothing to hide a scrollbar on and no scroll
+ *     position to restore.
+ *
+ * ── The loop ────────────────────────────────────────────────────────────────
+ *
+ * One card's cycle is a straight walk from one side to the other: it enters
+ * clipped at one edge, crosses the middle, and leaves clipped at the other. Four
+ * cards on the same path, each a quarter of a cycle behind the last, are four
+ * evenly spaced cards — which is a rail, and it is seamless for the same reason
+ * a marquee is: the card that leaves and the card that arrives are the same
+ * card, and the hand-over happens outside the frame where nothing can be seen.
+ *
+ * That last part is a measurement, not a hope. A card's turning points are at
+ * `±--span`, which is twice `--gap`, which is 1.16 card-widths — so at the
+ * moment it wraps, its near edge is 1.82 card-widths from the middle. The rail's
+ * half-width is under that at every frame the site supports (550 against 329 at
+ * 1440, 495 against 384 at 768, 382 against 218 at 390), so the wrap is always
+ * behind the `overflow: hidden` edge.
  * -------------------------------------------------------------------------- */
 
 .gallery {
@@ -224,115 +256,212 @@
   min-inline-size: 0;
 }
 
-.gallery:focus-visible {
-  outline: 1px solid var(--c-gold);
-  outline-offset: 6px;
-}
-
 .rail {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--rail-gap);
+  position: relative;
+  /* Deep enough for a card, its reflection, the corner the tilt lifts at the
+   * top and the drop the arc adds at the bottom. Each of those is a term. */
+  block-size: calc(var(--lift) + var(--frame-h) * 1.36 + var(--arc));
   margin: 0;
   padding: 0;
-  /*
-   * Room for the bend, and only where the bend goes.
-   *
-   * A card never rises: the arc puts the middle one at zero and pushes every
-   * other one *down*, so the space below has to hold a whole `--arc` and the
-   * space above has to hold nothing but the corner the rotation lifts — about
-   * an eighth of the card's width at these angles. Reserving `--arc` at both
-   * ends, which is what this was, left ninety-odd pixels of empty ground above
-   * the row and made the section that much taller for nothing.
-   */
-  padding-block: calc(var(--frame-w) * 0.12) var(--bend-room);
-  /* Half a frame of lead-in and lead-out, so the first and last card can each
-   * reach the middle of the scrollport — which is where the bend puts a card
-   * upright, and where scroll-snap parks it. Without it the two ends could
-   * never be the centre card. */
-  padding-inline: calc(50% - (var(--frame-w) / 2));
   list-style: none;
-
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-snap-type: x mandatory;
-  overscroll-behavior-x: contain;
-
-  /*
-   * An ordinary left-to-right scroller, in every language — deliberately, and
-   * not as an oversight about mirroring. The mirroring happens around it, on
-   * `.gallery`. See `[dir="rtl"] .gallery` below for what goes wrong otherwise.
-   */
-  direction: ltr;
-
-  /* The row's own affordance is the bend and the cards leaving the frame; a
-   * scrollbar under it would sit across the reflections. */
-  scrollbar-width: none;
+  /* The frame the rail is seen through, and what the wrap happens behind. */
+  overflow: hidden;
 
   --frame-w: clamp(13rem, 21vw, 20rem);
-  /* The comp's proportion: a landscape well with the name in a band under it,
-   * a shade taller than it is wide overall. */
   --frame-h: calc(var(--frame-w) * 1.16);
-  --rail-gap: clamp(1.25rem, 3vw, 2.75rem);
-  /* Room above and below for the arc to drop a card into without the section
-   * clipping it. Tied to `--arc` so the two cannot drift apart. */
-  --bend-room: calc(var(--arc) + 1rem);
+
+  /*
+   * The distance between two cards, and the distance one travels.
+   *
+   * `--gap` is centre to centre. `--span` is the half-journey, and it is twice
+   * `--gap` because there are four cards: a card covers `2 × --span` in a cycle
+   * and four of them share that cycle, so they sit `--span / 2` apart, which is
+   * `--gap`. Change the number of cards and this factor changes with it, which
+   * is why the arithmetic is written down rather than folded into a constant.
+   */
+  --gap: calc(var(--frame-w) * 1.16);
+  --span: calc(var(--gap) * 2);
+
+  /* How long a card takes to move up one place. Four of them to a cycle. */
+  --step: 4s;
+
+  /* The bend, exactly as it was: how far the arc drops a card at the ends of
+   * its travel, how far it turns, and how far back it sits. */
   --arc: clamp(2.5rem, 5vw, 4.5rem);
   --tilt: 11deg;
   --far: 0.82;
-  /* 1 normally, -1 under `[dir="rtl"]`, where the gallery around this
-   * scroller is mirrored and each card has to be turned back the right way. */
-  --flip: 1;
-}
+  --lift: calc(var(--frame-w) * 0.12);
 
-.rail::-webkit-scrollbar {
-  display: none;
-}
-
-/* -----------------------------------------------------------------------------
- * The row in Persian and Arabic.
- *
- * This one took three attempts, so the dead ends are worth writing down.
- *
- * Leaving the rail `direction: rtl` with the rest of the page mirrors the
- * layout correctly and breaks the bend. Chromium's scroll-driven timelines do
- * not agree with such a scroller about where it is scrolled to: measured on the
- * built page at 1440, the card sitting exactly in the middle of the scrollport —
- * centre 329 of a 0..658 box — was drawn at the arc's *edge*, dimmed and
- * tilted, while the card at the top of the arc was the one 859px off the left of
- * the screen. Changing the timeline's axis from `inline` to `x` changes nothing.
- * Neither does `flex-direction: row-reverse` on an otherwise LTR scroller, which
- * produces a pixel-identical layout and a pixel-identical fault — and that is
- * the tell. The writing direction was never the trigger. What both of those have
- * in common is that the content overflows to the *left* of its origin, and that
- * is the thing the timeline cannot follow.
- *
- * So the scroller is left alone. It is an ordinary left-to-right one in every
- * language, its content overflows right, its scroll position starts at zero and
- * the timeline is correct — and the whole gallery is mirrored around it. Card
- * one lands on the right, the row runs leftward off the frame's left edge, and
- * the row opens on card one exactly as it does in English, with no script
- * setting a scroll position.
- *
- * The flip is undone on each card by `--flip` in the keyframes, or every label
- * would read backwards. See `@keyframes bend`, where it rides along with the
- * arc for the same reason the arc is there at all: a transform is replaced
- * whole, so anything not restated at every step is dropped.
- * -------------------------------------------------------------------------- */
-
-[dir="rtl"] .gallery {
-  transform: scaleX(-1);
+  /*
+   * Which way the rail runs.
+   *
+   * Physical, like everything else about this object: `translate3d` on the X
+   * axis and `rotate` have no idea which way the page is written, so the row
+   * would run the same way in Persian as in English while the column it sits in
+   * moved to the other side of the page. One number mirrors the travel and the
+   * lean together, the same way `--fan` does for the stack in the section above.
+   */
+  --dir: 1;
 }
 
 [dir="rtl"] .rail {
-  --flip: -1;
+  --dir: -1;
 }
 
+/*
+ * The inner edge dissolves; the outer one does not.
+ *
+ * The rail has two edges and they are not the same kind of edge. The outer one
+ * is the window's own boundary — the gallery bleeds out to it — so a card cut
+ * there is a card leaving the screen, which is the composition and wants no
+ * help. The inner one lands in the middle of the page against the words, and a
+ * card cut *there* reads as a rendering fault: a straight vertical slice
+ * through a picture, in mid-air.
+ *
+ * So only that edge is faded, and only from 1024 up — below it the gallery
+ * bleeds to both edges of the frame and there is no inner edge left to soften.
+ * Which side that is flips with the writing direction, because the whole
+ * two-column arrangement does: the words are on the right in Persian and Arabic
+ * and the gallery runs off to the left.
+ *
+ * No `@supports` guard, unlike the reflection's mask. Where this one is not
+ * understood the rail simply keeps the hard edge it has today, which is the
+ * thing being improved rather than something being relied on.
+ */
+@media (min-width: 1024px) {
+  .rail {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 14%);
+    mask-image: linear-gradient(to right, transparent 0, #000 14%);
+  }
+
+  [dir="rtl"] .rail {
+    -webkit-mask-image: linear-gradient(to left, transparent 0, #000 14%);
+    mask-image: linear-gradient(to left, transparent 0, #000 14%);
+  }
+}
+
+/*
+ * A card, on the path.
+ *
+ * `left: 50%` and not `inset-inline-start`, deliberately. The arithmetic that
+ * places this card is physical from end to end, and an inset that flips under
+ * RTL would put the origin on the far side of the frame while the transforms
+ * carried on measuring from the near one. 50% from the left is the middle in
+ * every language; the mirroring is `--dir`'s job and nothing else's.
+ */
 .slide {
-  position: relative;
-  flex: none;
+  position: absolute;
+  inset-block-start: var(--lift);
+  left: 50%;
   inline-size: var(--frame-w);
-  scroll-snap-align: center;
+
+  animation: drift calc(var(--step) * 4) linear infinite;
+  /*
+   * Its place on the rail, as a phase offset.
+   *
+   * Every one of these must come out *negative*. A negative delay starts an
+   * animation that far into its cycle, which is what puts four cards at four
+   * places on one path; a positive one makes the card wait, and the rail would
+   * open with a hole in it that fills in over the first few seconds. Card 0
+   * wants to start half a cycle in — the top of the arc, dead centre — so the
+   * run begins at -6 steps rather than -2, which is the same phase a whole
+   * cycle earlier and negative for all four.
+   */
+  animation-delay: calc((var(--i) - 6) * var(--step));
+
+  will-change: transform, opacity;
+}
+
+/*
+ * One card's whole journey: in at one edge, across the middle, out at the other.
+ *
+ * The horizontal term is a straight line — `u` runs from +1 to -1 in even steps,
+ * so the travel is constant-speed and the row never surges or stalls. Everything
+ * else is the bend, and the bend is a function of `u` alone: `CircularGallery`
+ * drops a card by `R - sqrt(R² - x²)` and turns it by `asin(x / R)`, which over
+ * the top of a circle this wide is `u²` and `u` to within a pixel. So the drop
+ * and the scale go with `u²` — symmetric, deepest at both ends — and the turn
+ * goes with `u`, which is what makes the two sides lean opposite ways.
+ *
+ * Every keyframe restates the whole transform because a transform is replaced
+ * whole: anything left out at a step is dropped, not inherited.
+ */
+@keyframes drift {
+  /* u = 1 — arriving, still outside the frame */
+  0% {
+    transform: translate(-50%, 0) translate3d(calc(var(--span) * var(--dir)), var(--arc), 0)
+      rotate(calc(var(--tilt) * var(--dir))) scale(var(--far));
+    opacity: 0.5;
+    z-index: 1;
+  }
+  /* u = 0.75 */
+  12.5% {
+    transform: translate(-50%, 0)
+      translate3d(calc(var(--span) * 0.75 * var(--dir)), calc(var(--arc) * 0.5625), 0)
+      rotate(calc(var(--tilt) * 0.75 * var(--dir)))
+      scale(calc(1 - (1 - var(--far)) * 0.5625));
+    opacity: 0.63;
+    z-index: 2;
+  }
+  /* u = 0.5 */
+  25% {
+    transform: translate(-50%, 0)
+      translate3d(calc(var(--span) * 0.5 * var(--dir)), calc(var(--arc) * 0.25), 0)
+      rotate(calc(var(--tilt) * 0.5 * var(--dir)))
+      scale(calc(1 - (1 - var(--far)) * 0.25));
+    opacity: 0.78;
+    z-index: 3;
+  }
+  /* u = 0.25 */
+  37.5% {
+    transform: translate(-50%, 0)
+      translate3d(calc(var(--span) * 0.25 * var(--dir)), calc(var(--arc) * 0.0625), 0)
+      rotate(calc(var(--tilt) * 0.25 * var(--dir)))
+      scale(calc(1 - (1 - var(--far)) * 0.0625));
+    opacity: 0.93;
+    z-index: 4;
+  }
+  /* the top of the arc, dead centre */
+  50% {
+    transform: translate(-50%, 0) translate3d(0, 0, 0) rotate(0deg) scale(1);
+    opacity: 1;
+    z-index: 5;
+  }
+  /* u = -0.25 */
+  62.5% {
+    transform: translate(-50%, 0)
+      translate3d(calc(var(--span) * -0.25 * var(--dir)), calc(var(--arc) * 0.0625), 0)
+      rotate(calc(var(--tilt) * -0.25 * var(--dir)))
+      scale(calc(1 - (1 - var(--far)) * 0.0625));
+    opacity: 0.93;
+    z-index: 4;
+  }
+  /* u = -0.5 */
+  75% {
+    transform: translate(-50%, 0)
+      translate3d(calc(var(--span) * -0.5 * var(--dir)), calc(var(--arc) * 0.25), 0)
+      rotate(calc(var(--tilt) * -0.5 * var(--dir)))
+      scale(calc(1 - (1 - var(--far)) * 0.25));
+    opacity: 0.78;
+    z-index: 3;
+  }
+  /* u = -0.75 */
+  87.5% {
+    transform: translate(-50%, 0)
+      translate3d(calc(var(--span) * -0.75 * var(--dir)), calc(var(--arc) * 0.5625), 0)
+      rotate(calc(var(--tilt) * -0.75 * var(--dir)))
+      scale(calc(1 - (1 - var(--far)) * 0.5625));
+    opacity: 0.63;
+    z-index: 2;
+  }
+  /* u = -1 — gone, and about to be the card arriving at 0% */
+  100% {
+    transform: translate(-50%, 0)
+      translate3d(calc(var(--span) * -1 * var(--dir)), var(--arc), 0)
+      rotate(calc(var(--tilt) * -1 * var(--dir))) scale(var(--far));
+    opacity: 0.5;
+    z-index: 1;
+  }
 }
 
 .frame {
@@ -390,7 +519,7 @@
  * it, in that order — so what survives is the bottom of the card, which is the
  * part touching the surface, with its label the right way up in the mirror.
  *
- * Only the near two-fifths is kept, because that is as far as the fade carries
+ * Only the near third is kept, because that is as far as the fade carries
  * anyway and there is no reason to lay out and paint the rest of an upside-down
  * card nobody can see.
  *
@@ -423,114 +552,6 @@
   }
 }
 
-/* -----------------------------------------------------------------------------
- * The bend.
- *
- * `CircularGallery` puts the row on a circle of radius R and, for a card whose
- * distance from the middle is x, drops it by `R - sqrt(R² - x²)` and turns it by
- * `asin(x / R)`. The middle card is the top of the arc: highest, square, and
- * nearest. Everything either side falls away and leans into the curve.
- *
- * `view(inline)` hands a card the one quantity that calculation needs — how far
- * it is through the scrollport — as an animation timeline, so the same curve
- * comes out of the compositor with nothing running. Progress 0 is the card
- * entering at one edge, 0.5 is dead centre, 1 is leaving at the other.
- *
- * The samples below are `u = 2·(p - 0.5)` at every eighth, with drop ∝ u² and
- * turn ∝ u. Over the top of a circle this wide a parabola is the same shape;
- * the difference at the outermost sample is under a pixel.
- *
- * Opted into with `@supports`, and that is the whole fallback story: where
- * scroll-driven animations are missing the block is skipped and the row is
- * flat — still a gallery, still scrollable, still all four screens, no bend.
- * Declaring it outside the guard would be worse than not declaring it, because
- * an `animation` with no timeline runs on the clock instead, and with no
- * duration it would snap every card to the last keyframe and hold it there.
- * -------------------------------------------------------------------------- */
-
-@supports (animation-timeline: view()) {
-  .slide {
-    animation: bend linear both;
-    /*
-     * `x`, not `inline`, and this was a bug before it was a decision.
-     *
-     * The arc is a physical shape: a card left of the middle leans left and one
-     * right of it leans right, in every language, because that is what an arc
-     * looks like. `view(inline)` measures along the writing direction, so in
-     * Persian and Arabic it runs the progress backwards — and the result was not
-     * a mirrored arc, it was a broken one. Measured on the built page: the card
-     * sitting exactly in the middle of the scrollport (centre 329 of a 0..658
-     * box) was drawn at the arc's *edge*, dimmed to 0.5 and tilted, while the
-     * card at the top of the arc was the one 859px off the left of the screen.
-     *
-     * `x` is the same axis in both directions, so a card in the middle is at
-     * progress 0.5 wherever the page is written from, and the keyframes below —
-     * which are already symmetric about 0.5 — come out as the same arc either
-     * way. Nothing about the mirroring is lost: the row itself still runs
-     * right-to-left, because that is the rail's own layout doing its job.
-     */
-    animation-timeline: view(x);
-  }
-
-  @keyframes bend {
-    /* u = -1 */
-    0% {
-      transform: translateY(var(--arc)) rotate(calc(var(--tilt) * -1)) scale(var(--far)) scaleX(var(--flip));
-      opacity: 0.5;
-      z-index: 1;
-    }
-    /* u = -0.75 → u² = 0.5625 */
-    12.5% {
-      transform: translateY(calc(var(--arc) * 0.5625)) rotate(calc(var(--tilt) * -0.75))
-        scale(calc(1 - (1 - var(--far)) * 0.5625)) scaleX(var(--flip));
-      opacity: 0.63;
-      z-index: 2;
-    }
-    /* u = -0.5 → u² = 0.25 */
-    25% {
-      transform: translateY(calc(var(--arc) * 0.25)) rotate(calc(var(--tilt) * -0.5))
-        scale(calc(1 - (1 - var(--far)) * 0.25)) scaleX(var(--flip));
-      opacity: 0.78;
-      z-index: 3;
-    }
-    /* u = -0.25 → u² = 0.0625 */
-    37.5% {
-      transform: translateY(calc(var(--arc) * 0.0625)) rotate(calc(var(--tilt) * -0.25))
-        scale(calc(1 - (1 - var(--far)) * 0.0625)) scaleX(var(--flip));
-      opacity: 0.93;
-      z-index: 4;
-    }
-    /* the top of the arc */
-    50% {
-      transform: translateY(0) rotate(0deg) scale(1) scaleX(var(--flip));
-      opacity: 1;
-      z-index: 5;
-    }
-    62.5% {
-      transform: translateY(calc(var(--arc) * 0.0625)) rotate(calc(var(--tilt) * 0.25))
-        scale(calc(1 - (1 - var(--far)) * 0.0625)) scaleX(var(--flip));
-      opacity: 0.93;
-      z-index: 4;
-    }
-    75% {
-      transform: translateY(calc(var(--arc) * 0.25)) rotate(calc(var(--tilt) * 0.5))
-        scale(calc(1 - (1 - var(--far)) * 0.25)) scaleX(var(--flip));
-      opacity: 0.78;
-      z-index: 3;
-    }
-    87.5% {
-      transform: translateY(calc(var(--arc) * 0.5625)) rotate(calc(var(--tilt) * 0.75))
-        scale(calc(1 - (1 - var(--far)) * 0.5625)) scaleX(var(--flip));
-      opacity: 0.63;
-      z-index: 2;
-    }
-    100% {
-      transform: translateY(var(--arc)) rotate(var(--tilt)) scale(var(--far)) scaleX(var(--flip));
-      opacity: 0.5;
-      z-index: 1;
-    }
-  }
-}
 
 /* ── the four below ───────────────────────────────────────────────────────── */
 
@@ -671,10 +692,14 @@
  * -------------------------------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
-  .rail {
-    --arc: 0px;
-    --tilt: 0deg;
-    --bend-room: 0.5rem;
-    scroll-behavior: auto;
+  /*
+   * The rail stops, fanned out exactly as it is on the first frame — which is
+   * the composition the section was designed around, so nothing is lost but the
+   * travel. Pausing rather than removing the animation is what keeps it: each
+   * card's negative delay has already placed it, and a paused animation holds
+   * that place. `animation: none` would stack all four in the middle.
+   */
+  .slide {
+    animation-play-state: paused;
   }
 }
