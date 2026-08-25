@@ -41,7 +41,7 @@ export function SiteHeader({
   const { nav, actions, a11y } = dictionary;
 
   return (
-    <header className={styles.header}>
+    <header className={styles.header} data-site-bar="">
       <div className={styles.brand}>
         <BrandMark className={styles.brandMark} />
         <span className={styles.wordmark}>Navrya</span>

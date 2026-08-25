@@ -389,6 +389,59 @@
           "body": "Turn every trade into usable insight."
         }
       ]
+    },
+    "session": {
+      "eyebrow": "Built for disciplined traders",
+      "headline": [
+        "Plan Every",
+        "Trading Session",
+        "in One Place"
+      ],
+      "body": "Create a structured workspace for the market you’re trading — with charts, scenarios, updates, positions, and your final review connected to the same Session.",
+      "cards": [
+        {
+          "key": "workspace",
+          "index": "01",
+          "title": "Session Workspace"
+        },
+        {
+          "key": "timeline",
+          "index": "02",
+          "title": "Timeline"
+        },
+        {
+          "key": "charts",
+          "index": "03",
+          "title": "Charts"
+        },
+        {
+          "key": "scenarios",
+          "index": "04",
+          "title": "Scenario Tracking"
+        },
+        {
+          "key": "history",
+          "index": "05",
+          "title": "Session History"
+        }
+      ],
+      "features": [
+        {
+          "key": "workspace",
+          "label": "Session Workspace",
+          "body": "Your all-in-one trading command center."
+        },
+        {
+          "key": "scenarios",
+          "label": "Scenario Tracking",
+          "body": "Map scenarios, define plans, and stay ready."
+        },
+        {
+          "key": "history",
+          "label": "Session History",
+          "body": "Review past sessions and refine your edge."
+        }
+      ]
     }
   }
 }

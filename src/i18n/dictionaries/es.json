@@ -389,6 +389,59 @@
           "body": "Convierte cada operación en información útil."
         }
       ]
+    },
+    "session": {
+      "eyebrow": "Hecho para traders disciplinados",
+      "headline": [
+        "Planifica Cada",
+        "Sesión de Trading",
+        "en un Solo Lugar"
+      ],
+      "body": "Crea un espacio de trabajo estructurado para el mercado que operas — gráficos, escenarios, actualizaciones, posiciones y tu revisión final conectados a la misma sesión.",
+      "cards": [
+        {
+          "key": "workspace",
+          "index": "01",
+          "title": "Espacio de Sesión"
+        },
+        {
+          "key": "timeline",
+          "index": "02",
+          "title": "Línea de Tiempo"
+        },
+        {
+          "key": "charts",
+          "index": "03",
+          "title": "Gráficos"
+        },
+        {
+          "key": "scenarios",
+          "index": "04",
+          "title": "Seguimiento de Escenarios"
+        },
+        {
+          "key": "history",
+          "index": "05",
+          "title": "Historial de Sesiones"
+        }
+      ],
+      "features": [
+        {
+          "key": "workspace",
+          "label": "Espacio de Sesión",
+          "body": "Tu centro de mando de trading todo en uno."
+        },
+        {
+          "key": "scenarios",
+          "label": "Seguimiento de Escenarios",
+          "body": "Traza escenarios, define planes y mantente listo."
+        },
+        {
+          "key": "history",
+          "label": "Historial de Sesiones",
+          "body": "Revisa sesiones pasadas y afina tu ventaja."
+        }
+      ]
     }
   }
 }

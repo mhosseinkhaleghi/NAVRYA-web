@@ -1199,7 +1199,14 @@ async function main() {
     {
       const fit = await page.evaluate(() => {
         const hero = document.querySelector("[data-hero]");
-        const bar = document.querySelector("header");
+        /*
+         * The site's bar, named. `querySelector("header")` was fine while the
+         * only <header> on the page was the bar, and the moment a section below
+         * the film rendered cards with their own <header> it started measuring
+         * one of those: the check reported the bar ending at y=10467 and failed
+         * every locale. A check should name the thing it means.
+         */
+        const bar = document.querySelector("[data-site-bar]");
         if (!hero || !bar) return null;
         const parts = document.querySelectorAll("[data-hero-part]");
         const block = parts[0].getBoundingClientRect();
@@ -1222,6 +1229,10 @@ async function main() {
     }
 
     where.at = "slide-2";
+    const filmMaxY = await page.evaluate(() => {
+      const track = document.querySelector("[data-track]");
+      return track ? Math.round(track.offsetHeight - window.innerHeight) : 0;
+    });
     const maxY = await page.evaluate(() =>
       Math.round(document.scrollingElement.scrollHeight - window.innerHeight),
     );
@@ -1514,7 +1525,7 @@ async function main() {
       const s = await readSlide2();
       samples.push(s);
 
-      if (s.y >= maxY - 4) break;
+      if (s.y >= filmMaxY - 4) break;
       await page.mouse.wheel(0, 240);
       await page.waitForTimeout(150);
     }
@@ -1551,13 +1562,22 @@ async function main() {
     const at2 = bestBy((s) => (s.active ? (s.t ?? -1) : -1));
     const at3 = bestBy((s) => (s.f3 && s.f3.active ? (s.f3.t ?? -1) : -1));
 
-    // No stretch of document below the last magnetic stop: the wheel would
+    /*
+     * No stretch of *film* below its last magnetic stop — the wheel would
+     * refuse to travel it while the scrollbar said there was more.
+     *
+     * Measured against the track's own height and not the document's. They were
+     * the same number while the film was the whole page; a section below it
+     * makes the document taller than the film, and comparing against the
+     * document would demand the film rest somewhere it has no business being.
+     */
+    // The wheel would
     // refuse to travel it while the scrollbar said there was more.
-    if (rest.y < maxY - 4)
+    if (rest.y < filmMaxY - 4)
       fail(
         where,
         "interaction",
-        `the film rests at ${rest.y} of ${maxY} — ${maxY - rest.y}px the wheel cannot reach`,
+        `the film rests at ${rest.y} of ${filmMaxY} — ${filmMaxY - rest.y}px the wheel cannot reach`,
       );
     if (at2.active !== true) fail(where, "D1-text", "slide 2 never became active");
     if (!(at2.headR > 0.99))
@@ -1683,7 +1703,10 @@ async function main() {
      * stops earlier. Slides 2 and 3 were moved off `rest` for exactly this when
      * slide 4 arrived — slide 4 was left on it only because it was still last.
      */
-    const at4 = bestBy((x) => (x.f4 && x.f4.active ? (x.f4.headR ?? -1) : -1));
+    /* Scored on the plate's clock, not the panel's reveal — the reason is the
+     * note above: a panel finishes arriving well before its shot does, so the
+     * reveal peaks at a sample where the slide is up but not yet at rest. */
+    const at4 = bestBy((x) => (x.f4 && x.f4.active ? (x.f4.t ?? -1) : -1));
     if (!at4.f4) fail(where, "D1-text", "slide 4 is not in the DOM");
     else {
       const f4 = at4.f4;
@@ -1719,16 +1742,23 @@ async function main() {
 
     /* ── slide 5 — the desk ───────────────────────────────────────────── */
     /*
-     * The last scene, so this one *is* judged at the film's rest: its stop is
-     * `cues[1] + REST_SPAN` = 1.0, which is the end of its shot and the foot of
-     * the document, all the same point. That is the property being asserted as
-     * much as the panel's — if this slide ever stops being last, this block
-     * moves onto `bestBy` like the four above it, and the note on slide 4 says
-     * what happens when it is forgotten.
+     * On its own stop, like the four above it.
+     *
+     * It was judged at `rest` while it was the last thing on the page, and the
+     * note here said in as many words that the day it stopped being last this
+     * block would have to move. That day was the section below the film: `rest`
+     * became the foot of a *document* that now continues past the film, where
+     * slide 5 has long since scrolled away, and the run reported six of its
+     * blocks outside the viewport.
+     *
+     * It is still the film's last scene, and that part is asserted separately —
+     * the film has to rest at the foot of its own track, which is checked
+     * against the track's height rather than the document's.
      */
-    if (!rest.f5) fail(where, "D1-text", "slide 5 is not in the DOM");
+    const at5 = bestBy((x) => (x.f5 && x.f5.active ? (x.f5.t ?? -1) : -1));
+    if (!at5.f5) fail(where, "D1-text", "slide 5 is not in the DOM");
     else {
-      const f5 = rest.f5;
+      const f5 = at5.f5;
       if (!f5.active) fail(where, "D1-text", "slide 5 never became active");
       if (!(f5.headR > 0.99)) fail(where, "D1-text", `slide 5's head rests at --r ${f5.headR}`);
       if (!(f5.ctaR > 0.99)) fail(where, "D1-text", `slide 5's call to action rests at --r ${f5.ctaR}`);

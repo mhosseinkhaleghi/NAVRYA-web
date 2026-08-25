@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { FeaturePanel } from "@/components/feature/FeaturePanel";
 import { MapNotes } from "@/components/feature/MapNotes";
 import { CouncilPanel } from "@/components/feature/CouncilPanel";
+import { SessionSection } from "@/components/feature/SessionSection";
+import { SiteFooter } from "@/components/footer/SiteFooter";
 import { Hero } from "@/components/hero/Hero";
 import { Scene } from "@/components/frame/Scene";
 import { Stage } from "@/components/frame/Stage";
@@ -298,6 +300,20 @@ export default async function FeaturePage({
     <Stage
       sequence={SEQUENCE}
       chrome={<SiteHeader locale={locale} dictionary={dictionary} active="feature" />}
+      /*
+       * Below the film, and so not part of it.
+       *
+       * The sequence ends on the desk, and everything here is ordinary document
+       * — no beat, no scrubbing, no magnetic stop. The last slide hands over to
+       * plain scroll, which is the same arrangement the home page has had since
+       * its own film stopped carrying the whole page.
+       */
+      after={
+        <>
+          <SessionSection session={dictionary.feature.session} />
+          <SiteFooter locale={locale} dictionary={dictionary} route="feature" />
+        </>
+      }
     >
       <Scene plates={PLATES} />
       <Hero

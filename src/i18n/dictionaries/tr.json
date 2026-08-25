@@ -389,6 +389,59 @@
           "body": "Her işlemi kullanılabilir bir içgörüye çevirin."
         }
       ]
+    },
+    "session": {
+      "eyebrow": "Disiplinli yatırımcılar için",
+      "headline": [
+        "Her İşlem Seansını",
+        "Tek Bir Yerde",
+        "Planlayın"
+      ],
+      "body": "İşlem yaptığınız piyasa için yapılandırılmış bir çalışma alanı kurun — grafikler, senaryolar, güncellemeler, pozisyonlar ve son incelemeniz aynı seansa bağlı.",
+      "cards": [
+        {
+          "key": "workspace",
+          "index": "01",
+          "title": "Seans Çalışma Alanı"
+        },
+        {
+          "key": "timeline",
+          "index": "02",
+          "title": "Zaman Çizelgesi"
+        },
+        {
+          "key": "charts",
+          "index": "03",
+          "title": "Grafikler"
+        },
+        {
+          "key": "scenarios",
+          "index": "04",
+          "title": "Senaryo Takibi"
+        },
+        {
+          "key": "history",
+          "index": "05",
+          "title": "Seans Geçmişi"
+        }
+      ],
+      "features": [
+        {
+          "key": "workspace",
+          "label": "Seans Çalışma Alanı",
+          "body": "Hepsi bir arada işlem komuta merkeziniz."
+        },
+        {
+          "key": "scenarios",
+          "label": "Senaryo Takibi",
+          "body": "Senaryoları kurun, planları tanımlayın, hazır olun."
+        },
+        {
+          "key": "history",
+          "label": "Seans Geçmişi",
+          "body": "Geçmiş seansları inceleyin, avantajınızı keskinleştirin."
+        }
+      ]
     }
   }
 }
