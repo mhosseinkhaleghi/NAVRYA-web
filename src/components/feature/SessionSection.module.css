@@ -7,9 +7,46 @@
 
 .section {
   position: relative;
-  padding-block: clamp(5rem, 12vh, 9rem) clamp(4rem, 9vh, 7rem);
+
+  /*
+   * The site's section rhythm, not a number of its own.
+   *
+   * This block used to open on `clamp(5rem, 12vh, 9rem)` — a little over twice
+   * `--section-pad` at the top of a 1080-high frame — which left a band of empty
+   * ground between the last frame of the film and the eyebrow, and made the
+   * handover read as a gap rather than as the next section. Every other section
+   * on the site is padded on `--section-pad` (sections 7 through 10 all alias
+   * it), so this one is too, and the space above the words is now the same space
+   * that separates any two blocks on any page.
+   */
+  padding-block: var(--section-pad);
   padding-inline: var(--gutter);
-  background-color: var(--c-bg);
+
+  /*
+   * The commander's ground, ruled.
+   *
+   * Two things are going on here and they are separate.
+   *
+   * The colour is the commander skin's `--char-atmosphere`, reached by putting
+   * `data-character="commander"` on the section itself — the same opt-in
+   * `CouncilPanel` already makes, and the mechanism the palette documents
+   * ("set data-character on any ancestor"). It is scoped to this element, so
+   * the neutral gold skin the rest of the marketing site runs is untouched.
+   * Note what the skin carries besides the ground: `--char-accent` moves from
+   * antique gold to the commander's red, which is what `.eyebrowNode` and
+   * `.ruleNode` below are already written to follow.
+   *
+   * The ruling is `--grid-image`, the same ground the CTA section and the
+   * footer sit on, attached to the viewport exactly as they attach it. That
+   * last part is the point: a fixed attachment means the cells line up across
+   * every surface that uses them, so the page reads as one ruled sheet from
+   * here down to the bottom of the footer rather than three sections each with
+   * its own grid starting wherever its own box happens to begin.
+   */
+  background-color: var(--char-atmosphere);
+  background-image: var(--grid-image);
+  background-attachment: fixed;
+
   overflow: hidden;
 }
 
@@ -168,9 +205,27 @@
    * and on its timing. These are the slot positions that motion moves between,
    * which is the part a comp is allowed to have an opinion about.
    */
-  --dx: 132px;
+  --dx: calc(132px * var(--fan));
   --dy: 26px;
   --dz: 88px;
+
+  /*
+   * Which way the fan opens, and the lean of the cards in it.
+   *
+   * Everything about this object is physical. The slot offsets are
+   * `translate3d` on the X axis and the lean is `skewY`, and neither of those
+   * has the faintest idea which way the page is written — so unlike the rest of
+   * this file, which mirrors by itself because it is in logical properties, the
+   * stack would come out identical in Persian and Arabic while the column it
+   * sits in moved to the other side of the page. This is the one switch that
+   * mirrors it, the same way `.ruleLineFaint` above flips its gradient.
+   */
+  --fan: 1;
+  --skew: calc(6deg * var(--fan));
+}
+
+[dir="rtl"] .stack {
+  --fan: -1;
 }
 
 /*
@@ -194,6 +249,22 @@
 
 .card {
   position: absolute;
+
+  /*
+   * Anchored to the origin physically, and that word is doing work.
+   *
+   * With no inset at all a card falls at its *static* position, and the static
+   * position of an absolutely positioned box is direction-dependent: in Persian
+   * and Arabic it hangs from the containing block's right edge and lays itself
+   * out leftwards. `translate(-50%, -50%)` then centres it on the wrong point —
+   * one whole card-width off, which is what the stack did in both RTL locales.
+   * `inset-inline-start` would not fix it either; it is the same flip by another
+   * name. `left: 0` is the same point in every language, and the mirror is done
+   * once, deliberately, by `--fan` above.
+   */
+  inset-block-start: 0;
+  left: 0;
+
   /* Portrait, as the comp draws them: a tall panel about two thirds as wide as
    * it is high, not the landscape card the component's own example uses. */
   inline-size: clamp(15rem, 21vw, 20rem);
@@ -246,13 +317,13 @@
   /* front */
   0%,
   14% {
-    transform: translate(-50%, -50%) translate3d(0, 0, 0) skewY(6deg);
+    transform: translate(-50%, -50%) translate3d(0, 0, 0) skewY(var(--skew));
     opacity: 1;
     z-index: 5;
   }
   /* falls away */
   19% {
-    transform: translate(-50%, -50%) translate3d(0, 190px, 0) skewY(6deg);
+    transform: translate(-50%, -50%) translate3d(0, 190px, 0) skewY(var(--skew));
     opacity: 0;
     z-index: 5;
   }
@@ -260,7 +331,7 @@
   20% {
     transform: translate(-50%, -50%)
       translate3d(calc(var(--dx) * 4), calc(var(--dy) * -4), calc(var(--dz) * -4))
-      skewY(6deg);
+      skewY(var(--skew));
     opacity: 0;
     z-index: 1;
   }
@@ -269,7 +340,7 @@
   40% {
     transform: translate(-50%, -50%)
       translate3d(calc(var(--dx) * 4), calc(var(--dy) * -4), calc(var(--dz) * -4))
-      skewY(6deg);
+      skewY(var(--skew));
     opacity: 1;
     z-index: 1;
   }
@@ -277,21 +348,21 @@
   60% {
     transform: translate(-50%, -50%)
       translate3d(calc(var(--dx) * 3), calc(var(--dy) * -3), calc(var(--dz) * -3))
-      skewY(6deg);
+      skewY(var(--skew));
     opacity: 1;
     z-index: 2;
   }
   80% {
     transform: translate(-50%, -50%)
       translate3d(calc(var(--dx) * 2), calc(var(--dy) * -2), calc(var(--dz) * -2))
-      skewY(6deg);
+      skewY(var(--skew));
     opacity: 1;
     z-index: 3;
   }
   100% {
     transform: translate(-50%, -50%)
       translate3d(var(--dx), calc(var(--dy) * -1), calc(var(--dz) * -1))
-      skewY(6deg);
+      skewY(var(--skew));
     opacity: 1;
     z-index: 4;
   }
@@ -428,10 +499,17 @@
 /* -----------------------------------------------------------------------------
  * Narrow frames.
  *
- * The stack is the first thing to go: it is a wide, angled object that cannot
- * be made small without becoming a smudge, and the five names above it already
- * say what it contains. The words take the full measure and the three features
- * stack.
+ * The words take the full measure, the three features stack, and the card stack
+ * comes with them — it is the picture of the product on a page that is mostly
+ * about the product, and dropping it left the phone with five names and no
+ * screenshots at all.
+ *
+ * It is not the desktop stack shrunk by a scale factor. The fan is built out of
+ * three lengths and a card size, so all four come down together and the cards
+ * stay legible rather than turning into a smudge of unreadable type. Measured on
+ * the built page at 390: the front card is 176 wide and the whole object paints
+ * across 332px with 27 of air on one side and 31 on the other — inside the
+ * frame, where on desktop it deliberately runs off the edge.
  * -------------------------------------------------------------------------- */
 
 @media (max-width: 1023px) {
@@ -440,7 +518,60 @@
   }
 
   .stack {
-    display: none;
+    /* The slot offsets, tracking the frame. Each is the desktop value's shape
+     * with a viewport term in the middle, so the fan opens as the frame widens
+     * and arrives at roughly the desktop proportions by the time the two-column
+     * layout takes back over at 1024. */
+    --dx: calc(clamp(46px, 12vw, 96px) * var(--fan));
+    --dy: clamp(12px, 3vw, 20px);
+    --dz: clamp(44px, 11vw, 72px);
+
+    /* Tall enough for the front card plus the four slots' worth of rise above
+     * it — the same sum the desktop height is, on the smaller numbers. */
+    min-block-size: clamp(19rem, 76vw, 30rem);
+  }
+
+  /*
+   * Centred, and centred in both directions.
+   *
+   * `translate(-50%, -50%)` in the keyframes puts slot 0 on the origin and the
+   * fan grows from there to slot 4, so the middle of the object is some way
+   * past the origin rather than on it. Backing the origin off by that much is
+   * what centres the stack rather than its front card.
+   *
+   * Two slots is the *geometric* middle and it is not the right number: the
+   * rear slots are also `4 × --dz` further back, and 900px of perspective pulls
+   * them in toward the perspective origin, so the painted fan is shorter than
+   * the fan on paper. Measured on the built page, the correction that lands the
+   * object on the centre line is a little under 1.7 slots — at 2 the front card
+   * sat flush against the left edge of a 360px frame with 29px of air on the
+   * other side.
+   *
+   * The shift is a transform and not an inset because `inset-inline-start: 50%`
+   * is the one inset value that means the same thing in Persian and Arabic as
+   * it does in English — the centre is the centre — while `calc(50% - …)`
+   * measures from the opposite edge under RTL and would throw the fan off to
+   * the far side of the frame.
+   */
+  .stackInner {
+    inset-inline-start: 50%;
+    transform: translate3d(calc(var(--dx) * -1.7), 0, 0);
+  }
+
+  .card {
+    inline-size: clamp(11rem, 42vw, 17rem);
+    block-size: clamp(16rem, 62vw, 25rem);
+  }
+
+  /* The head is the first thing that stops fitting: at 176px of card there is
+   * no room for a gap of 0.75rem and 1.1rem of inset either side as well. */
+  .cardHead {
+    gap: 0.5rem;
+    padding: 0.7rem 0.8rem;
+  }
+
+  .well {
+    margin: 0.7rem;
   }
 
   .features {
@@ -472,7 +603,7 @@
     transform: translate(-50%, -50%)
       translate3d(calc(var(--i) * var(--dx)), calc(var(--i) * var(--dy) * -1),
                   calc(var(--i) * var(--dz) * -1))
-      skewY(6deg);
+      skewY(var(--skew));
     z-index: calc(5 - var(--i));
   }
 }

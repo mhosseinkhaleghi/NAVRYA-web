@@ -91,7 +91,24 @@ export function SessionSection({
   };
 }) {
   return (
-    <section className={styles.section} data-session="">
+    <section
+      className={styles.section}
+      data-session=""
+      /*
+       * What makes the ground red.
+       *
+       * The palette carries four character skins and the marketing site runs
+       * none of them — it is on the neutral gold skin, and the tokens file says
+       * so. The skins are opted into per surface instead, which `CouncilPanel`
+       * already does for the commander's own panel in the film above, and which
+       * this section does for the same reason: the film ends on the commander's
+       * desk and this is that desk's workspace. What it changes is
+       * `--char-atmosphere`, the ground the stylesheet paints, and
+       * `--char-accent`, which the eyebrow and rule diamonds are already
+       * written to follow.
+       */
+      data-character="commander"
+    >
       <div className={styles.top}>
         <div className={styles.words}>
           <p className={styles.eyebrow}>
