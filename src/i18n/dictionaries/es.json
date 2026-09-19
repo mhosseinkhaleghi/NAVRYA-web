@@ -13,8 +13,8 @@
   "hero": {
     "headline": "Conviértete en el Cazador.",
     "subline": [
-      "El mercado no paga a quienes persiguen cada movimiento.",
-      "Recompensa a quienes esperan la presa perfecta."
+      "Lee el gráfico, planea la operación,",
+      "y espera el momento justo."
     ],
     "scroll": "Desliza"
   },
@@ -23,31 +23,31 @@
       "eyebrow": "Sección 2",
       "headline": "Toda Cacería Empieza con un Escenario.",
       "subline": [
-        "Los cazadores no improvisan. Se preparan para",
-        "cada movimiento posible antes de que empiece la cacería."
+        "Construye posibles rutas de mercado, actualiza probabilidades,",
+        "conecta Patrones y prepara una respuesta para cada resultado."
       ],
       "featuresLabel": "Funciones",
       "icon": "compass",
       "features": [
         {
           "index": "01",
-          "label": "Crea escenarios de trading"
+          "label": "Análisis de Escenarios con IA"
         }
       ]
     },
     {
       "eyebrow": "Sección 3",
-      "headline": "Conoce Tus Horas de Caza",
+      "headline": "Conoce Tus Horas de Caza.",
       "subline": [
-        "Sigue cada sesión de trading y descubre",
-        "cuándo tu estrategia rinde mejor."
+        "NAVRYA conecta sesión, configuración, ejecución y resultado",
+        "para revelar cuándo tu ventaja rinde mejor."
       ],
       "featuresLabel": "Funciones",
       "icon": "session",
       "features": [
         {
           "index": "02",
-          "label": "Sigue cada sesión de trading"
+          "label": "Inteligencia de Rendimiento por Sesión"
         }
       ]
     },
@@ -55,22 +55,22 @@
       "eyebrow": "Sección 4",
       "headline": "Decide Antes de Disparar.",
       "subline": [
-        "Fija tus reglas antes de que el mercado se mueva,",
-        "para que cuando llegue el momento ya sepas qué hacer."
+        "Cuando una operación planeada choca con tu propia Estrategia",
+        "o límites de riesgo, NAVRYA te lo hace ver antes de ejecutar."
       ],
       "featuresLabel": "Funciones",
       "icon": "timer",
       "features": [
         {
           "index": "03",
-          "label": "Prepara tu reacción antes de que el mercado se mueva"
+          "label": "Barreras de Reglas con IA"
         }
       ]
     }
   ],
   "closing": {
-    "headline": "Cada Flecha Aprende",
-    "body": "Tu IA aprende cómo cazas. Ve el mercado con tus ojos, recuerda cada lección y hace que cada disparo siguiente sea más preciso."
+    "headline": "Cada Flecha Aprende.",
+    "body": "Tus Estrategias. Tus Patrones. Tus Sesiones. Tus Operaciones. NAVRYA trae el historial relevante a cada conversación."
   },
   "miss": {
     "eyebrow": "Sección 6",

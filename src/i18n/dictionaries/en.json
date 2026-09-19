@@ -13,8 +13,8 @@
   "hero": {
     "headline": "Become the Hunter.",
     "subline": [
-      "The market doesn’t pay those who chase every move.",
-      "It rewards those who wait for the perfect prey."
+      "Read the chart, plan the trade,",
+      "and wait for the right move."
     ],
     "scroll": "Scroll"
   },
@@ -23,31 +23,31 @@
       "eyebrow": "Section 2",
       "headline": "Every Hunt Begins With a Scenario.",
       "subline": [
-        "Hunters don’t improvise. They prepare for",
-        "every possible move before the hunt begins."
+        "Build possible market paths, update probabilities,",
+        "connect Patterns and prepare a response for each outcome."
       ],
       "featuresLabel": "Features",
       "icon": "compass",
       "features": [
         {
           "index": "01",
-          "label": "Build trading scenarios"
+          "label": "AI Scenario Analysis"
         }
       ]
     },
     {
       "eyebrow": "Section 3",
-      "headline": "Know Your Hunting Hours",
+      "headline": "Know Your Hunting Hours.",
       "subline": [
-        "Track each trading session and discover",
-        "when your strategy performs at its best."
+        "NAVRYA connects session, setup, execution and outcome",
+        "to reveal when your edge performs best."
       ],
       "featuresLabel": "Features",
       "icon": "session",
       "features": [
         {
           "index": "02",
-          "label": "Track Every Trading Session"
+          "label": "Session Performance Intelligence"
         }
       ]
     },
@@ -55,22 +55,22 @@
       "eyebrow": "Section 4",
       "headline": "Decide Before You Strike.",
       "subline": [
-        "Set your rules before the market moves,",
-        "so when the moment comes, you already know what to do."
+        "When a planned trade conflicts with your own Strategy",
+        "or risk limits, NAVRYA makes you see it before execution."
       ],
       "featuresLabel": "Features",
       "icon": "timer",
       "features": [
         {
           "index": "03",
-          "label": "Prepare your reaction before the market moves"
+          "label": "AI Rule Guardrails"
         }
       ]
     }
   ],
   "closing": {
-    "headline": "Every Arrow Learns",
-    "body": "Your AI learns how you hunt. It sees the market through your eyes, remembers every lesson, and makes every next shot more precise."
+    "headline": "Every Arrow Learns.",
+    "body": "Your Strategies. Your Patterns. Your Sessions. Your Trades. NAVRYA brings the relevant history into every conversation."
   },
   "miss": {
     "eyebrow": "Section 6",
