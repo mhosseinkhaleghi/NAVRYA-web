@@ -113,13 +113,15 @@
     "eyebrow": "Section 7",
     "headline": [
       "Meet the AI Trading Journal",
-      "That Learns From You."
+      "From First Analysis",
+      "To Final Review."
     ],
     "body": [
-      "Journal your trades, decisions, and emotions —",
-      "while AI learns your behavior and helps you",
-      "become a more disciplined trader."
-    ]
+      "Trading is already complicated enough. Charts, scenarios,",
+      "strategies, trades, emotions — NAVRYA keeps it all in one place,",
+      "and you can run the whole process just by talking to it."
+    ],
+    "explore": "Explore Feature"
   },
   "partners": {
     "eyebrow": "Section 8",

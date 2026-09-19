@@ -36,7 +36,7 @@ export default async function HomePage({
       }
       after={
         <>
-          <DarkSection dark={dictionary.dark} />
+          <DarkSection dark={dictionary.dark} locale={locale} />
           <PartnersSection partners={dictionary.partners} />
           <TestimonialsSection testimonials={dictionary.testimonials} />
           <ArchetypesSection archetypes={dictionary.archetypes} />

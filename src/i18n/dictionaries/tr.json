@@ -112,14 +112,16 @@
   "dark": {
     "eyebrow": "Bölüm 7",
     "headline": [
-      "Sizden Öğrenen",
-      "Yapay Zekâ İşlem Günlüğü."
+      "Yapay Zeka İşlem Günlüğüyle Tanışın",
+      "İlk Analizden",
+      "Son İncelemeye Kadar."
     ],
     "body": [
-      "İşlemlerinizi, kararlarınızı ve duygularınızı kaydedin —",
-      "yapay zekâ davranışınızı öğrenirken",
-      "daha disiplinli bir yatırımcı olun."
-    ]
+      "Alım satım zaten yeterince karmaşık. Grafikler, senaryolar,",
+      "stratejiler, işlemler, duygular — NAVRYA hepsini tek bir yerde toplar,",
+      "ve tüm süreci sadece onunla konuşarak yürütebilirsin."
+    ],
+    "explore": "Özellikleri Keşfet"
   },
   "partners": {
     "eyebrow": "Bölüm 8",

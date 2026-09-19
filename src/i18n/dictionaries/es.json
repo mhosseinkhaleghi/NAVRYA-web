@@ -112,14 +112,16 @@
   "dark": {
     "eyebrow": "Sección 7",
     "headline": [
-      "El Diario de Trading con IA",
-      "Que Aprende de Ti."
+      "Conoce el Diario de Trading con IA",
+      "Desde el Primer Análisis",
+      "Hasta la Revisión Final."
     ],
     "body": [
-      "Registra tus operaciones, decisiones y emociones —",
-      "mientras la IA aprende tu comportamiento y te ayuda",
-      "a ser un trader más disciplinado."
-    ]
+      "El trading ya es lo bastante complicado. Gráficos, escenarios,",
+      "estrategias, operaciones, emociones — NAVRYA lo reúne todo en un solo lugar,",
+      "y puedes manejar todo el proceso con solo hablarle."
+    ],
+    "explore": "Explorar Funciones"
   },
   "partners": {
     "eyebrow": "Sección 8",

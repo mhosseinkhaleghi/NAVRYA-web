@@ -1,3 +1,5 @@
+import { ROUTE_HREF } from "@/config/routes";
+import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
 
 import styles from "./DarkSection.module.css";
@@ -54,7 +56,13 @@ function Flourish({ wide = false }: { wide?: boolean }) {
  * boots a WebGL canvas into once the controller marks it live. See
  * `orb-script.ts` for why it is not a React client component.
  */
-export function DarkSection({ dark }: { dark: Dictionary["dark"] }) {
+export function DarkSection({
+  dark,
+  locale,
+}: {
+  dark: Dictionary["dark"];
+  locale: Locale;
+}) {
   return (
     <section className={styles.dark} data-dark="">
       {/* Behind everything, and behind the words in particular. */}
@@ -82,6 +90,18 @@ export function DarkSection({ dark }: { dark: Dictionary["dark"] }) {
               </span>
             ))}
           </p>
+
+          {/* A plain anchor, not next/link — a document change, the same as
+           * the bar's own nav, so the incoming page's stage controller boots
+           * fresh rather than inheriting a track it never started. */}
+          <div className={styles.actions}>
+            <a className={styles.explore} href={ROUTE_HREF.feature!(locale)} data-dark-explore="">
+              {dark.explore}
+              <svg className={styles.exploreIcon} viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M4 12L12 4M6 4h6v6" />
+              </svg>
+            </a>
+          </div>
         </div>
       </div>
     </section>

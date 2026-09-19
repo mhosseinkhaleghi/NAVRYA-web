@@ -245,6 +245,65 @@
   display: block;
 }
 
+/* ── The action ───────────────────────────────────────────────────────────── */
+
+/*
+ * The design system's one primary control, at its large size — the same
+ * tokens the hero's own primary action is built from: 52px, `--font-ui` at a
+ * fixed 14px rather than the display face, the accent filled solid.
+ */
+.actions {
+  margin-block-start: calc(var(--s2-gap) * 1.9);
+
+  opacity: var(--body);
+  transform: translateY(calc((1 - var(--body)) * 2.2rem));
+  will-change: opacity, transform;
+}
+
+.explore {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+  block-size: 52px;
+  padding-inline: 28px;
+  border: var(--border-1) solid var(--char-accent);
+  border-radius: var(--radius-8);
+  background: var(--char-accent);
+  color: var(--ink-950);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  transition:
+    filter var(--dur-hover) var(--ease-out),
+    border-color var(--dur-hover) var(--ease-out);
+}
+
+.explore:hover {
+  filter: brightness(var(--hover-brightness));
+}
+
+.explore:active {
+  border-color: var(--char-accent);
+}
+
+.exploreIcon {
+  inline-size: 1.05em;
+  block-size: 1.05em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The arrow points away from the reader in either direction. */
+[dir="rtl"] .exploreIcon {
+  transform: scaleX(-1);
+}
+
 /* -----------------------------------------------------------------------------
  * Compact frames.
  *
