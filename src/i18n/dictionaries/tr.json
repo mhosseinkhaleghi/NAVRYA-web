@@ -13,8 +13,8 @@
   "hero": {
     "headline": "Avcı Ol.",
     "subline": [
-      "Piyasa, her hareketin peşinden koşanlara ödeme yapmaz.",
-      "Kusursuz avı bekleyenleri ödüllendirir."
+      "Grafiği oku, işlemi planla,",
+      "ve doğru anı bekle."
     ],
     "cta": "Panele Git",
     "trial": "Ücretsiz Deneyin",
@@ -25,31 +25,31 @@
       "eyebrow": "Bölüm 2",
       "headline": "Her Av Bir Senaryoyla Başlar.",
       "subline": [
-        "Avcılar doğaçlama yapmaz. Av başlamadan önce",
-        "olası her hamleye hazırlanırlar."
+        "Olası piyasa yollarını oluştur, olasılıkları güncelle,",
+        "Kalıpları bağla ve her sonuç için bir yanıt hazırla."
       ],
       "featuresLabel": "Özellikler",
       "icon": "compass",
       "features": [
         {
           "index": "01",
-          "label": "Alım satım senaryoları kurun"
+          "label": "Yapay Zeka Senaryo Analizi"
         }
       ]
     },
     {
       "eyebrow": "Bölüm 3",
-      "headline": "Av Saatlerini Bilin",
+      "headline": "Av Saatlerini Bilin.",
       "subline": [
-        "Her işlem seansını izleyin ve stratejinizin",
-        "en iyi ne zaman çalıştığını keşfedin."
+        "NAVRYA seansı, kurulumu, uygulamayı ve sonucu birbirine bağlar,",
+        "avantajının en iyi ne zaman çalıştığını ortaya çıkarır."
       ],
       "featuresLabel": "Özellikler",
       "icon": "session",
       "features": [
         {
           "index": "02",
-          "label": "Her işlem seansını izleyin"
+          "label": "Seans Performans Zekası"
         }
       ]
     },
@@ -57,22 +57,22 @@
       "eyebrow": "Bölüm 4",
       "headline": "Vurmadan Önce Karar Ver.",
       "subline": [
-        "Kurallarını piyasa hareket etmeden önce belirle,",
-        "böylece an geldiğinde ne yapacağını çoktan bilirsin."
+        "Planlanan bir işlem kendi Stratejinle ya da risk limitlerinle",
+        "çelişirse, NAVRYA bunu uygulamadan önce sana gösterir."
       ],
       "featuresLabel": "Özellikler",
       "icon": "timer",
       "features": [
         {
           "index": "03",
-          "label": "Piyasa hareket etmeden tepkini hazırla"
+          "label": "Yapay Zeka Kural Korumaları"
         }
       ]
     }
   ],
   "closing": {
-    "headline": "Her Ok Öğrenir",
-    "body": "Yapay zekân nasıl avlandığını öğrenir. Piyasayı senin gözlerinden görür, her dersi hatırlar ve sonraki her atışı daha isabetli kılar."
+    "headline": "Her Ok Öğrenir.",
+    "body": "Stratejilerin. Kalıpların. Seansların. İşlemlerin. NAVRYA ilgili geçmişi her konuşmaya taşır."
   },
   "miss": {
     "eyebrow": "Bölüm 6",
