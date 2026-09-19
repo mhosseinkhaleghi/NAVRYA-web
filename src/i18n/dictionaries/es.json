@@ -85,10 +85,10 @@
     "traits": [
       {
         "index": "01",
-        "title": "Rastreo Emocional",
+        "title": "Análisis de Gráficos con IA",
         "body": [
-          "Descubre cómo el miedo, la codicia, la confianza",
-          "y la duda influyen en tus operaciones."
+          "Muéstrale el gráfico a NAVRYA. Lee el planteamiento,",
+          "el contexto y los riesgos — antes de que operes."
         ]
       },
       {
@@ -101,10 +101,10 @@
       },
       {
         "index": "03",
-        "title": "Memoria de Patrones",
+        "title": "Inteligencia del Comportamiento",
         "body": [
-          "Reconoce los errores que repites,",
-          "antes de volver a repetirlos."
+          "NAVRYA te acompaña en cada operación,",
+          "leyendo tu comportamiento a medida que avanza tu camino."
         ]
       }
     ]

@@ -85,10 +85,10 @@
     "traits": [
       {
         "index": "01",
-        "title": "Emotional Tracking",
+        "title": "AI Chart Analysis",
         "body": [
-          "Discover how fear, greed, confidence,",
-          "and hesitation influence your trades."
+          "Show NAVRYA the chart. It reads the setup,",
+          "context and risks — before you commit."
         ]
       },
       {
@@ -101,10 +101,10 @@
       },
       {
         "index": "03",
-        "title": "Pattern Recall",
+        "title": "Behavior Intelligence",
         "body": [
-          "Recognise the mistakes you repeat,",
-          "before you repeat them again."
+          "NAVRYA walks with you through every trade,",
+          "reading your behavior as your journey unfolds."
         ]
       }
     ]

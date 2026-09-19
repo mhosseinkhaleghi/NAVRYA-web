@@ -85,10 +85,10 @@
     "traits": [
       {
         "index": "01",
-        "title": "Duygu Takibi",
+        "title": "Yapay Zeka Grafik Analizi",
         "body": [
-          "Korkunun, açgözlülüğün, güvenin ve tereddüdün",
-          "işlemlerini nasıl etkilediğini keşfet."
+          "Grafiği NAVRYA'ya göster. Kurulumu, bağlamı",
+          "ve riskleri okur — sen işleme girmeden önce."
         ]
       },
       {
@@ -101,10 +101,10 @@
       },
       {
         "index": "03",
-        "title": "Örüntü Hafızası",
+        "title": "Davranış Zekası",
         "body": [
-          "Tekrarladığın hataları, yeniden",
-          "tekrarlamadan önce fark et."
+          "NAVRYA her işlemde seninle yürür,",
+          "yolculuğun ilerledikçe davranışını okur."
         ]
       }
     ]
