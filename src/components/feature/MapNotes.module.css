@@ -169,11 +169,9 @@
   gap: 0.28em;
   padding-inline: var(--gutter);
   color: var(--c-text);
-  font-family: var(--font-quote);
-  /* Stated, not inherited from the family having had only one cut. The upright
-   * exists now, and this line is the italic one. */
-  font-style: italic;
+  font-family: var(--font-display);
   font-size: var(--fs-f3-closing);
+  letter-spacing: var(--tracking-display);
   line-height: 1.35;
   text-align: center;
   text-shadow: var(--text-lift);

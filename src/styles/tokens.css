@@ -153,7 +153,7 @@
    * map, and a map's labels are the smallest type on it. */
   --fs-f3-note: var(--fs-label);
   --fs-f3-note-compact: clamp(0.85rem, 3.6vw, 1.15rem);
-  --fs-f3-closing: var(--fs-body-2);
+  --fs-f3-closing: var(--fs-body-1);
   --f3-closing-bottom: clamp(2rem, 6vh, 4.5rem);
 
   /* ── The features page, slide 4 — the council table ─────────────────────── */
