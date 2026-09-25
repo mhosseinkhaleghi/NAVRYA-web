@@ -84,11 +84,19 @@ glide as section 7's rail mark.
 
 What a step does, and what it no longer does:
 
-- **Its length comes from the footage it crosses, compressed.** Short shots play
-  at their own speed; long ones are compressed so that every step lands in about
-  two seconds (`STEP_*` in `stage-script.ts`). A step used to play its footage
-  at 1× — 7.3s from the opening to section 2, 10.5s for the release — and the
-  page did nothing else until it had.
+- **Its speed is the viewer's.** An ordinary scroll — a notch or a short turn of
+  a wheel, an unhurried trackpad swipe, a swipe on a phone, a key — plays the
+  footage at the speed it was shot (7.3s from the opening to section 2). Harder
+  input plays it faster, up to 4×: a wheel or trackpad by how much it has moved
+  in the last moments, a touch by the finger's speed, a held key at 2×, and each
+  further flick, notch or swipe while a step runs (or each half second of a
+  wheel or key kept going through it) adds half a speed. A step speeds up the
+  moment the input does and does not slow down before it lands; the next one
+  keeps that speed while the viewer is still going, and one asked for from rest
+  starts again from the input. Constants: `RATE_MAX` and the ones after it in
+  `stage-script.ts`. It used to be fixed either way: first everything at 1×
+  however hard the viewer scrolled, then every step squeezed into about two
+  seconds (2–4×) however gently.
 - **Input during a step is kept, not dropped.** A flick while travelling is
   taken the moment the travel lands (two are kept); a flick the other way turns
   the travel round to the chapter it left.
@@ -103,8 +111,9 @@ What a step does, and what it no longer does:
   to take any upward wheel below the film — from section 9 as readily as 7 —
   straight back to the film's last chapter.
 - **Nothing waits on the opening.** A first step taken while the opening shot is
-  still playing runs the rest of it at 4× and steps the moment it ends, so the
-  film continues from its last frame rather than cutting out of the middle.
+  still playing runs the rest of it faster — 2× for an ordinary scroll, up to 4×
+  for a hard one — and steps the moment it ends, so the film continues from its
+  last frame rather than cutting out of the middle.
 - **A travel paints each frame itself**, in the frame it moves, instead of a
   frame later from the scroll event it raises.
 
@@ -161,7 +170,7 @@ fires once. `components/frame/stage-script.ts` maps scroll onto the beats:
 
 | beat | scroll | what happens |
 | ---- | ------ | ------------ |
-| — | on load | The bar, the headline and both calls to action are up at first paint — held only for the opening's typefaces, at most 500ms. `hunter-dawn` plays once it can run without stalling; at **4.33s** the hunter turns to face the viewer. Nothing is locked: a first step taken while it plays runs the rest of it at 4× and steps the moment it ends. |
+| — | on load | The bar, the headline and both calls to action are up at first paint — held only for the opening's typefaces, at most 500ms. `hunter-dawn` plays once it can run without stalling; at **4.33s** the hunter turns to face the viewer. Nothing is locked: a first step taken while it plays runs the rest of it at 2–4× (by how hard it was asked for) and steps the moment it ends. |
 | `turn` | 210vh | `hunter-turn` scrubs: he turns back to the valley. The hero block leaves over it. |
 | `prey` | 380vh | `valley-prey` scrubs. The deer clears the frame edge at **0.40s** and section 2's headline lands on it; at **3.60s** it drops its head to graze and the rest of the panel assembles. |
 | `draw` | 380vh | `hunter-draw` scrubs. The draw settles into the aim at **2.50s** and section 3 arrives. Section 2 leaves over it. |
@@ -515,8 +524,8 @@ Nothing carries `autoplay`. It begins at `canplay`, which promises exactly one
 more decodable frame, and the hitch that follows is what made the opening look
 broken. The controller starts the plate only once it is buffered *or* the file
 is arriving faster than it plays, and only while the viewer is still at the top
-to watch it. A first step taken while it plays runs the rest of it at 4× and
-steps the moment it ends: the plate after it opens on the frame it closes on,
+to watch it. A first step taken while it plays runs the rest of it at 2–4×
+(by how hard it was asked for) and steps the moment it ends: the plate after it opens on the frame it closes on,
 so the film continues rather than cutting into the middle of the shot.
 
 Seeks are queued one at a time per plate — a seek issued while another is
@@ -527,7 +536,8 @@ mid-frame; it costs under a millisecond per frame.
 
 To retime anything: `BEATS` for how much scroll each beat gets, the cue
 constants (`DEER_ENTERS`, `DEER_GRAZES`, `BOW_SET`, `AIM_HELD`) for where each
-panel lands — and so where each step rests — `STEP_*` for how long a step takes,
+panel lands — and so where each step rests — `RATE_MAX` and the constants after
+it for how fast a step plays for a given input,
 and `RAIL` for where each mark goes. The
 reveal styling itself lives in the `Intro` / `Reveal` sections of the component
 stylesheets.

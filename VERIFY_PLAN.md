@@ -110,7 +110,7 @@ wheel gesture was being swallowed. With two stops the first one is also
 the opening gesture and glided back to the top. What is asserted:
 
 - one gesture moves the page at all — within three seconds, because a first
-  step taken while the opening shot is playing runs the shot out at 4× first;
+  step taken while the opening shot is playing runs the shot out at 2–4× first;
 - the opening and the slide's headline are never legible at the same time —
   sampled all the way through the travel, not only at the ends. Read off
   `[data-hero-part]`, which is the element the exit opacity is on, and never off

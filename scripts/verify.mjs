@@ -1522,8 +1522,8 @@ async function main() {
      *
      * Given up to three seconds rather than a moment, and on purpose: a first
      * step taken while the opening shot is still playing runs the rest of that
-     * shot at 4x and steps the instant it ends, so the film continues from its
-     * last frame. From the first second of the page that is about a second.
+     * shot faster (twice its speed for one ordinary gesture) and steps the
+     * instant it ends, so the film continues from its last frame.
      */
     await page.mouse.wheel(0, 240);
     {
@@ -1541,14 +1541,15 @@ async function main() {
     /*
      * Wait for the film to stop moving.
      *
-     * A step travels for between one and about two and a half seconds, and
-     * the walk's own cadence is 150ms — so a sample taken straight after a
-     * wheel is a sample of the *travel*, which is what the doubled-headline
-     * check wants and the opposite of what the resting assertions want.
+     * One gesture plays a step's footage at its own speed — up to about eight
+     * seconds — and the walk's own cadence is 150ms, so a sample taken
+     * straight after a wheel is a sample of the *travel*, which is what the
+     * doubled-headline check wants and the opposite of what the resting
+     * assertions want.
      */
     const settle = async () => {
       let last = -1;
-      for (let i = 0; i < 24; i++) {
+      for (let i = 0; i < 100; i++) {
         const y = await page.evaluate(() => Math.round(window.scrollY));
         if (y === last) return;
         last = y;

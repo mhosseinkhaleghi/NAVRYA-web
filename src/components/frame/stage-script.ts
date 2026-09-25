@@ -42,12 +42,12 @@ const FONT_WAIT_MS = 500;
  * what made the opening hitch.
  *
  * The scroll is not held for it any more. A first step taken while it is still
- * playing runs the rest of it at `OPENING_RUSH` and moves on the moment it
- * ends: the plate after it opens on the frame it closes on, so the film
- * continues rather than cutting into the middle of the shot. From the first
- * frame that is at most about a second; a reader who has read the headline
- * waits a fraction of that. `HANDOVER_MS` eases the first scrubbed plate in if
- * the page was moved some other way (a rail mark) while the shot was running.
+ * playing runs the rest of it faster — twice its speed for an ordinary scroll,
+ * up to `OPENING_RUSH` for a hard one — and moves on the moment it ends: the
+ * plate after it opens on the frame it closes on, so the film continues rather
+ * than cutting into the middle of the shot. `HANDOVER_MS` eases the first
+ * scrubbed plate in if the page was moved some other way (a rail mark) while
+ * the shot was running.
  */
 const OPENING_BUFFER_S = 5.5;
 const RATE_MARGIN = 1.25;
@@ -55,24 +55,44 @@ const OPENING_RUSH = 4;
 const HANDOVER_MS = 650;
 
 /**
- * How long one step takes, from the footage it crosses.
+ * How fast a step plays, from how the viewer is scrolling.
  *
- * A step used to play its footage at exactly 1x, which made the length of a
- * step the length of the shot: 7.3s from the opening to section 2, 6.9s to
- * section 4, 10.5s for the release. Scrolling was a request to watch, and the
- * page did nothing else until it had been watched.
+ * An ordinary scroll plays the footage at the speed it was shot: a notch or a
+ * short turn of a wheel, an unhurried trackpad swipe, a swipe on a phone, a
+ * key. Harder input plays it faster, up to `RATE_MAX` times:
  *
- * Now a step plays short shots at their own speed and compresses long ones:
- * `min(footage, STEP_BASE + STEP_PER_S x footage)`, held between the two
- * bounds. Every step lands in about two seconds — 1.8s for three seconds of
- * footage, 2.2s for seven, 2.6s for the release — so the rhythm is even, the
- * longer shots still feel longer, and nothing plays slower than it was shot
- * except the very shortest, which get `STEP_MIN`.
+ * - a wheel or trackpad by how much it has moved lately — a sum of its deltas
+ *   that leaks away over `INPUT_TAU_MS`, read as px/s: 1x up to `WHEEL_EASY`,
+ *   `RATE_MAX` from `WHEEL_HARD`, in proportion between;
+ * - a touch by the finger's speed, the same way between `TOUCH_EASY` and
+ *   `TOUCH_HARD`;
+ * - a key held down at `KEY_HELD_RATE`;
+ * - and every further intent that comes in while a step is running (another
+ *   flick, another notch after a pause, another swipe) adds `RATE_BUMP`, as
+ *   does every `SUSTAIN_MS` of a wheel or key kept going through it — the
+ *   viewer is scrolling faster than the film plays, whichever way they do it.
+ *
+ * A step speeds up the moment the input does, and does not slow down again
+ * before it lands: a flick asks for the whole step, not for its first second.
+ * The step after it keeps that speed while the viewer is still going (a
+ * queued intent, a wheel still turning); one asked for from rest starts again
+ * from the input that asks for it. Each step ramps in and out over `RAMP_S`
+ * at the speed it is running, so it never starts or stops with a jerk.
+ *
+ * Until this the rate was fixed: first everything at 1x (7.3s to section 2
+ * however hard the viewer scrolled), then every step compressed into about
+ * two seconds (the footage at 2-4x however gently they scrolled).
  */
-const STEP_MIN = 1.0;
-const STEP_MAX = 2.6;
-const STEP_BASE = 1.5;
-const STEP_PER_S = 0.1;
+const RATE_MAX = 4;
+const INPUT_TAU_MS = 300;
+const WHEEL_EASY = 1500;
+const WHEEL_HARD = 5000;
+const TOUCH_EASY = 2500;
+const TOUCH_HARD = 8000;
+const KEY_HELD_RATE = 2;
+const RATE_BUMP = 0.5;
+const SUSTAIN_MS = 500;
+const RAMP_S = 0.6;
 
 /**
  * What counts as one intent.
@@ -144,8 +164,8 @@ const BEATS = [
  *
  * Video beats use the source clip's duration. The composited beats between
  * clips have no video clock, so they retain the existing 70vh-per-second
- * pacing. A step's length is taken from the footage it crosses — see
- * `STEP_MS`.
+ * pacing. A step plays this footage at a rate set by the input — see
+ * `RATE_MAX`.
  */
 const BEAT_SECONDS = [
   ["turn", 3],
@@ -400,8 +420,11 @@ export const stageScript = inlineScript(`
   var FONT_WAIT_MS = ${FONT_WAIT_MS};
   var OPENING_BUFFER_S = ${OPENING_BUFFER_S}, RATE_MARGIN = ${RATE_MARGIN};
   var OPENING_RUSH = ${OPENING_RUSH}, HANDOVER_MS = ${HANDOVER_MS};
-  var STEP_MIN = ${STEP_MIN}, STEP_MAX = ${STEP_MAX};
-  var STEP_BASE = ${STEP_BASE}, STEP_PER_S = ${STEP_PER_S};
+  var RATE_MAX = ${RATE_MAX}, INPUT_TAU_MS = ${INPUT_TAU_MS};
+  var WHEEL_EASY = ${WHEEL_EASY}, WHEEL_HARD = ${WHEEL_HARD};
+  var TOUCH_EASY = ${TOUCH_EASY}, TOUCH_HARD = ${TOUCH_HARD};
+  var KEY_HELD_RATE = ${KEY_HELD_RATE}, RATE_BUMP = ${RATE_BUMP}, RAMP_S = ${RAMP_S};
+  var SUSTAIN_MS = ${SUSTAIN_MS};
   var GESTURE_GAP_MS = ${GESTURE_GAP_MS}, HOLD_MS = ${HOLD_MS};
 
   var reduced = window.matchMedia
@@ -1096,23 +1119,22 @@ export const stageScript = inlineScript(`
     }
 
     /*
-     * The travel's shape, in film time: ramp in, run at a constant rate, ramp
-     * out. An ease-out starts the film at three times its average speed and
-     * the camera leaves before it is seen to go; the ramps only exist so a
-     * travel does not start and stop with a jerk.
+     * The rate the input is asking for, 1 to RATE_MAX. Each kind of input
+     * reports what it asks for as it arrives; it fades back to 1x over
+     * INPUT_TAU_MS once the input stops, and resets when it changes direction.
      */
-    var FILM_RAMP = 0.15;
-    function filmEase(t) {
-      var r = FILM_RAMP, k = 2 * r * (1 - r);
-      if (t <= r) return (t * t) / k;
-      if (t >= 1 - r) { var u = 1 - t; return 1 - (u * u) / k; }
-      return (t - r / 2) / (1 - r);
+    var asked = 1, askedAt = 0, askedDir = 0;
+    function rateFor(speed, easy, hard) {
+      return Math.max(1, Math.min(RATE_MAX, 1 + (RATE_MAX - 1) * (speed - easy) / (hard - easy)));
     }
-
-    // How long a step takes, from the seconds of footage it crosses.
-    function stepMs(seconds) {
-      var s = Math.min(seconds, STEP_BASE + STEP_PER_S * seconds);
-      return 1000 * Math.max(STEP_MIN, Math.min(STEP_MAX, s));
+    function askedNow() {
+      var gone = Math.max(0, performance.now() - askedAt) / INPUT_TAU_MS;
+      return 1 + (asked - 1) * Math.exp(-gone);
+    }
+    function ask(rate, dir) {
+      asked = dir === askedDir ? Math.max(askedNow(), rate) : rate;
+      askedAt = performance.now();
+      askedDir = dir;
     }
 
     // Where the film hands over to the page: section 7's top, which is also
@@ -1163,7 +1185,8 @@ export const stageScript = inlineScript(`
     var storyGlide = null, storyLocked = false, handoffGlide = false;
     var storyFrom = 0, storyTo = 0, storyStarted = 0, storyDuration = 0;
     var storyOrigin = 0, storyTravelDirection = 0, storyCarriesFilm = false;
-    var storyFilmFrom = 0, storyFilmTo = 0;
+    var storyFilmTo = 0, storyAt = 0, storySpeed = 0, storyT = 0;
+    var drive = 1;  // this travel's rate: rises with the input, never falls
     var nextDir = 0, nextCount = 0;  // intents kept for when the travel lands
     var holdDir = 0, holdUntil = 0;  // input still at strength: carry straight on
     var openingIntent = false;
@@ -1179,10 +1202,11 @@ export const stageScript = inlineScript(`
       var dir = nextCount ? nextDir : performance.now() < holdUntil ? holdDir : 0;
       if (nextCount) nextCount--;
       if (!nextCount) nextDir = 0;
-      if (dir && dir === went) travelStory(dir);
+      // Still going, so still at the speed it was going.
+      if (dir && dir === went) travelStory(dir, false, undefined, undefined, drive);
     }
 
-    function travelStory(direction, force, target, origin) {
+    function travelStory(direction, force, target, origin, rate, speed) {
       if ((!force && storyLocked) || !direction) return;
       if (typeof target !== 'number') {
         // The next state *ahead*, not the one after the nearest: from anywhere
@@ -1221,32 +1245,67 @@ export const stageScript = inlineScript(`
         return;
       }
 
-      // A travel that carries footage is timed in film time, so each shot
-      // plays at one steady rate however much track it happens to own. One
-      // that starts or ends on the page below is a plain eased move.
-      storyFilmFrom = filmSecondsAt(from);
+      // From rest, at the rate the input that asked for it is asking; carried
+      // on, at the rate it was already going.
+      drive = Math.max(typeof rate === 'number' ? rate : 1, askedNow());
+
+      /*
+       * A travel that carries footage is driven in film time, so each shot
+       * plays at one steady rate however much track it happens to own: the
+       * position is film seconds, advanced each frame at the travel's speed.
+       * That speed ramps to the rate over RAMP_S, follows it up if the input
+       * asks for more, and brakes over RAMP_S of its own speed to stop exactly
+       * on the state. Not an ease-out: that starts the film at three times its
+       * average speed, and the camera leaves before it is seen to go. One that
+       * starts or ends on the page below is a plain eased move, quicker the
+       * harder it was asked for.
+       */
+      var filmFrom = filmSecondsAt(from);
       storyFilmTo = filmSecondsAt(to);
-      var seconds = Math.abs(storyFilmTo - storyFilmFrom);
-      storyCarriesFilm = seconds > 0.05 && Math.max(from, to) <= filmMax + 1;
-      storyDuration = stepMs(Math.max(seconds, storyCarriesFilm ? 0 : 1.2));
-      storyStarted = performance.now();
+      storyCarriesFilm = Math.abs(storyFilmTo - filmFrom) > 0.05 && Math.max(from, to) <= filmMax + 1;
+      storyStarted = storyT = performance.now();
       storyFrom = from;
       storyTo = to;
-      (function step(now) {
-        var t = clamp01((now - storyStarted) / storyDuration);
-        var at = storyCarriesFilm
-          ? filmPositionAtSeconds(storyFilmFrom + (storyFilmTo - storyFilmFrom) * filmEase(t))
-          : storyFrom + (storyTo - storyFrom) * ease(t);
-        // The stops themselves, not whatever the table rounds to: a resting
-        // position a pixel off is one the next step measures from.
-        if (t >= 1) at = storyTo;
-        window.scrollTo(0, at);
-        // Painted in the same frame it moves, rather than a frame later from
-        // the scroll event it raises.
-        apply();
-        if (t < 1) { storyGlide = requestAnimationFrame(step); return; }
-        landed();
-      })(storyStarted);
+      storyAt = filmFrom;
+      // Turned round, it is still moving the old way for a moment: it brakes
+      // through zero rather than stopping dead.
+      storySpeed = typeof speed === 'number' ? -speed : 0;
+      if (!storyCarriesFilm) {
+        storyDuration = 1200 / Math.sqrt(drive);
+        (function glide(now) {
+          var t = clamp01((now - storyStarted) / storyDuration);
+          window.scrollTo(0, t >= 1 ? storyTo : storyFrom + (storyTo - storyFrom) * ease(t));
+          apply();
+          if (t < 1) { storyGlide = requestAnimationFrame(glide); return; }
+          landed();
+        })(storyStarted);
+        return;
+      }
+      storyGlide = requestAnimationFrame(travelFrame);
+    }
+
+    function travelFrame(now) {
+      var dt = Math.min(0.1, Math.max(0, now - storyT) / 1000);
+      storyT = now;
+      drive = Math.max(drive, askedNow());
+      var sign = storyFilmTo < storyAt ? -1 : 1;
+      var left = Math.abs(storyFilmTo - storyAt);
+      // Braking from the wrong way is quicker than a ramp, so a turn is felt
+      // at once.
+      var a = storySpeed < 0 ? Math.max(drive, -storySpeed) / (RAMP_S / 2) : drive / RAMP_S;
+      var v = Math.min(storySpeed + a * dt, drive, Math.sqrt(2 * (drive / RAMP_S) * left));
+      storySpeed = v;
+      var done = v >= 0 && v * dt >= left - 1e-4;
+      storyAt = done ? storyFilmTo : Math.max(0, storyAt + sign * v * dt);
+      // The stops themselves, not whatever the table rounds to: a resting
+      // position a pixel off is one the next step measures from.
+      window.scrollTo(0, done ? storyTo : filmPositionAtSeconds(storyAt));
+      // Painted in the same frame it moves, rather than a frame later from
+      // the scroll event it raises.
+      apply();
+      if (!done) { storyGlide = requestAnimationFrame(travelFrame); return; }
+      storySpeed = 0;
+      landed();
     }
 
     // Reverse to the exact state the active travel left.
@@ -1257,7 +1316,8 @@ export const stageScript = inlineScript(`
       storyLocked = false;
       nextDir = 0;
       nextCount = 0;
-      travelStory(direction, true, storyOrigin, storyTo);
+      travelStory(direction, true, storyOrigin, storyTo, undefined,
+        storyCarriesFilm ? Math.max(0, storySpeed) : 0);
     }
 
     function intend(direction) {
@@ -1267,17 +1327,21 @@ export const stageScript = inlineScript(`
       // of the shot quickly and step the moment it ends, so the film continues
       // from its last frame instead of cutting out of the middle of it.
       if (openingState === 'playing' && window.scrollY < 2) {
-        if (direction > 0 && !openingIntent) {
+        if (direction > 0 && openingIntent) {
+          drive = Math.min(RATE_MAX, drive + RATE_BUMP);
+        } else if (direction > 0) {
           openingIntent = true;
+          drive = askedNow();
           warm();
           apply();
           // A shot that never reports its end must not hold the step for ever.
+          var rest = opening.duration ? Math.max(0, opening.duration - opening.currentTime) : 2;
           setTimeout(function () {
             if (!openingIntent) return;
             openingIntent = false;
             retireOpening();
-            travelStory(1);
-          }, 2500);
+            travelStory(1, false, undefined, undefined, drive);
+          }, 1000 + 1000 * rest / openingRush());
         } else if (direction < 0) {
           openingIntent = false;
         }
@@ -1286,10 +1350,27 @@ export const stageScript = inlineScript(`
       if (!storyLocked) { travelStory(direction); return; }
       if (direction !== storyTravelDirection) { redirectStory(direction); return; }
       // Up to two kept: a quick run of flicks is honoured without a long
-      // string of them turning into a runaway.
+      // string of them turning into a runaway. Each is also a viewer scrolling
+      // faster than the film is playing, so each makes it play faster.
       nextDir = direction;
       if (nextCount < 2) nextCount++;
+      drive = Math.min(RATE_MAX, drive + RATE_BUMP);
     }
+
+    // Input kept going while a step runs: every SUSTAIN_MS of it counts as
+    // one more intent's worth of speed.
+    var sustained = 0;
+    function press(direction, ms) {
+      if (!storyLocked || direction !== storyTravelDirection) { sustained = 0; return; }
+      sustained += Math.min(ms, GESTURE_GAP_MS);
+      if (sustained < SUSTAIN_MS) return;
+      sustained -= SUSTAIN_MS;
+      drive = Math.min(RATE_MAX, drive + RATE_BUMP);
+    }
+
+    // The rest of the opening, once a step is waiting on it: twice its speed
+    // for an ordinary scroll, up to OPENING_RUSH for a hard one.
+    function openingRush() { return Math.min(OPENING_RUSH, 2 * drive); }
 
     // Whether an input in this direction belongs to the film. Down, anywhere
     // above the handover; up, anywhere at or above it — so from section 7's
@@ -1302,7 +1383,7 @@ export const stageScript = inlineScript(`
     }
 
     var wheelT = 0, wheelDir = 0, wheelAvg = 0, wheelPeak = 0;
-    var wheelTravel = 0, wheelTaken = false;
+    var wheelTravel = 0, wheelTaken = false, wheelSum = 0;
     function storyWheel(e) {
       if (!e.deltaY || e.ctrlKey) return; // ctrl + wheel is zoom
       var down = e.deltaY > 0;
@@ -1318,6 +1399,10 @@ export const stageScript = inlineScript(`
       // rise once the previous swipe's momentum has decayed.
       var fresh = now - wheelT > GESTURE_GAP_MS || dir !== wheelDir
         || (wheelAvg < wheelPeak * 0.4 && mag > wheelAvg * 2 && mag > 8);
+      // How hard it is going: what it has moved lately, as px/s.
+      var gap = Math.max(0, now - wheelT), leak = Math.exp(-gap / INPUT_TAU_MS);
+      wheelSum = (dir === wheelDir ? wheelSum * leak : 0) + mag;
+      ask(rateFor(wheelSum * 1000 / INPUT_TAU_MS, WHEEL_EASY, WHEEL_HARD), dir);
       if (fresh) {
         wheelPeak = mag;
         wheelAvg = mag;
@@ -1330,7 +1415,11 @@ export const stageScript = inlineScript(`
       wheelT = now;
       wheelDir = dir;
       wheelTravel += mag;
-      if (mag >= wheelPeak * 0.5) { holdDir = dir; holdUntil = performance.now() + HOLD_MS; }
+      if (mag >= wheelPeak * 0.5) {
+        holdDir = dir;
+        holdUntil = performance.now() + HOLD_MS;
+        if (!fresh) press(dir, gap);
+      }
       // A gesture is an intent once it has moved far enough to mean it — one
       // notch of a wheel always has; the last crumbs of a momentum tail never do.
       if (!wheelTaken && wheelTravel >= 12) {
@@ -1339,6 +1428,7 @@ export const stageScript = inlineScript(`
       }
     }
 
+    var keyT = 0;
     function storyKey(e) {
       if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
       var el = e.target, tag = (el && el.tagName) || '';
@@ -1355,18 +1445,27 @@ export const stageScript = inlineScript(`
       var dir = down ? 1 : -1;
       // A held key repeats: it carries on at each landing rather than
       // queueing a step per repeat.
+      var now = e.timeStamp || performance.now();
       holdDir = dir;
       holdUntil = performance.now() + HOLD_MS;
-      if (!e.repeat) intend(dir);
+      if (e.repeat) {
+        ask(KEY_HELD_RATE, dir);
+        press(dir, now - keyT);
+      }
+      keyT = now;
+      // A repeat does not queue a step, but one that finds the film at rest
+      // starts the next: the hold may have lapsed between two repeats.
+      if (!e.repeat || !storyLocked) intend(dir);
     }
 
-    var touchX = null, touchY = null, touchDone = false;
+    var touchX = null, touchY = null, touchDone = false, touchLast = 0, touchT = 0;
     window.addEventListener('wheel', storyWheel, { passive: false, capture: true });
     window.addEventListener('keydown', storyKey, { passive: false, capture: true });
     window.addEventListener('touchstart', function (e) {
       if (e.touches.length !== 1) { touchY = null; return; }
       touchX = e.touches[0].clientX;
-      touchY = e.touches[0].clientY;
+      touchY = touchLast = e.touches[0].clientY;
+      touchT = e.timeStamp || performance.now();
       touchDone = false;
     }, { passive: true, capture: true });
     window.addEventListener('touchmove', function (e) {
@@ -1379,6 +1478,13 @@ export const stageScript = inlineScript(`
       if (handoffGlide) { if (e.cancelable) e.preventDefault(); return; }
       if (!inStory(down)) return;
       if (e.cancelable) e.preventDefault();
+      // How fast the finger is going, over at least a frame.
+      var now = e.timeStamp || performance.now(), y = e.touches[0].clientY;
+      if (now - touchT >= 16) {
+        ask(rateFor(Math.abs(touchLast - y) * 1000 / (now - touchT), TOUCH_EASY, TOUCH_HARD), down ? 1 : -1);
+        touchLast = y;
+        touchT = now;
+      }
       // One swipe, one step: decided once, as soon as it has a direction.
       if (!touchDone && Math.abs(dy) >= 12) {
         touchDone = true;
@@ -1458,7 +1564,11 @@ export const stageScript = inlineScript(`
         if (openingState !== 'playing') return;
         openingState = 'done';
         warm();
-        if (openingIntent) { openingIntent = false; travelStory(1); return; }
+        if (openingIntent) {
+          openingIntent = false;
+          travelStory(1, false, undefined, undefined, drive);
+          return;
+        }
         // The viewer is already into the first beat: ease the plate after it
         // from this very frame up to wherever the scroll has reached.
         if (window.scrollY > 0) { handoverAt = performance.now(); runHandover(); }
@@ -1496,7 +1606,7 @@ export const stageScript = inlineScript(`
       if (openingState === 'playing' && p >= heroGoneAt) retireOpening();
       var holding = openingState !== 'done';
       if (openingState === 'playing') {
-        var rate = p > 0 || openingIntent ? OPENING_RUSH : 1;
+        var rate = openingIntent ? openingRush() : p > 0 ? OPENING_RUSH : 1;
         if (opening.playbackRate !== rate) opening.playbackRate = rate;
       }
 
