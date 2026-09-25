@@ -368,7 +368,17 @@
    * cycle earlier and negative for all four.
    */
   animation-delay: calc((var(--i) - 6) * var(--step));
+  animation-play-state: paused;
+}
 
+/*
+ * Travelling only while the section is on screen, for the same reason as the
+ * session stack above it: a rail running below the film is work every frame of
+ * the film for nobody. `data-in` is the controller's on-screen latch; paused,
+ * each card holds the place its delay gave it.
+ */
+.section[data-in] .slide {
+  animation-play-state: running;
   will-change: transform, opacity;
 }
 
@@ -699,7 +709,9 @@
    * card's negative delay has already placed it, and a paused animation holds
    * that place. `animation: none` would stack all four in the middle.
    */
-  .slide {
+  .slide,
+  .section[data-in] .slide {
     animation-play-state: paused;
+    will-change: auto;
   }
 }

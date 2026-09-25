@@ -32,8 +32,8 @@ import styles from "./ScenarioSection.module.css";
  * card walks the same path offset into its own place on it by a negative
  * `animation-delay` of its index. That is the idiom the session workspace above
  * already uses and the partners and testimonial marquees have used since long
- * before either. No script, no timers, no hydration, and the browser runs the
- * whole thing on the compositor.
+ * before either. No script, no timers, no hydration, and like them it runs only
+ * while the section is on screen (`data-reveal` → `data-in`).
  *
  * The arc is the interesting part. `CircularGallery` computes, per frame and
  * per card, how far the card is from the middle and bends it onto a circle:
@@ -114,7 +114,7 @@ export function ScenarioSection({
   };
 }) {
   return (
-    <section className={styles.section} data-scenario="">
+    <section className={styles.section} data-scenario="" data-reveal="">
       <div className={styles.top}>
         <div className={styles.words}>
           <h2 className={styles.headline}>

@@ -31,7 +31,22 @@
   pointer-events: none;
 }
 
+/* A layer per moving element, but only while this slide is on screen — the
+ * same rule the home film's panels follow. Without one, every frame of an
+ * arrival repaints what is moving, drop-shadows and gradient type included. */
+.panel[data-active] [data-reveal-group] {
+  will-change: opacity, transform;
+}
+
+/* Hidden by opacity, so its words stay in the accessibility tree — see the
+ * same rule on `FeaturePanel`. The call to action is the one control on the
+ * film, and an invisible button must not take a click or a Tab stop, so it
+ * alone is hidden outright while its slide is off screen. */
 .panel:not([data-active]) {
+  opacity: 0;
+}
+
+.panel:not([data-active]) .cta {
   visibility: hidden;
 }
 

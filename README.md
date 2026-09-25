@@ -433,10 +433,21 @@ section 6's features, the page ground. Stillness is where the words are read.
 On compact screens the scrubbed blurs (the headlines resolving, the hero
 leaving, section 5's bloom stroke) are dropped — each is a full-size repaint on
 every frame of the scroll — and the rise and fade carry the motion alone.
-Layers (`will-change`) exist only while their section is on screen. Under
-`prefers-reduced-motion` nothing downloads, the stills carry the film, entrances
-do not animate, and each step moves to the next chapter at once instead of
-travelling to it.
+Layers (`will-change`) exist only while their section is on screen, and the
+looping animations — the partners and testimonial marquees here, the features
+page's card stack and gallery — run only while theirs is (`data-reveal` →
+`data-in`). The features page's stack steps `z-index`, which the compositor
+cannot animate, so left running below the film it was 60–73% of that page's
+idle main-thread work. Under `prefers-reduced-motion` nothing downloads, the
+stills carry the film, entrances do not animate, and each step moves to the next
+chapter at once instead of travelling to it.
+
+The features page is the same controller on its own film, so all of the above
+holds there too: stepping at the reader's speed, the opening, the loading, the
+layers. Its slides are hidden by opacity rather than visibility when off
+screen, like the home film's panels, so their words stay in the accessibility
+tree; the council slides' call to action alone is hidden outright, so an
+invisible button never takes a Tab stop or a click.
 
 ## The plates
 

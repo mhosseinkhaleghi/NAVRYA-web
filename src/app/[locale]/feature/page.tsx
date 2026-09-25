@@ -21,10 +21,12 @@ import slide from "@/components/feature/FeatureSlide.module.css";
  *
  * It opens exactly as the home page opens, and that is not a resemblance — it
  * is the same components and the same controller. The plate is fetched outright
- * and nothing competes with it, the interface is held back until the shot has
- * run its course, the words arrive on the frame the shot settles on, and the
- * scroll unlocks when it ends. None of that is written here; it is what `Stage`,
- * `Scene` and `Hero` already do, and this page is the second caller of each.
+ * and nothing competes with it, the interface comes up with the first paint,
+ * and a step taken while the shot is still playing runs the rest of it faster
+ * and moves on the moment it ends. Every step after that plays at the speed the
+ * reader scrolls — the footage's own for an ordinary scroll, faster for a hard
+ * one. None of that is written here; it is what `Stage`, `Scene` and `Hero`
+ * already do, and this page is the second caller of each.
  *
  * Two slides. The sequence below is this page's film, handed to the controller
  * the same way the home page's is built into it — same beats, same scrubbing,
@@ -82,9 +84,10 @@ const PLATES = [
    * frame still carries one readable English callout: "Execution." sits nearest
    * the zoom axis, so it blurs least and outlives the other seven. Checked frame
    * by frame — legible at the first, gone by the third. Two frames is 0.08s of a
-   * 2.2s move and takes nothing from it. The
-   * magnetic step takes its length from the shot's own seconds, so restoring
-   * the full dive is also what makes it play at the speed it was cut at.
+   * 2.2s move and takes nothing from it. A
+   * step plays the shot's own seconds at the reader's rate, so restoring the
+   * full dive is also what makes an ordinary scroll play it at the speed it was
+   * cut at.
    */
   { id: "council", slug: "commander-council", lead: false, codecs: ["webm", "mp4"] },
   /*
@@ -100,8 +103,8 @@ const PLATES = [
 /*
  * The film.
  *
- * The lead plate has no beat. It plays before the timeline unlocks and the
- * film starts on the shot after it, exactly as the home sequence does — its
+ * The lead plate has no beat. It plays by itself at the top of the page and
+ * the film starts on the shot after it, exactly as the home sequence does — its
  * table also begins on the second shot, not the first.
  *
  * Every number below is a fraction of the one shot this film currently is, and

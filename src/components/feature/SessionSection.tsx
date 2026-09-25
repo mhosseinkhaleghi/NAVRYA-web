@@ -28,7 +28,11 @@ import styles from "./SessionSection.module.css";
  * What differs is what runs it. Every card follows the *same* path, so one
  * keyframe sequence covers all five and each card is offset by a negative
  * `animation-delay` of its own index. That is the whole implementation: no
- * script, no timers, no hydration, and the browser runs it on the compositor.
+ * script, no timers, no hydration. The one thing the controller does here is
+ * the on-screen latch every looping animation on the site runs on
+ * (`data-reveal` → `data-in`): the stack turns only while it can be seen. Its
+ * keyframes step `z-index`, which the compositor cannot animate, so left
+ * running below the film it cost the main thread every frame of the film.
  *
  * ── The pictures ────────────────────────────────────────────────────────────
  *
@@ -91,7 +95,7 @@ export function SessionSection({
   };
 }) {
   return (
-    <section className={styles.section} data-session="">
+    <section className={styles.section} data-session="" data-reveal="">
       <div className={styles.top}>
         <div className={styles.words}>
           <p className={styles.eyebrow}>

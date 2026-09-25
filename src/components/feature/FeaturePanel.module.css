@@ -23,9 +23,20 @@
   pointer-events: none;
 }
 
-/* Off the compositor entirely until the beat begins. */
+/* A layer per moving element, but only while this slide is on screen — the
+ * same rule the home film's panels follow. Without one, every frame of an
+ * arrival repaints what is moving, drop-shadows and gradient type included. */
+.panel[data-active] [data-reveal-group] {
+  will-change: opacity, transform;
+}
+
+/* Not on screen until the beat begins. Hidden by opacity, not visibility: the
+ * slide holds no controls, and its words stay in the accessibility tree, so a
+ * screen reader reads the page's slides in order rather than only the one on
+ * screen — the same as the home film's panels. Nothing is painted at zero
+ * opacity, and without an active layer nothing is composited either. */
 .panel:not([data-active]) {
-  visibility: hidden;
+  opacity: 0;
 }
 
 /* ── The head ─────────────────────────────────────────────────────────────── */

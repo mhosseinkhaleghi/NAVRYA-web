@@ -10,5 +10,6 @@
 - Opening: the bar, headline and calls to action come up at first paint, held only for the preloaded opening faces (≤500ms). Nothing is locked; a first step during the opening shot runs it at 2–4× and steps the moment it ends.
 - Loading: only the opening plate and its still load with the page. The rest is fetched one file at a time once the opening has played or on the first step; save-data/2G/3G gets the light tier only. Section 10 portraits are lazy `<img>`s.
 - Reloads and Back keep the viewer's place (scroll restoration and bfcache are the browser's).
+- Features page: same controller and stepping. Its card stack and gallery run only while on screen (`data-reveal` → `data-in`); its slides are hidden by opacity (words in the accessibility tree), the council CTA by visibility.
 - Verification: `scripts/verify.mjs` and `scripts/audit-layout.mjs` (Playwright outside the package — see their headers).
 - Known issues: none open.
