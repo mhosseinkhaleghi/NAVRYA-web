@@ -12,8 +12,8 @@ export type Panel = Dictionary["panels"][number];
  * Each arrives on cues taken from its own plate: `data-reveal-group` marks
  * which beat an element belongs to and `--r` is the 0–1 progress the controller
  * writes onto it, so the whole reveal runs backwards as readily as forwards.
- * The headline is its own group because in section 2 it lands early, on the
- * deer's entrance, with everything else following once the deer settles.
+ * The headline is its own group because it lands first — in section 2 on the
+ * deer's entrance — with everything else following as soon as it has settled.
  */
 export function PanelSection({
   id,
@@ -28,7 +28,7 @@ export function PanelSection({
   const Icon = PANEL_ICONS[icon as PanelIconName] ?? PANEL_ICONS.compass;
 
   return (
-    <section className={styles.panel} data-panel={id} aria-hidden="true">
+    <section className={styles.panel} data-panel={id}>
       <div className={styles.content}>
         <p className={styles.eyebrow} data-reveal-group="rest" data-reveal-step="0">
           {eyebrow}
@@ -87,7 +87,12 @@ export function PanelSection({
 
       {/* The comp gives each panel its own cue: the same mouse as the hero's,
        * carried on down to a node — a thread to whatever comes next. */}
-      <div className={styles.cue} data-reveal-group="rest" data-reveal-step="6">
+      <div
+        className={styles.cue}
+        data-reveal-group="rest"
+        data-reveal-step="6"
+        aria-hidden="true"
+      >
         <span className={styles.cueLabel}>{scrollLabel}</span>
         <span className={styles.mouse}>
           <span className={styles.wheel} />

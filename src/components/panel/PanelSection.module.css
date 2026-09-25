@@ -41,10 +41,14 @@
   pointer-events: none;
 }
 
-/* A panel does not exist before its plate begins, or after it has scrolled
- * back out. */
+/* A panel is not on screen before its plate begins, or after it has scrolled
+ * back out. Hidden by opacity, not visibility: the panel holds no controls,
+ * and its words stay in the accessibility tree, so a screen reader can read
+ * the whole story in order instead of only the one chapter that happens to be
+ * on screen. (The section used to be `aria-hidden` outright, and the site's
+ * product claims were invisible to assistive technology.) */
 .panel:not([data-active]) {
-  visibility: hidden;
+  opacity: 0;
 }
 
 /* -----------------------------------------------------------------------------
@@ -78,7 +82,12 @@
   grid-row: 2;
   align-self: center;
   inline-size: 100%;
-  max-inline-size: 46rem;
+  /* The measure keeps pace with the headline once the headline outgrows it.
+   * A fixed 46rem against a display size that climbs to 120px wrapped the
+   * headline onto five lines at 2560×1300 — 609px of it — and the block ran
+   * under the bar and into the cue. Below ~2000px wide the headline is under
+   * 92px and this is the 46rem it always was. */
+  max-inline-size: max(46rem, calc(var(--fs-s2-display) * 8));
 }
 
 /* -----------------------------------------------------------------------------
@@ -92,12 +101,26 @@
 .panel [data-reveal-group] {
   opacity: var(--r, 1);
   transform: translateY(calc((1 - var(--r, 1)) * 1.5rem));
+}
+
+/* A layer per moving element, but only while its panel is on screen — three
+ * panels' worth held for the whole film is memory a phone does not have. */
+.panel[data-active] [data-reveal-group] {
   will-change: opacity, transform;
 }
 
 .headline[data-reveal-group] {
   transform: translateY(calc((1 - var(--r, 1)) * 0.32em));
   filter: blur(calc((1 - var(--r, 1)) * 12px));
+}
+
+/* Compact frames rise without the blur: the headline is most of the screen
+ * there, and re-rasterising it blurred on every frame of the scroll is the
+ * most expensive thing a phone would do on this page. */
+@media (max-width: 1023px) {
+  .headline[data-reveal-group] {
+    filter: none;
+  }
 }
 
 /* The rules draw from the text's leading edge rather than fading in flat. */

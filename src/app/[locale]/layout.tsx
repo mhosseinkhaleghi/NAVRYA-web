@@ -57,6 +57,23 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+/**
+ * The faces the first screen is set in, fetched with the document instead of
+ * after the stylesheet has been parsed and the text laid out.
+ *
+ * The opening is held until these arrive (for at most half a second — see
+ * `FONT_WAIT_MS`), so a font discovered late is a headline that arrives late.
+ * Cinzel sets the wordmark in every language and the Latin headlines; the
+ * sub-headline is Satoshi's light weight, or Peyda wherever the script is
+ * Arabic, which also carries the headline there. Nothing else is preloaded:
+ * every other face is below the opening or a weight of the bar's buttons,
+ * which are fixed-height and do not move when their face lands.
+ */
+const OPENING_FACES = {
+  ltr: ["/fonts/cinzel-latin.woff2", "/fonts/satoshi/satoshi-300.woff2"],
+  rtl: ["/fonts/cinzel-latin.woff2", "/fonts/brand/PeydaFaNumWeb-Regular.woff2"],
+} as const;
+
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
@@ -70,10 +87,22 @@ export default async function LocaleLayout({
 }) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
+  const dir = getDirection(locale as Locale);
 
   return (
-    <html lang={locale} dir={getDirection(locale as Locale)}>
+    <html lang={locale} dir={dir}>
       <body>
+        {/* React hoists these into <head>. */}
+        {OPENING_FACES[dir].map((href) => (
+          <link
+            key={href}
+            rel="preload"
+            href={href}
+            as="font"
+            type="font/woff2"
+            crossOrigin="anonymous"
+          />
+        ))}
         {/* Runs before the composition is painted, so the opening beat can
          * hold it back without it flashing on screen first. */}
         <script dangerouslySetInnerHTML={{ __html: stageScript }} />

@@ -267,16 +267,23 @@
 /* ── A panel's plate ──────────────────────────────────────────────────────── */
 
 /*
- * The picture is a background rather than an `<img>`, and it is sized to cover
- * with its own focal point, so a panel narrowing to a sliver crops *around the
- * character* instead of squashing the frame or sliding them out of it.
+ * The picture is cropped to cover with its own focal point, so a panel
+ * narrowing to a sliver crops *around the character* instead of squashing the
+ * frame or sliding them out of it.
+ *
+ * An `<img>` rather than a background, because it can be lazy. This section is
+ * the last on a page twenty-three screens long, and as backgrounds the four
+ * portraits — 350KB — were fetched with the page, competing with the opening.
+ * The browser now fetches them as the reader approaches, with or without
+ * JavaScript. `alt=""`: the caption on the same panel names the character.
  */
 .art {
   position: absolute;
   inset: 0;
-  background-position: var(--s10-focus, 50%) center;
-  background-size: cover;
-  background-repeat: no-repeat;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  object-position: var(--s10-focus, 50%) center;
   filter: saturate(0.82) brightness(0.86);
   transform: scale(1.04);
   transition:
@@ -289,24 +296,20 @@
   transform: scale(1);
 }
 
-.panel[data-art="master"] .art {
+.panel[data-art="master"] {
   --s10-focus: 30%;
-  background-image: url("/cast/master.jpg");
 }
 
-.panel[data-art="hunter"] .art {
+.panel[data-art="hunter"] {
   --s10-focus: 24%;
-  background-image: url("/cast/hunter.jpg");
 }
 
-.panel[data-art="engineer"] .art {
+.panel[data-art="engineer"] {
   --s10-focus: 57%;
-  background-image: url("/cast/engineer.jpg");
 }
 
-.panel[data-art="commander"] .art {
+.panel[data-art="commander"] {
   --s10-focus: 28%;
-  background-image: url("/cast/commander.jpg");
 }
 
 /* Two jobs: settle the type onto the picture, and hold the closed panels back

@@ -151,7 +151,16 @@ export function ArchetypesSection({
               data-art={member.id}
               {...(index === 0 ? { "data-on": "" } : {})}
             >
-              <span className={styles.art} aria-hidden="true" />
+              {/* eslint-disable-next-line @next/next/no-img-element -- a plain,
+                 * lazy <img>: `next/image` is a client component, and this site
+                 * ships none. Far below the fold, so no bearing on LCP. */}
+              <img
+                className={styles.art}
+                src={`/cast/${member.id}.jpg`}
+                alt=""
+                loading="lazy"
+                decoding="async"
+              />
               <span className={styles.veil} aria-hidden="true" />
               <span className={styles.plate}>
                 <span className={styles.sigil} aria-hidden="true">

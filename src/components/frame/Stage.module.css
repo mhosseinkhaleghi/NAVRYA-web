@@ -1,12 +1,28 @@
 /*
  * The film's own length. Nothing renders here — this block exists to give the
  * screen inside it something to stick through, and its height is what decides
- * how much wheel travel each beat gets.
+ * how much scroll each beat gets.
+ *
+ * The unit is a clamped `lvh`, for two reasons.
+ *
+ * Clamped, because pure viewport units are a loop inside a frame that is sized
+ * to its content — a taller frame makes a taller document makes a taller
+ * frame — and a ceiling is what lets it settle. The range covers every real
+ * viewport.
+ *
+ * `lvh` — the large viewport, the height with a phone's toolbars retracted —
+ * because a phone's toolbar slides away under a native scroll and back when it
+ * reverses. Sized from the window, the track changed by seventeen toolbars'
+ * height each time — well over a thousand pixels — and the film jumped under
+ * the reader's finger. The large viewport does not move with the toolbar.
+ * (Never seen while the film took touch input away from the browser: a
+ * toolbar only retracts under a native scroll.) `vh` first, for a browser
+ * without `lvh`, which drops the second declaration.
  */
 .film {
   position: relative;
-  block-size: calc(var(--timeline-vh) * 1vh);
-  block-size: var(--track-px, calc(var(--timeline-vh) * 1vh));
+  block-size: calc(var(--timeline-vh) * clamp(3.8px, 1vh, 11px));
+  block-size: calc(var(--timeline-vh) * clamp(3.8px, 1lvh, 11px));
 }
 
 /* The single full-screen frame every scene renders into. Stuck to the top for
@@ -48,7 +64,14 @@
   background: var(--char-atmosphere);
 }
 
-/* Holds the compact bar's row open now that the bar itself is a layer above. */
+/* Holds the compact bar's row open now that the bar itself is a layer above.
+ *
+ * The controller measures the real bar into `--chrome-h`, but it can only do
+ * that once the document is parsed, which on a phone is after first paint —
+ * and the fallback used to be 0, so the whole opening dropped 100px under the
+ * reader a second into the page (CLS 0.12 on its own). The fallback is now the
+ * bar's measured height across the compact range, to within a few pixels in
+ * every locale, so the correction is invisible. */
 .band {
   display: none;
 }
@@ -56,7 +79,13 @@
 @media (max-width: 1023px) {
   .band {
     display: block;
-    block-size: var(--chrome-h, 0px);
+    block-size: var(--chrome-h, clamp(100px, calc(68px + 7.4vw), 132px));
+  }
+}
+
+@media (max-width: 1023px) and (max-height: 560px) {
+  .band {
+    block-size: var(--chrome-h, 92px);
   }
 }
 

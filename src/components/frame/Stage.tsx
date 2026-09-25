@@ -56,8 +56,6 @@ export function Stage({
    *
    *   beats        [name, vh][] — the order of the film and how much scroll
    *                each shot gets. Their sum is the track's height.
-   *   beatSeconds  [name, seconds][] — real durations, so a magnetic step plays
-   *                a shot at its own speed rather than at a scroll rate.
    *   plates       the plate ids, in the order they are composited.
    *   plateBeat    the beat each plate takes over on; null for the lead.
    *   scenes       which plate scrubs on which beat, and the panel it reveals.
@@ -68,7 +66,6 @@ export function Stage({
    */
   sequence?: {
     beats: readonly (readonly [string, number])[];
-    beatSeconds: readonly (readonly [string, number])[];
     plates: readonly string[];
     plateBeat: readonly (string | null)[];
     heroExit?: readonly [number, number];
@@ -95,6 +92,24 @@ export function Stage({
   return (
     <>
       {/*
+       * The bar and the rail sit above everything, film and document alike.
+       * They cannot stay inside the stage: it is a stacking context of its own,
+       * so anything in it is trapped below the flow that scrolls over it.
+       *
+       * First in the document, although it paints last (it is fixed, with its
+       * own z-index). Order is what the keyboard and a screen reader follow,
+       * and at the end of the page the bar — the navigation, the language and
+       * Login — was reached only after tabbing through the footer.
+       */}
+      {chrome ? (
+        <div
+          className={styles.chrome}
+          {...(character ? { "data-character": character } : {})}
+        >
+          {chrome}
+        </div>
+      ) : null}
+      {/*
        * The block is the timeline's length; the screen inside it is what the
        * viewer looks at. `data-track` stays on the block, because the length of
        * the block is still exactly what the controller measures the scroll
@@ -120,7 +135,6 @@ export function Stage({
                 "--timeline-vh": sequence.beats.reduce((n, b) => n + b[1], 0),
               } as CSSProperties,
               "data-beats": JSON.stringify(sequence.beats),
-              "data-beat-seconds": JSON.stringify(sequence.beatSeconds),
               "data-plates": JSON.stringify(sequence.plates),
               "data-plate-beat": JSON.stringify(sequence.plateBeat),
               "data-scenes": JSON.stringify(sequence.scenes),
@@ -148,19 +162,6 @@ export function Stage({
           {...(character ? { "data-character": character } : {})}
         >
           {after}
-        </div>
-      ) : null}
-      {/*
-       * The bar and the rail sit above everything, film and document alike.
-       * They cannot stay inside the stage: it is a stacking context of its own,
-       * so anything in it is trapped below the flow that scrolls over it.
-       */}
-      {chrome ? (
-        <div
-          className={styles.chrome}
-          {...(character ? { "data-character": character } : {})}
-        >
-          {chrome}
         </div>
       ) : null}
     </>

@@ -28,9 +28,8 @@ export function ArrowSection({ closing }: { closing: Dictionary["closing"] }) {
       className={styles.arrow}
       data-arrow=""
       data-words={words.length}
-      aria-hidden="true"
     >
-      <div className={styles.halo} />
+      <div className={styles.halo} aria-hidden="true" />
 
       {/*
        * The edge light, drawn rather than faded.

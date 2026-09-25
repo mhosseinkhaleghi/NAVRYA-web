@@ -58,8 +58,8 @@ page has two slides. Every locale at the desktop frame, where the composition
 differs most from the compact one, and English at all three.
 
 What is asserted there is not that it works but that it works *the same way*:
-the plate decodes and stays visible for the whole shot, the interface is held
-back until the shot ends, the headline and sub-headline arrive, nothing
+the plate decodes and stays visible for the whole shot, the interface comes up
+without waiting on the shot, the headline and sub-headline arrive, nothing
 overflows, `dir` is right, and the bar marks the page it is on and still offers
 a way back. If the two pages ever stop sharing an implementation, this is what
 notices.
@@ -124,11 +124,8 @@ the opening gesture and glided back to the top. What is asserted:
   animation overrides the exit declaration, so the cue was pinned on screen over
   the arriving slide. The entrance now lives on an inner span and the exit on
   the part, which is the arrangement the rest of the hero already uses;
-- the film's last magnetic stop is the foot of the document. Anything short of
-  it is scroll the wheel refuses to travel while the scrollbar says there is
-  more, and the fix is the film's own timing, never a shorter track: a resting
-  stop is `cues[1] + REST_SPAN` of its beat, so a last scene resting at the end
-  of its shot is what makes the two agree;
+- the wheel reaches the end of the film: nothing below the film's last frame
+  is unreachable by an ordinary wheel;
 - at rest the panel is active, its reveal is complete, the headline is painted
   with a box, and the shot has actually reached its end;
 - the rule under the headline is present, has a real width, and **does not cross
@@ -266,6 +263,35 @@ opening plays. One, not the whole tier — preloading six 1080p plates at once
 cost the home film 580ms on its unlock, not for want of bandwidth but because
 demuxing fourteen megabytes competes with playing the shot on screen.
 
+Two corrections to the features walk, made when the scroll became native and
+said here as the contract requires. Neither makes a check weaker; both made a
+check look at the wrong sample:
+
+- **The lead plate is exempt from the readiness gate.** It is played, not
+  scrubbed, and has no light copy that could be standing in for it, so it never
+  carries `data-plate-ready` (the stylesheet does not gate it either). With the
+  opening holding the frame while its copy leaves, the walk's first steps land
+  on it, and the check reported "commander plate composited but not ready —
+  100% buffered" about a shot playing at full resolution. Its visibility is
+  what matters, and that is asserted by the opening checks.
+- **A slide mid-exit is not "at rest".** Slide 4 leaves over the opening of the
+  desk shot by design, and its own clock has reached its end by then; under
+  magnetic stops no sample ever landed in that window, under native scroll one
+  does, and it outscored the real resting sample. Samples with any `--exit` are
+  now excluded when the resting stop is chosen.
+- **A slide rests while the film holds the frame.** The walk's last wheel step
+  now goes past the film's end into the document below, where the stage is
+  scrolling away with the page; the last slide's clock is at its end there too,
+  so that sample won and slide 5 was judged half off the top of a phone it fits
+  at rest. Resting stops are chosen only from samples inside the film, and the
+  walk wheels back to the film's exact last frame to take one there — which is
+  also what the "the last shot reaches its end" check needs.
+
+The layout audit (`scripts/audit-layout.mjs`) had the same kind of blind spot:
+it skips blocks that are mid-exit, but read `--exit` off the hero's *section*
+while the hero writes it on its parts, so the opening leaving under the bar
+was reported as a collision. It now reads `--exit` off the block itself.
+
 **The plates carry no burned-in lettering.** `scripts/check-plate-clean.mjs`,
 run separately from the browser suite because it is a property of the files
 rather than of the page. The source for slide 3 draws its own English callouts
@@ -386,9 +412,23 @@ advanced its clock 0 → 5.04 — flawless on every count above, and invisible. 
 visitor saw the still frame behind it, and the one shot the entire opening is
 built around never appeared.
 
-Sampled during playback on purpose: the timeline unlocks when the shot ends, so
-anything measured after that wait is looking at a plate on its final frame,
-which says nothing about whether the shot was ever on screen.
+Sampled during playback on purpose: anything measured after the shot ends is
+looking at a plate on its final frame, which says nothing about whether the
+shot was ever on screen.
+
+### Nothing holds the page
+
+Added with the motion overhaul, which removed the scroll lock and the video-gated
+interface. At load, on every locale and breakpoint:
+
+- the document is scrollable from the first sample — no `overflow-y: hidden`, no
+  `data-timeline="held"`;
+- the interface (`data-intro="shown"`) is up within 2s of navigation, measured
+  by the page itself from navigation start. It is held only for its preloaded
+  faces, at most 500ms after the document; the margin is for a loaded runner;
+- while it is held, the hero's links are not visible, not pressable and not
+  focusable (`visibility: hidden`, which also takes them out of the tab order
+  — `pointer-events: none` did not).
 
 ### D3 — Layout integrity
 
@@ -432,6 +472,11 @@ Checked on both routes, in every locale, at every breakpoint.
   regression is caught rather than eyeballed
 
 ### What a locale costs to load
+
+*Measured before the motion overhaul, when the page stayed locked until the
+opening shot had played; there is no unlock now. The interface comes up at
+~0.6s unthrottled and ~0.9s on a fast-4G profile — see the commit that removed
+the lock for the before/after.*
 
 Measured on the standalone server over an emulated 12 Mbps line, best of three,
 time from navigation to the timeline unlocking:
@@ -524,7 +569,7 @@ glyph the page itself would have hidden.
   the broken build passed this check.
 - **Both scene tiers are present**: seven shipping plates and six light copies,
   each light copy paired with a plate. The light tier is what keeps the film
-  running under a magnetic step; if it disappears the film does not fail
+  running under a fast scroll; if it disappears the film does not fail
   loudly, it quietly freezes on stills again.
 - **The light tier is inside its weight budget**: the six light copies together
   must be under 2.5MB, read from `Content-Length` off the wire rather than from

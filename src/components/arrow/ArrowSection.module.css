@@ -20,8 +20,14 @@
   --glow: 0;
 }
 
+/* Off screen by opacity rather than visibility, so the words stay readable to
+ * assistive technology — see the panels. The halo's turn stops with it. */
 .arrow:not([data-active]) {
-  visibility: hidden;
+  opacity: 0;
+}
+
+.arrow:not([data-active]) .halo::before {
+  animation-play-state: paused;
 }
 
 /* -----------------------------------------------------------------------------
@@ -82,6 +88,9 @@
   opacity: var(--head);
   transform: translateY(calc((1 - var(--head)) * 0.34em));
   filter: blur(calc((1 - var(--head)) * 12px));
+}
+
+.arrow[data-active] .headline {
   will-change: opacity, transform, filter;
 }
 
@@ -245,6 +254,20 @@
 @media (max-width: 767px) {
   .body {
     max-inline-size: 100%;
+  }
+}
+
+/* The two most expensive paints in the film — a full-size blur on the
+ * headline as it resolves, and a blurred stroke the length of the frame's
+ * perimeter redrawn on every frame of the ring — are desktop effects. A phone
+ * keeps the line, the rise and the halo. */
+@media (max-width: 1023px) {
+  .headline {
+    filter: none;
+  }
+
+  .ringBloom {
+    display: none;
   }
 }
 

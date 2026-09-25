@@ -109,20 +109,19 @@
 /* -----------------------------------------------------------------------------
  * The opening beat.
  *
- * `armed` is set before first paint and cleared when the hunter turns, so the
- * rail rises with the rest of the interface instead of sitting over the opening
- * shot. With no JavaScript neither attribute is ever set, so the rail is simply
- * there — and its buttons still scroll, because they are anchors to positions
- * the document really has.
+ * `armed` is set before first paint and cleared once the page has its faces,
+ * and the rail arrives last, after the opening block has risen — it is a way
+ * back through the page, not part of the first thing read. With no JavaScript
+ * neither attribute is ever set, so the rail is simply there.
  * -------------------------------------------------------------------------- */
 
 :global([data-intro="armed"]) .rail {
   opacity: 0;
-  pointer-events: none;
+  visibility: hidden;
 }
 
 :global([data-intro="shown"]) .rail {
-  animation: rail-in 1.1s var(--ease-cine) 1.2s backwards;
+  animation: rail-in 1s var(--ease-cine) 0.9s backwards;
 }
 
 @keyframes rail-in {

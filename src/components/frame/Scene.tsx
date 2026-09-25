@@ -110,7 +110,9 @@ export function Scene({ plates = PLATES }: { plates?: readonly Plate[] }) {
           key={id}
           className={styles.plate}
           data-plate-id={id}
-          {...(lead ? { "data-plate-on": "", style: { "--o": 1 } as React.CSSProperties } : {})}
+          {...(lead
+            ? { "data-plate-on": "", "data-plate-near": "", style: { "--o": 1 } as React.CSSProperties }
+            : {})}
         >
           <div
             className={styles.still}

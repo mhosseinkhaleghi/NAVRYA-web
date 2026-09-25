@@ -46,7 +46,16 @@
 
 /* The opening frame, behind the video. It stands in until the plate has
  * decoded, so nothing flashes black on the handover — and it is sized and
- * mirrored on exactly the same rules, so the handover is invisible. */
+ * mirrored on exactly the same rules, so the handover is invisible.
+ *
+ * Only once its plate is on screen or next up (`data-plate-near`, set by the
+ * controller; the lead plate carries it in the markup). A hidden element still
+ * fetches its background, so all seven stills — 930KB — used to load with the
+ * page, alongside the one opening plate the first screen actually waits on. */
+.plate:not([data-plate-near]) .still {
+  background-image: none;
+}
+
 .still {
   position: absolute;
   inset: 0;

@@ -33,7 +33,7 @@ function Ornament() {
 
 export function MissSection({ miss }: { miss: Dictionary["miss"] }) {
   return (
-    <section className={styles.miss} data-miss="" aria-hidden="true">
+    <section className={styles.miss} data-miss="">
       {/* The statement. */}
       <div className={styles.told}>
         <div className={styles.statement}>

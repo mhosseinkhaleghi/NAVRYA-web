@@ -53,13 +53,32 @@ the only way onward is to chain to the parent. With it on both axes the wheel
 died at the bottom of an embed while the rail, which scrolls by script, kept
 working. Hence `overscroll-behavior-x`.
 
-Scroll input feeds scene changes *inside* the frame. `Stage` renders a track
+The scroll is the viewer's. The controller never reads the wheel, touch or
+keyboard to decide where the page goes — the browser scrolls natively, with its
+own momentum, keyboard handling and accessibility, and every frame of the film
+is a pure function of where it has been scrolled to. The only scripted scrolls
+are ones a viewer explicitly asks for (a rail mark, section 6's dots), and any
+input of theirs takes the scroll straight back.
+
+(It used to intercept every input inside the film and glide between "story
+states" at the footage's own speed. One notch of a mouse wheel then moved the
+page 5.2 screens and took 8.7s to settle, holding the wheel took 50s to reach
+section 7, and further input was ignored until each glide finished. The film
+was 38 screens long, which is what made that seem necessary; it is 17 now.)
+
+Scroll position feeds scene changes *inside* the frame. `Stage` renders a track
 below itself whose only job is to give the document height to scroll through;
 `--timeline-vh` is that height, and stretching it slows every beat of the
 sequence proportionally. The controller writes it from its own beat table before
 first paint — the two drifted once, when a beat was added and the token was not,
 and the sequence ran off the end of its own track — so what is in `tokens.css`
 is the no-JS fallback.
+
+The unit it is multiplied by is a clamped `lvh` (see `.film` in
+`Stage.module.css`): clamped so that a frame sized to its content cannot feed
+back into the track's length, and the *large* viewport so that a phone's
+toolbar sliding in and out under a native scroll does not resize a
+seventeen-screen track by seventeen toolbars.
 
 ### Where the film stops
 
@@ -109,22 +128,24 @@ fires once. `components/frame/stage-script.ts` maps scroll onto the beats:
 
 | beat | scroll | what happens |
 | ---- | ------ | ------------ |
-| — | on load | `hunter-dawn` plays. At **4.33s** the hunter turns to face the viewer and the interface rises into frame; the timeline unlocks when the plate reaches its last frame. |
-| `turn` | 210vh | `hunter-turn` scrubs: he turns back to the valley. The hero block leaves over it. |
-| `prey` | 380vh | `valley-prey` scrubs. The deer clears the frame edge at **0.40s** and section 2's headline lands on it; at **3.60s** it drops its head to graze and the rest of the panel assembles. |
-| `draw` | 380vh | `hunter-draw` scrubs. The draw settles into the aim at **2.50s** and section 3 arrives. Section 2 leaves over it. |
-| `strike` | 520vh | `hunter-strike` scrubs. The camera reaches the draw at **4.00s**, about 70% back, and section 4 arrives. Section 3 leaves over it. |
-| `clear` | 160vh | Section 4 leaves, over the closing frame and nothing else. The release is the loudest moment in the sequence and the text is off the screen before it. |
-| `arrow` | 520vh | `arrow-learns` scrubs: the release, the flight, the fall to black. At **2.00s** the arrow is dead centre and section 5's headline arrives above it; from **5.15s** the valley falls away and the paragraph fades up with it. |
-| `learn` | 340vh | The paragraph lights up a word at a time and the edge light draws itself round the frame. Both finish as the beat does — the sentence completing *is* the end of the section, so the last word goes white at 95–97% of the beat, depending on how many words the locale's sentence has. |
-| `depart` | 150vh | Section 5's words leave, the arrow follows them off, the frame dips through black, and the next morning fades up. Every vh of it is moving, which is what lets it be this short. |
-| `miss` | 420vh | `forest-miss` scrubs. The arrow buries itself in the tree at **0.67s** and section 6's statement lands on it; the block lifts as the stag turns and runs at **1.30s**; the frame is empty by **3.95s**. |
-| `traits` | 560vh | The psychology features, one slide per stretch of scroll, over the plate's own last frame — which stays. The deck finishes at 96% of the beat rather than 75%, so the last feature landing is the end of the section. |
-| `fall` | 180vh | Section 6 lifts away and the forest goes down behind it, leaving the frame on the page's own black. The one handover with no plate on the other side, and the end of the film — section 7 begins on the next pixel. |
+| — | on load | The bar, the headline and both calls to action are up at first paint — held only for the opening's typefaces, at most 500ms. `hunter-dawn` plays once it can run without stalling. Nothing is locked: a viewer who scrolls while it plays runs it on at 2.5× so it finishes under them, and the first scrubbed plate eases up from its last frame. |
+| `turn` | 130vh | `hunter-turn` scrubs: he turns back to the valley. The hero holds for the first 30% and leaves by 80%. |
+| `prey` | 170vh | `valley-prey` scrubs. The deer clears the frame edge at **0.40s** and section 2's headline lands on it; the rest of the panel follows straight after and is whole about a third of the way in. |
+| `draw` | 180vh | `hunter-draw` scrubs. Section 2 leaves over its first fifth, and section 3 is whole by just past half. |
+| `strike` | 200vh | `hunter-strike` scrubs: the camera circles and pushes in to the draw. Section 3 leaves over its first fifth; section 4 is whole by 57%. |
+| `clear` | 60vh | Section 4 leaves, over the closing frame and nothing else. The release is the loudest moment in the sequence and the text is off the screen before it. |
+| `arrow` | 220vh | `arrow-learns` scrubs: the release, the flight, the fall to black. At **2.00s** the arrow is dead centre and section 5's headline arrives above it; from **5.15s** the valley falls away and the paragraph fades up with it. |
+| `learn` | 150vh | The paragraph lights up a word at a time and the edge light draws itself round the frame. Both finish as the beat does — the sentence completing *is* the end of the section. |
+| `depart` | 80vh | Section 5's words leave, the arrow follows them off, the frame dips through black, and the next morning fades up. |
+| `miss` | 180vh | `forest-miss` scrubs. The arrow buries itself in the tree at **0.67s** and section 6's statement lands on it; the block lifts as the stag turns and runs at **1.30s**; the frame is empty by **3.95s**. |
+| `traits` | 300vh | The psychology features, one slide per stretch of scroll, over the plate's own last frame — which stays. |
+| `fall` | 70vh | Section 6 lifts away and the forest goes down behind it, onto the page's own black, and section 7 rises out of it. |
 
-The shape repeats: a plate runs, its panel arrives on a cue taken from the
-footage, and the panel leaves again **over the next plate**, which is already
-moving. There are no held frames anywhere in the chain — a still image followed
+The shape repeats: a plate runs, its panel arrives early in it, rests for
+roughly a screen of scroll with the shot still moving behind it, and leaves
+again **over the next plate**, which is already moving. A panel is complete
+wherever a reader stops inside that stretch — there is no need for the page to
+stop them there. There are no held frames anywhere in the chain — a still image followed
 by sudden motion reads as a jump however well the frames match. Sections 2, 3
 and 4 are one component rendered three times —
 `components/panel/PanelSection` — differing only in copy and icon.
@@ -238,9 +259,10 @@ all pointing the same way:
 - Nothing else on the site needs React on the client, and one decorative
   backdrop is a poor reason to start.
 
-It compiles nothing until the controller marks its host live, a beat ahead of
-the section, exactly as each plate is fetched a beat ahead of the viewer — and
-it gives the frame back when the section is out of reach or the tab is hidden.
+It compiles nothing until the controller marks its host live, a screen ahead
+of the section, and it gives the frame back when the section is out of reach or
+the tab is hidden. On a touch screen it renders at no more than 1.5× the CSS
+pixel size: a soft glow has no edges to sharpen.
 Under `prefers-reduced-motion` it never runs; without WebGL the section simply
 reads without it. The words are markup over the canvas, never inside it.
 
@@ -260,9 +282,9 @@ The firms sit on one continuous rail and **drift** along it. The run is rendered
 twice and the track travels exactly half its own width before repeating, so the
 loop has no seam to find; it is slow on purpose — atmosphere behind a row of
 names, not a ticker — and it is what makes six firms work on a frame that cannot
-hold six firms. Nothing is cut off, it is simply not on screen yet. The drift is
-paused until the section has been seen, and switched off entirely under reduced
-motion. In Arabic and Persian it runs the other way, because the eye does.
+hold six firms. Nothing is cut off, it is simply not on screen yet. The drift
+runs only while the section is on screen, and is switched off entirely under
+reduced motion. In Arabic and Persian it runs the other way, because the eye does.
 
 The emblems are line art on the site's own hairline, each a mark rather than a
 logo — these are placeholder partners. Firm names stay Latin in every locale, as
@@ -272,7 +294,7 @@ brand names do; the kind and the tagline are translated.
 
 One mark per section down the **trailing** edge of the frame — right in English,
 Turkish and Spanish, left in Persian and Arabic — with the current one drawn
-long. The sequence is ~44 screens of scroll end to end, which is right for
+long. The page is ~23 screens of scroll end to end, which is right for
 watching it and wrong for going back to something.
 
 It is not a component with state. Which mark is lit and where each one lands are
@@ -281,11 +303,12 @@ everything else, so retiming a beat moves the rail with it. A mark owns the
 scroll from the beat its section takes the frame on until the next mark's, which
 puts every boundary on a plate handover.
 
-Where a mark *goes* is deliberately not where its section starts. A section
-begins arriving at its cue and is not composed until well after — jumping to the
-cue lands on a headline mid-blur with its panel still assembling. The targets are
-each section at rest: the panel built, the closing sentence complete, section 6's
-statement whole and not yet lifting.
+Where a mark *goes* is deliberately not where its section starts: jumping to a
+section's first frame lands on a headline mid-blur with its panel still
+assembling. The targets are inside each section's resting stretch: the panel
+built, the closing sentence complete, section 6's statement whole and not yet
+lifting. Marks below the film re-read their target on every frame of the jump,
+because a section's height can change while the page is travelling to it.
 
 A jump is travelled, not teleported. Every frame is a pure function of scroll
 position, so scrolling to the target *plays* the footage in between, which is the
@@ -348,6 +371,32 @@ pass carries a second generation of quantisation noise, and that noise is
 visible as a shimmer at the handover into it, so `encode-scene.sh` takes the
 trim length as an argument and does it in the delivery encode.
 
+## Motion language
+
+Three tiers, and most things are in none of them:
+
+- **Primary — the film.** Plates cut on shared frames, the one dip to black,
+  panels leaving over the shot that follows. This is the story, and it is
+  scrubbed by scroll so it runs backwards as readily as forwards.
+- **Secondary — arrivals.** A headline resolves, its body follows, a rule
+  draws from the text's leading edge. Every chapter's copy is complete about a
+  third of the way into its shot and then *rests* for roughly a screen of
+  scroll, so wherever a reader stops inside that stretch it is whole. Below the
+  film a section's head is up by the time its top is a third of the way up the
+  screen, and its body by half way.
+- **Micro — feedback.** Hover and press states, the scroll cue, the rail.
+
+What is deliberately still: the plates between cues, the held frame under
+section 6's features, the page ground. Stillness is where the words are read.
+
+On compact screens the scrubbed blurs (the headlines resolving, the hero
+leaving, section 5's bloom stroke) are dropped — each is a full-size repaint on
+every frame of the scroll — and the rise and fade carry the motion alone.
+Layers (`will-change`) exist only while their section is on screen. Under
+`prefers-reduced-motion` nothing downloads, the stills carry the film, entrances
+do not animate, and scroll moves the story on exactly as it does for everyone
+else.
+
 ## The plates
 
 Shown **raw**: no scrim, no tint, no gradient. Whatever grading the footage
@@ -377,11 +426,21 @@ only one a `prefers-reduced-motion` viewer sees.
 
 ### Weight, and where it is actually paid
 
-Only the opening plate is on the critical path. It is the one the interface
-waits for, so it is tuned lighter than the rest — about 1.1 MB. Every other
-plate is `preload="none"` and is fetched a beat ahead of the viewer, while they
-are watching the one before it, so quality on plates 2–6 costs nothing at open
-and there is a whole beat of scrolling to cover the fetch.
+Only the opening plate is fetched at load, and it is tuned lighter than the
+rest — about 1.1 MB. Nothing else is: the other plates are `preload="none"`, and
+so are their stills (a hidden element still fetches its background, and all
+seven used to come with the page) and the section 10 portraits, which are lazy
+`<img>`s. Once the opening has *played* — or at the viewer's first scroll, if
+that comes sooner — the controller fetches the rest in the order they are
+watched, one file at a time: the light tier first, then the shipping plates. A
+plate the viewer reaches before the queue does jumps it. A connection that asks
+to save data, or reports 2G/3G, gets the light tier alone.
+
+Nothing is fetched *while* the opening plays. A second decoder spinning up under
+the playing shot stalled the main thread for 1.3s in measurement (1.6s of total
+blocking time on a fast 4G profile); with the same files arriving after the shot,
+nothing. The opening is five seconds long and the first plate's light copy is
+120KB, so nothing is lost by waiting.
 
 That is why the scrubbed plates are encoded for picture rather than for bytes.
 The numbers behind the CRF and GOP chosen there are in `encode-scene.sh`; the
@@ -412,25 +471,39 @@ screen and then vanishes. And with no JavaScript at all its attributes are
 never set, so the CSS holding rules never match and the page is simply,
 statically visible — the interface can never be lost behind a backdrop.
 
+The interface is never held for the footage. It is held for one thing — the
+faces the opening is set in, which are preloaded — and for at most 500ms, so
+the headline arrives in its own face rather than reflowing a moment after it
+has been read (Cinzel is far wider than any fallback; the swap used to grow the
+block by a third). It used to wait for the opening plate to reach the frame
+where the hunter turns: 5.3s on a fast line, 7-8s on a phone, with the scroll
+locked until the shot had finished.
+
 Nothing carries `autoplay`. It begins at `canplay`, which promises exactly one
 more decodable frame, and the hitch that follows is what made the opening look
-broken. The controller starts the plate only once the beat is buffered *or* the
-file is arriving faster than it plays; a connection too slow for either gets the
-interface over the opening frame instead of a stutter. Measured cold and warm
-across five network profiles, no frozen frames in any of them.
+broken. The controller starts the plate only once it is buffered *or* the file
+is arriving faster than it plays, and only while the viewer is still at the top
+to watch it. If they scroll first, it is let go once the opening copy starts to
+leave. If they scroll while it plays, it runs on at 2.5× and the first scrubbed
+plate eases from its last frame to wherever the scroll has reached — the two
+frames either side are the same picture, so it reads as one quickened shot.
 
-The reveal then watches the plate's own `currentTime`, so it lands on the turn
-however slowly the plate buffers, with fallbacks on `ended`, `error`, a 5s
-patience limit and a 12s hard cap. The timeline unlocks a beat later still, when
-the plate reaches its *last* frame — which is the frame the next plate opens on,
-so the first scroll continues the shot instead of cutting into the middle of it. Seeks are queued one at a time per plate — a seek issued while
-another is resolving is dropped by the browser — which keeps the picture as
-close to the wheel as the decoder allows.
+Seeks are queued one at a time per plate — a seek issued while another is
+resolving is dropped by the browser — which keeps the picture as close to the
+scroll as the decoder allows. Each frame of the controller reads every
+measurement it needs before it writes anything, so it never forces a layout
+mid-frame; it costs under a millisecond per frame.
 
-To retime anything: `INTRO_REVEAL_AT` for the opening beat, `BEATS` for how
-much scroll each beat gets, and the cue constants (`DEER_ENTERS`,
-`DEER_GRAZES`, `BOW_SET`, `AIM_HELD`) for where each panel lands. The reveal styling itself lives in the `Intro` / `Reveal` sections of the
-component stylesheets.
+To retime anything: `BEATS` for how much scroll each beat gets, the `cues` on
+`SCENES` for where each panel lands, and `RAIL` for where each mark goes. The
+reveal styling itself lives in the `Intro` / `Reveal` sections of the component
+stylesheets.
+
+The inline scripts are written with their notes in, and `inline-script.ts`
+strips comments and indentation before they ship: an inline script is in the
+document twice (once as the script, once inside the RSC payload), and the notes
+alone were ~100KB of every page. The stripped script is compiled at build time,
+so a strip that broke it would fail the build rather than the page.
 
 ## Layout
 
@@ -557,14 +630,15 @@ nobody has started, and the previous controller is left holding a DOM that no
 longer exists. Changing language is a change of document here, and the film
 plays again from its first frame.
 
-Three other things can drop a viewer into the middle of the sequence, and the
-controller answers all three: scroll restoration is switched off and the
-position reset before first paint, again once the track exists and again on
-`load`; and a back/forward-cache restore — which brings back the scroll offset
-*and* every playhead — reloads the page outright, because there is nothing to
-rewind into. Each language is named in its
-own script, isolated so a Persian or Arabic endonym cannot drag the row's layout
-around it.
+A reload, or Back from the product, returns the viewer to where they were:
+scroll restoration and the back/forward cache are left to the browser. Every
+frame of the film is a pure function of scroll position, so the page renders
+correctly wherever it lands, and the opening does not replay under a viewer
+who is already in the middle of the film. (It used to force the page back to
+the top on every one of those, reloading outright on a back/forward restore,
+because the opening had locked the scroll and nothing could be shown without
+it.) Each language is named in its own script, isolated so a Persian or Arabic
+endonym cannot drag the row's layout around it.
 
 The layout is written entirely in **logical properties** — `inset-inline-start`,
 `margin-inline`, `text-align: start` — so `dir="rtl"` mirrors the whole
@@ -601,9 +675,10 @@ Two changes, and between them the composition can no longer outgrow its screen:
   is `auto`, measured off the cue itself — the previous computed reserve was
   196px against a cue that measured 234px.
 
-`scripts/audit-layout.mjs` is the check: 17 real viewport sizes × 103 scroll
-positions, looking for content under the bar, content in the cue, and anything
-past an edge. Before: 300+ collisions, on every laptop in the list. After: none.
+`scripts/audit-layout.mjs` is the check: 17 real viewport sizes × a scroll
+position every 40vh of the film, looking for content under the bar, content in
+the cue, and anything past an edge. Before: 300+ collisions, on every laptop in
+the list. After: none.
 
 ## Responsive
 

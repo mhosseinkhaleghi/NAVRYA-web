@@ -419,6 +419,17 @@ async function runOne(browser, locale, bp) {
     if (r.status() >= 400) failedRequests.push({ url: r.url(), status: r.status() });
   });
 
+  // When the interface came up, as the page itself saw it — relative to the
+  // navigation, and independent of how long the checks below take to run.
+  await page.addInitScript(() => {
+    new MutationObserver(() => {
+      if (window.__shownAt === undefined && document.documentElement.dataset.intro === "shown")
+        window.__shownAt = Math.round(performance.now());
+    // \`document\`, not \`documentElement\`: an init script runs before <html>
+    // exists, and the observer has to be in place before the controller runs.
+    }).observe(document, { attributes: true, subtree: true, attributeFilter: ["data-intro"] });
+  });
+
   const url = `${BASE}/${locale.code}`;
   const started = Date.now();
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
@@ -436,7 +447,9 @@ async function runOne(browser, locale, bp) {
    * ever on screen. The dimmest moment while the clock is advancing is the
    * honest measure, so that is what is kept.
    */
-  /* The hero's two links must not exist for the viewer until the opening ends.
+  /* The hero's two links must not exist for the viewer while the interface is
+   * still held back — which is now only until its faces land, not until the
+   * opening ends.
    *
    * They were added to the composition without being added to the reveal, so
    * they painted from the very first frame: a filled gold button sitting over
@@ -458,23 +471,23 @@ async function runOne(browser, locale, bp) {
           opacity: +getComputedStyle(v).opacity,
           ready: v.hasAttribute("data-plate-ready"),
           lead: v.hasAttribute("data-plate-lead"),
-          done: document.documentElement.getAttribute("data-timeline") !== "held",
           intro: document.documentElement.dataset.intro,
           hero: (() => {
             const el = document.querySelector("[data-hero-trial]")?.parentElement;
             if (!el) return null;
             const cs = getComputedStyle(el);
-            return { opacity: +cs.opacity, pointer: cs.pointerEvents };
+            return { opacity: +cs.opacity, pointer: cs.pointerEvents, visibility: cs.visibility };
           })(),
         };
       })
       .catch(() => null);
     if (!s) break;
     // While the interface is still armed, the hero's links are neither visible
-    // nor pressable.
+    // nor pressable — nor focusable, which \`visibility: hidden\` also covers
+    // and \`pointer-events: none\` did not.
     if (s.intro === "armed" && s.hero) {
       heroGate.samples++;
-      if (s.hero.opacity > 0.02 || s.hero.pointer !== "none") {
+      if (s.hero.opacity > 0.02 || (s.hero.pointer !== "none" && s.hero.visibility !== "hidden")) {
         heroGate.live++;
         heroGate.worst ??= s.hero;
       }
@@ -490,18 +503,37 @@ async function runOne(browser, locale, bp) {
       openingWatch.ready = s.ready;
       openingWatch.lead = s.lead;
     }
-    if (s.done) break;
+    // Sampled for as long as the shot runs; it plays whether or not anyone
+    // scrolls, so its end is the end of what there is to watch here.
+    if (s.dur && s.t >= s.dur - 0.1) break;
     await page.waitForTimeout(250);
   }
 
-  // The timeline is held shut until the opening plate finishes. Wait it out
-  // rather than fighting it — a wheel during the hold is correctly ignored.
-  await page
-    .waitForFunction(
-      () => document.documentElement.getAttribute("data-timeline") !== "held",
-      { timeout: 20000 },
-    )
-    .catch(() => notes.push(`${locale.code}/${bp.name}: timeline never unlocked`));
+  /*
+   * Nothing holds the page.
+   *
+   * The scroll used to be locked until the opening plate had finished and the
+   * interface held until it reached 4.33s — 5-8 seconds of a visitor unable to
+   * read, press or scroll anything. Both are asserted gone: the document is
+   * scrollable from the first sample, and the interface is up within its
+   * font budget (half a second) plus a margin for a loaded runner.
+   */
+  where.at = "load";
+  const gate = await page.evaluate(() => ({
+    overflowY: getComputedStyle(document.documentElement).overflowY,
+    held: document.documentElement.getAttribute("data-timeline") === "held",
+  }));
+  if (gate.held || gate.overflowY === "hidden")
+    fail(where, "interaction", `the document is locked at load (overflow-y ${gate.overflowY})`);
+  // Measured from navigation, so a slow document counts against it too.
+  const shownAt = await page.evaluate(() => window.__shownAt ?? null);
+  if (shownAt === null || shownAt > 2000)
+    fail(
+      where,
+      "D1-text",
+      `the interface came up ${shownAt === null ? "never" : `at ${shownAt}ms`} — ` +
+        `it is held only for its faces, at most 500ms after the document`,
+    );
 
   await page.waitForTimeout(600);
 
@@ -523,9 +555,9 @@ async function runOne(browser, locale, bp) {
 
   // The scene ships in two tiers: seven shipping plates and six light copies
   // that stand in until each shipping plate arrives. The light tier is what
-  // keeps the film running under a magnetic step, which crosses a whole beat in
-  // about a second — far less than a several-megabyte plate takes to land. If
-  // it ever goes missing the film does not break loudly, it just freezes on
+  // keeps the film running under a fast scroll, which can cross a whole beat in
+  // well under a second — far less than a several-megabyte plate takes to land.
+  // If it ever goes missing the film does not break loudly, it just freezes on
   // stills again, so its presence is asserted rather than assumed.
   const tiers = await page.evaluate(() => ({
     full: document.querySelectorAll("[data-scene-video]").length,
@@ -593,7 +625,7 @@ async function runOne(browser, locale, bp) {
       "D1-text",
       `the hero's links were live during the opening: ${heroGate.live} of ` +
         `${heroGate.samples} samples at opacity ${heroGate.worst.opacity}, ` +
-        `pointer-events ${heroGate.worst.pointer} — they sit over the film ` +
+        `pointer-events ${heroGate.worst.pointer}, visibility ${heroGate.worst.visibility} — they sit over the film ` +
         `before the words they belong to have arrived`,
     );
   }
@@ -645,10 +677,9 @@ async function runOne(browser, locale, bp) {
    * the opening plate's arrival and pushed the unlock from 6.8s to 10.3s —
    * surfacing as the hero headline still at opacity 0 on the coldest run.
    *
-   * The tier is fetched the moment the opening plate begins playing, so it no
-   * longer competes with that plate for the line. It still has a deadline: the
-   * scroll unlocks when the opening ends, and the tier is what the first
-   * gesture draws. One shot's length is what it gets, so its weight is bounded.
+   * The tier is fetched once the opening has played, or at the first scroll,
+   * so it never competes with that plate for the line. It still has a deadline:
+   * it is what the first scroll draws. So its weight is bounded.
    *
    * Checked from Content-Length off the wire rather than from the repository,
    * because what matters is what the edge actually serves.
@@ -701,9 +732,9 @@ async function runOne(browser, locale, bp) {
 
   /* The film keeps a picture while a person is actually watching it.
    *
-   * This is the check for the fault that was reported: with a magnetic step
-   * crossing a whole beat in about a second, the shipping plates could not
-   * arrive in time and shot after shot landed on a frozen still.
+   * This is the check for a fault that was reported: with the film crossed
+   * quickly, the shipping plates could not arrive in time and shot after shot
+   * landed on a frozen still.
    *
    * Gestured at a human cadence — flick, look, flick — not settled between,
    * because waiting for the network is exactly what a viewer does not do.
@@ -1024,7 +1055,7 @@ async function main() {
    * It is a second route running the same opening as the home page, off the
    * same components and the same controller — so what has to be asserted is not
    * that it works but that it works *the same way*: the plate decodes and is
-   * visible while it plays, the interface is held back until the shot has run,
+   * visible while it plays, the interface comes up without waiting on the shot,
    * the words arrive, nothing overflows, and the bar knows which page it is on.
    *
    * Its own pass rather than a second route inside the matrix above: the home
@@ -1069,8 +1100,8 @@ async function main() {
 
     await checkChrome(page, { ...where, at: "chrome" }, locale.code, "/feature");
 
-    // Held back while the shot runs — the same gate the home page's opening is
-    // behind, and the reason the words are not on screen over the first frame.
+    // Held back only until the page has its faces — the same brief gate the
+    // home page's opening is behind. While it holds, the words must not leak.
     let heldSamples = 0;
     let leaked = 0;
     for (let i = 0; i < 40; i++) {
@@ -1084,7 +1115,6 @@ async function main() {
             headOpacity: +getComputedStyle(head).opacity,
             plateOpacity: +getComputedStyle(v).opacity,
             t: v.currentTime,
-            live: document.documentElement.getAttribute("data-timeline") !== "held",
           };
         })
         .catch(() => null);
@@ -1099,8 +1129,8 @@ async function main() {
           break;
         }
       }
-      if (s.live) break;
-      await page.waitForTimeout(200);
+      if (s.intro === "shown") break;
+      await page.waitForTimeout(100);
     }
     if (!heldSamples) {
       notes.push(`${locale.code}/${bp.name}/feature: never caught the opening while held`);
@@ -1113,11 +1143,10 @@ async function main() {
     }
 
     await page
-      .waitForFunction(
-        () => document.documentElement.getAttribute("data-timeline") !== "held",
-        { timeout: 25000 },
-      )
-      .catch(() => fail(where, "interaction", "the timeline never unlocked"));
+      .waitForFunction(() => document.documentElement.dataset.intro === "shown", null, {
+        timeout: 1500,
+      })
+      .catch(() => fail(where, "D1-text", "the interface was still held back 1.5s after load"));
     await page.waitForTimeout(700);
 
     where.at = "slide";
@@ -1310,6 +1339,7 @@ async function main() {
             return {
               id: v.getAttribute("data-scene-video"),
               ready: v.hasAttribute("data-plate-ready"),
+              lead: v.hasAttribute("data-plate-lead"),
               covered: v.duration && b.length ? b.end(b.length - 1) / v.duration : 0,
             };
           })(),
@@ -1340,6 +1370,7 @@ async function main() {
           f4: (() => {
             const panel = document.querySelector('[data-panel="f4"]');
             if (!panel) return null;
+            const exit = +getComputedStyle(panel).getPropertyValue("--exit") || 0;
             const v = document.querySelector('[data-scene-video="council"]');
             const r = (el) => (el ? +getComputedStyle(el).getPropertyValue("--r") : null);
             const pillars = [...panel.querySelectorAll("li")];
@@ -1348,6 +1379,7 @@ async function main() {
             const bb = block.getBoundingClientRect();
             return {
               active: panel.hasAttribute("data-active"),
+              exit,
               headR: r(panel.querySelector('[data-reveal-group="title"]')),
               ctaR: r(panel.querySelector("button")),
               pillars: pillars.length,
@@ -1495,13 +1527,11 @@ async function main() {
     /*
      * Wait for the film to stop moving.
      *
-     * A magnetic step glides for between 620ms and about two seconds, and the
-     * walk's own cadence is 150ms — so a sample taken straight after a wheel is
-     * a sample of the *travel*, which is what the doubled-headline check wants
-     * and the opposite of what the resting assertions want. On a phone the
-     * steps are large enough that no mid-glide sample ever landed on slide 3's
-     * stop at all: measured, the slide was still up with its plate at 0.77s and
-     * had already left by the time the plate reached 0.847.
+     * A wheel gesture is smoothed by the browser over a few hundred
+     * milliseconds, and the walk's own cadence is 150ms — so a sample taken
+     * straight after a wheel is a sample of the *travel*, which is what the
+     * doubled-headline check wants and the opposite of what the resting
+     * assertions want.
      */
     const settle = async () => {
       let last = -1;
@@ -1541,6 +1571,22 @@ async function main() {
     samples.push(rest);
 
     /*
+     * And the film at rest on its last frame.
+     *
+     * With the scroll native, the walk's last step goes past the end of the
+     * film into the document below, so no step is guaranteed to land on the
+     * frame the last shot ends on. Wheeled back to it — a real wheel, like
+     * every other move here — and sampled there, so the last slide is judged
+     * where it actually rests.
+     */
+    if (rest.y > filmMaxY) {
+      await page.mouse.wheel(0, filmMaxY - rest.y);
+      await settle();
+      await page.waitForTimeout(400);
+      samples.push(await readSlide2());
+    }
+
+    /*
      * Each slide is judged at *its own* resting stop, not at the film's end.
      *
      * They were all read off the final sample, which worked for exactly as long
@@ -1557,22 +1603,28 @@ async function main() {
      * playing, so the first sample at `--r: 1` won and the map was reported
      * resting at 2.63s of 5.04.
      */
+    /*
+     * Only samples taken while the film still holds the frame. With the scroll
+     * native, the walk's last step can overshoot the film's end into the
+     * document below, where the stage is already scrolling away with the page —
+     * the last slide's clock is at its end there too, so that sample tied for
+     * "furthest" and won, and the slide was judged half off the top of a phone
+     * it fits with the film at rest.
+     */
+    const inFilm = samples.filter((s) => s.y <= filmMaxY + 1);
     const bestBy = (score) =>
-      samples.reduce((best, s) => (score(s) > score(best ?? s) || !best ? s : best), null) ?? rest;
+      inFilm.reduce((best, s) => (score(s) > score(best ?? s) || !best ? s : best), null) ?? rest;
     const at2 = bestBy((s) => (s.active ? (s.t ?? -1) : -1));
     const at3 = bestBy((s) => (s.f3 && s.f3.active ? (s.f3.t ?? -1) : -1));
 
     /*
-     * No stretch of *film* below its last magnetic stop — the wheel would
-     * refuse to travel it while the scrollbar said there was more.
+     * The wheel reaches the end of the film: nothing below it is unreachable.
      *
      * Measured against the track's own height and not the document's. They were
      * the same number while the film was the whole page; a section below it
      * makes the document taller than the film, and comparing against the
      * document would demand the film rest somewhere it has no business being.
      */
-    // The wheel would
-    // refuse to travel it while the scrollbar said there was more.
     if (rest.y < filmMaxY - 4)
       fail(
         where,
@@ -1624,7 +1676,11 @@ async function main() {
      * stops and had corrected itself by the last.
      */
     for (const s of samples) {
-      if (!s.plate) continue;
+      // The lead plate is played rather than scrubbed and has no light copy to
+      // stand in for it, so it is never gated on readiness (see Scene.module.css);
+      // it is on screen while the opening copy leaves, and its visibility is
+      // asserted by the opening checks above.
+      if (!s.plate || s.plate.lead) continue;
       if (!s.plate.ready)
         fail(where, "D2-video",
           `at y=${s.y} the ${s.plate.id} plate is composited but not ready — ` +
@@ -1705,8 +1761,16 @@ async function main() {
      */
     /* Scored on the plate's clock, not the panel's reveal — the reason is the
      * note above: a panel finishes arriving well before its shot does, so the
-     * reveal peaks at a sample where the slide is up but not yet at rest. */
-    const at4 = bestBy((x) => (x.f4 && x.f4.active ? (x.f4.t ?? -1) : -1));
+     * reveal peaks at a sample where the slide is up but not yet at rest.
+     *
+     * And never while it is leaving. Slide 4 leaves over the opening of the
+     * desk shot, by design, and its own clock has reached its end by then — so
+     * with the scroll native, a walk step inside that window scored highest and
+     * was judged as the slide "at rest" on the desk plate. A panel with any
+     * `--exit` is on its way out, not resting. */
+    const at4 = bestBy((x) =>
+      x.f4 && x.f4.active && !(x.f4.exit > 0) ? (x.f4.t ?? -1) : -1,
+    );
     if (!at4.f4) fail(where, "D1-text", "slide 4 is not in the DOM");
     else {
       const f4 = at4.f4;

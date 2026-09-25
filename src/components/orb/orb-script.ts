@@ -1,3 +1,5 @@
+import { inlineScript } from "@/components/frame/inline-script";
+
 /**
  * The orb — section 7's backdrop.
  *
@@ -222,7 +224,7 @@ void main() {
 }
 `;
 
-export const orbScript = `
+export const orbScript = inlineScript(`
 (function () {
   // No canvas at all under reduced motion. The orb is atmosphere; the section
   // is its words, and they do not need it.
@@ -311,8 +313,11 @@ export const orbScript = `
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
+    // A soft glow has no edges to sharpen: past 1.5x on a touch screen the
+    // shader only runs more times per frame for the same picture.
+    var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
     function resize() {
-      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      var dpr = Math.min(window.devicePixelRatio || 1, coarse ? 1.5 : 2);
       var w = host.clientWidth, h = host.clientHeight;
       if (!w || !h) return;
       canvas.width = Math.round(w * dpr);
@@ -390,4 +395,4 @@ export const orbScript = `
   });
   }
 })();
-`.trim();
+`);

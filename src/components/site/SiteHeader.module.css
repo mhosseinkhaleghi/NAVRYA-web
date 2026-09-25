@@ -314,18 +314,20 @@
 /* -----------------------------------------------------------------------------
  * Intro.
  *
- * The bar is held back with the rest of the interface until the hunter turns,
- * then settles down into the frame. `armed` is set by an inline script before
- * first paint; with no JavaScript it is never set, and the bar is just there.
+ * The bar comes up with the rest of the interface — once the page has its
+ * faces, at most half a second in — and settles down into the frame. `armed`
+ * is set by an inline script before first paint; with no JavaScript it is never
+ * set, and the bar is just there. `visibility`, not only opacity, so its links
+ * are out of the tab order while they cannot be seen.
  * -------------------------------------------------------------------------- */
 
 :global([data-intro="armed"]) .header {
   opacity: 0;
-  pointer-events: none;
+  visibility: hidden;
 }
 
 :global([data-intro="shown"]) .header {
-  animation: header-settle 1s var(--ease-cine) both;
+  animation: header-settle 0.8s var(--ease-cine) both;
 }
 
 @keyframes header-settle {

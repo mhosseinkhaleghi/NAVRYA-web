@@ -318,7 +318,9 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+/* Reduced motion, and compact frames — where a scrubbed full-size blur is the
+ * most expensive paint on the page — rise without the blur. */
+@media (prefers-reduced-motion: reduce), (max-width: 1023px) {
   .headline {
     filter: none;
   }

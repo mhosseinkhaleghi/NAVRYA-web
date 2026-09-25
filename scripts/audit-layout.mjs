@@ -1,5 +1,7 @@
 import { chromium } from "playwright";
 import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
 /*
  * Layout audit across the desktop sizes people actually have.
@@ -47,9 +49,11 @@ const findings = [];
 for (const [name, width, height] of VIEWPORTS) {
   const page = await browser.newPage({ viewport: { width, height } });
   await page.goto("http://localhost:4173/en", { waitUntil: "load" });
-  await page.waitForFunction(() => document.documentElement.dataset.timeline === "live", null, {
+  // Measured against the composed interface, not its entrance.
+  await page.waitForFunction(() => document.documentElement.dataset.intro === "shown", null, {
     timeout: 30000,
   });
+  await page.waitForTimeout(1600);
   // The film maps onto its own track, not the whole document: past the track
   // the site is ordinary sections, which this audit is not about — it checks
   // the composition inside a fixed frame.
@@ -124,9 +128,12 @@ for (const [name, width, height] of VIEWPORTS) {
       for (const blk of blocks) {
         const b = box(blk);
         if (b.height < 4) continue;
-        // A block that is mid-exit is *meant* to be leaving the frame.
-        const owner = blk.closest("[data-panel], [data-hero], [data-arrow]");
-        const exiting = owner && +getComputedStyle(owner).getPropertyValue("--exit") > 0.001;
+        // A block that is mid-exit is *meant* to be leaving the frame. Read off
+        // the block itself: `--exit` inherits down from wherever it is written
+        // — the section for a panel or the arrow, the part itself for the hero —
+        // and asking the hero's section read nothing, so a departing opening
+        // was judged as colliding with the bar it was leaving under.
+        const exiting = +getComputedStyle(blk).getPropertyValue("--exit") > 0.001;
         if (exiting) continue;
         for (const { el: cueEl, rect: c } of cues) {
           if (blk.contains(cueEl) || cueEl.contains(blk)) continue;
@@ -163,8 +170,6 @@ if (!findings.length) console.log("none");
 for (const f of findings) {
   console.log(`  ${f.width}×${f.height}  [${f.label}]  ${f.issue}`);
 }
-fs.writeFileSync(
-  "/tmp/claude-0/-home-user-NAVRYA-web/0bda1909-18c0-5a26-ab49-38498f328aa8/scratchpad/audit.json",
-  JSON.stringify(findings, null, 2),
-);
+// The findings in full, for tooling; the summary above is the readable form.
+fs.writeFileSync(path.join(os.tmpdir(), "navrya-audit-layout.json"), JSON.stringify(findings, null, 2));
 await browser.close();
