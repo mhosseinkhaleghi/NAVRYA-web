@@ -555,9 +555,9 @@ async function runOne(browser, locale, bp) {
 
   // The scene ships in two tiers: seven shipping plates and six light copies
   // that stand in until each shipping plate arrives. The light tier is what
-  // keeps the film running under a fast scroll, which can cross a whole beat in
-  // well under a second — far less than a several-megabyte plate takes to land.
-  // If it ever goes missing the film does not break loudly, it just freezes on
+  // keeps the film running under a step, which crosses a whole beat in about
+  // two seconds — far less than a several-megabyte plate takes to land. If it
+  // ever goes missing the film does not break loudly, it just freezes on
   // stills again, so its presence is asserted rather than assumed.
   const tiers = await page.evaluate(() => ({
     full: document.querySelectorAll("[data-scene-video]").length,
@@ -732,9 +732,9 @@ async function runOne(browser, locale, bp) {
 
   /* The film keeps a picture while a person is actually watching it.
    *
-   * This is the check for a fault that was reported: with the film crossed
-   * quickly, the shipping plates could not arrive in time and shot after shot
-   * landed on a frozen still.
+   * This is the check for a fault that was reported: with a step crossing a
+   * whole beat in a couple of seconds, the shipping plates could not arrive
+   * in time and shot after shot landed on a frozen still.
    *
    * Gestured at a human cadence — flick, look, flick — not settled between,
    * because waiting for the network is exactly what a viewer does not do.
@@ -1517,21 +1517,34 @@ async function main() {
         };
       });
 
+    /*
+     * One gesture moves the page.
+     *
+     * Given up to three seconds rather than a moment, and on purpose: a first
+     * step taken while the opening shot is still playing runs the rest of that
+     * shot at 4x and steps the instant it ends, so the film continues from its
+     * last frame. From the first second of the page that is about a second.
+     */
     await page.mouse.wheel(0, 240);
-    await page.waitForTimeout(450);
-    if ((await page.evaluate(() => Math.round(window.scrollY))) < 8)
-      fail(where, "interaction", "a wheel gesture does not move the features page at all");
+    {
+      let moved = false;
+      for (let i = 0; i < 30 && !moved; i++) {
+        await page.waitForTimeout(100);
+        moved = (await page.evaluate(() => Math.round(window.scrollY))) >= 8;
+      }
+      if (!moved)
+        fail(where, "interaction", "a wheel gesture does not move the features page at all");
+    }
 
     // Both headlines on screen at once is the failure the opening's own exit
     // window guards against, and it is only visible while the film is moving.
     /*
      * Wait for the film to stop moving.
      *
-     * A wheel gesture is smoothed by the browser over a few hundred
-     * milliseconds, and the walk's own cadence is 150ms — so a sample taken
-     * straight after a wheel is a sample of the *travel*, which is what the
-     * doubled-headline check wants and the opposite of what the resting
-     * assertions want.
+     * A step travels for between one and about two and a half seconds, and
+     * the walk's own cadence is 150ms — so a sample taken straight after a
+     * wheel is a sample of the *travel*, which is what the doubled-headline
+     * check wants and the opposite of what the resting assertions want.
      */
     const settle = async () => {
       let last = -1;
@@ -1573,11 +1586,10 @@ async function main() {
     /*
      * And the film at rest on its last frame.
      *
-     * With the scroll native, the walk's last step goes past the end of the
-     * film into the document below, so no step is guaranteed to land on the
-     * frame the last shot ends on. Wheeled back to it — a real wheel, like
-     * every other move here — and sampled there, so the last slide is judged
-     * where it actually rests.
+     * Below the film the page scrolls natively, so a walk that has gone past
+     * the film's last stop is somewhere in the document below it. Wheeled
+     * back to the film's last frame — a real wheel, like every other move
+     * here — and sampled there, so the last slide is judged where it rests.
      */
     if (rest.y > filmMaxY) {
       await page.mouse.wheel(0, filmMaxY - rest.y);
@@ -1604,12 +1616,11 @@ async function main() {
      * resting at 2.63s of 5.04.
      */
     /*
-     * Only samples taken while the film still holds the frame. With the scroll
-     * native, the walk's last step can overshoot the film's end into the
-     * document below, where the stage is already scrolling away with the page —
-     * the last slide's clock is at its end there too, so that sample tied for
-     * "furthest" and won, and the slide was judged half off the top of a phone
-     * it fits with the film at rest.
+     * Only samples taken while the film still holds the frame. A walk step
+     * past the film's end lands in the document below, where the stage is
+     * already scrolling away with the page — the last slide's clock is at its
+     * end there too, so that sample tied for "furthest" and won, and the slide
+     * was judged half off the top of a phone it fits with the film at rest.
      */
     const inFilm = samples.filter((s) => s.y <= filmMaxY + 1);
     const bestBy = (score) =>
@@ -1618,7 +1629,8 @@ async function main() {
     const at3 = bestBy((s) => (s.f3 && s.f3.active ? (s.f3.t ?? -1) : -1));
 
     /*
-     * The wheel reaches the end of the film: nothing below it is unreachable.
+     * No stretch of *film* below its last stop — the wheel would refuse to
+     * travel it while the scrollbar said there was more.
      *
      * Measured against the track's own height and not the document's. They were
      * the same number while the film was the whole page; a section below it
@@ -1765,9 +1777,9 @@ async function main() {
      *
      * And never while it is leaving. Slide 4 leaves over the opening of the
      * desk shot, by design, and its own clock has reached its end by then — so
-     * with the scroll native, a walk step inside that window scored highest and
-     * was judged as the slide "at rest" on the desk plate. A panel with any
-     * `--exit` is on its way out, not resting. */
+     * a sample inside that window scored highest and was judged as the slide
+     * "at rest" on the desk plate. A panel with any `--exit` is on its way
+     * out, not resting. */
     const at4 = bestBy((x) =>
       x.f4 && x.f4.active && !(x.f4.exit > 0) ? (x.f4.t ?? -1) : -1,
     );

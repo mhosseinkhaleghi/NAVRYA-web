@@ -12,8 +12,8 @@ export type Panel = Dictionary["panels"][number];
  * Each arrives on cues taken from its own plate: `data-reveal-group` marks
  * which beat an element belongs to and `--r` is the 0–1 progress the controller
  * writes onto it, so the whole reveal runs backwards as readily as forwards.
- * The headline is its own group because it lands first — in section 2 on the
- * deer's entrance — with everything else following as soon as it has settled.
+ * The headline is its own group because in section 2 it lands early, on the
+ * deer's entrance, with everything else following once the deer settles.
  */
 export function PanelSection({
   id,

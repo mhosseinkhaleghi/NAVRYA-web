@@ -12,23 +12,15 @@ import { inlineScript } from "./inline-script";
  *
  *   · bring the interface up — at once, waiting only (and briefly) for the
  *     faces the opening is set in, never for the footage;
- *   · play the opening shot, and hand it over cleanly to the scrubbed film
- *     whenever the viewer starts to scroll;
- *   · map the document's scroll position onto the film.
+ *   · play the opening shot;
+ *   · step the film: one scroll intent — a wheel gesture, a swipe, a key —
+ *     carries the page to the next complete story state, playing the footage
+ *     in between. Every frame is still a pure function of scroll position, so
+ *     the film runs backwards exactly as readily as forwards, and below the
+ *     film the page scrolls natively.
  *
- * Scroll is the viewer's. Nothing here reads the wheel, touch or keyboard to
- * decide where the page goes — the browser scrolls it natively, with its own
- * momentum, keyboard handling and accessibility, and every frame of the film
- * is a pure function of where it has been scrolled to. The only scripted
- * scrolls are the ones a viewer explicitly asks for: a section-rail mark and
- * section 6's dots, and both give the scroll back the moment it is touched.
- *
- * (It used to intercept every input inside the film and tween the page
- * between "story states" at the footage's own speed. One notch of a mouse
- * wheel then moved the page 5.2 screens and took 8.7s to settle, holding the
- * wheel took 50s to reach section 7, and further input was ignored until each
- * move finished. The film length that made that necessary is gone too — see
- * `BEATS`.)
+ * The one exception is the closing plate's release, which is part of a step
+ * like any other shot: scroll owns whether a plate is on screen at all.
  */
 
 /**
@@ -42,99 +34,164 @@ import { inlineScript } from "./inline-script";
 const FONT_WAIT_MS = 500;
 
 /**
- * The opening plays itself; everything after it is scrubbed.
+ * The opening plays itself; everything after it is stepped.
  *
  * `OPENING_BUFFER_S` is how much of it has to be in hand before it starts —
  * all of it, in practice — unless the file is arriving `RATE_MARGIN` times
  * faster than it plays. Starting at `canplay`, which promises one frame, is
  * what made the opening hitch.
  *
- * A viewer who starts scrolling while it is still playing is not held to it:
- * the shot runs on at `OPENING_RUSH` so it finishes under them, and the first
- * scrubbed plate then eases from the frame the opening ended on to wherever
- * the scroll has got to, over `HANDOVER_MS`. The two frames either side of
- * that handover are the same picture (see `PLATES`), so what the viewer sees
- * is one continuous, briefly quickened shot rather than a cut.
+ * The scroll is not held for it any more. A first step taken while it is still
+ * playing runs the rest of it at `OPENING_RUSH` and moves on the moment it
+ * ends: the plate after it opens on the frame it closes on, so the film
+ * continues rather than cutting into the middle of the shot. From the first
+ * frame that is at most about a second; a reader who has read the headline
+ * waits a fraction of that. `HANDOVER_MS` eases the first scrubbed plate in if
+ * the page was moved some other way (a rail mark) while the shot was running.
  */
 const OPENING_BUFFER_S = 5.5;
 const RATE_MARGIN = 1.25;
-const OPENING_RUSH = 2.5;
+const OPENING_RUSH = 4;
 const HANDOVER_MS = 650;
 
 /**
+ * How long one step takes, from the footage it crosses.
+ *
+ * A step used to play its footage at exactly 1x, which made the length of a
+ * step the length of the shot: 7.3s from the opening to section 2, 6.9s to
+ * section 4, 10.5s for the release. Scrolling was a request to watch, and the
+ * page did nothing else until it had been watched.
+ *
+ * Now a step plays short shots at their own speed and compresses long ones:
+ * `min(footage, STEP_BASE + STEP_PER_S x footage)`, held between the two
+ * bounds. Every step lands in about two seconds — 1.8s for three seconds of
+ * footage, 2.2s for seven, 2.6s for the release — so the rhythm is even, the
+ * longer shots still feel longer, and nothing plays slower than it was shot
+ * except the very shortest, which get `STEP_MIN`.
+ */
+const STEP_MIN = 1.0;
+const STEP_MAX = 2.6;
+const STEP_BASE = 1.5;
+const STEP_PER_S = 0.1;
+
+/**
+ * What counts as one intent.
+ *
+ * A wheel gesture is a burst of events: a notch of a mouse wheel is one event,
+ * a trackpad swipe is dozens followed by a long decaying tail of momentum. A
+ * burst that has been silent for `GESTURE_GAP_MS` is over. Within a burst, a
+ * sharp rise after the tail has decayed is a new swipe on top of the old one.
+ *
+ * Input that is still at strength when a step lands — a wheel still turning, a
+ * key still held — carries straight on into the next step. Momentum does not:
+ * it has decayed by then, so a single swipe is a single step however long its
+ * tail. And an intent that arrives while a step is running is kept and taken
+ * when it lands, so a quick second flick is never lost.
+ */
+const GESTURE_GAP_MS = 180;
+const HOLD_MS = 200;
+
+/**
  * The timeline: one beat per plate, in vh of scroll. Must add up to the
- * `--timeline-vh` token, which is the no-JS fallback for the track's height.
+ * `--timeline-vh` token, which is what actually creates the scrollable height.
  *
- * 1740vh — seventeen screens — for six chapters. It was 3840, paced at 70vh
- * per second of footage so that a scrolling reader watched every shot at its
- * own speed; at that length the film could only be crossed with the input
- * taken away from the reader, which is what it did. At this length it is
- * crossed by scrolling: a flick of a trackpad or a phone covers a chapter, and
- * each chapter keeps a stretch of scroll in which its panel is complete and
- * nothing moves but the footage (see the cues on `SCENES`).
+ * There are no holds. Earlier the picture froze on a plate's closing frame
+ * while its panel scrolled out, and every one of those pauses ended in a lurch
+ * as the next plate took over — a still image and then sudden motion reads as a
+ * jump however well the frames match. Now each plate runs straight into the
+ * next and the text leaves *over* the plate that is already moving.
  *
- * There are still no holds on a frozen frame: each plate runs straight into
- * the next, and text leaves *over* the plate that is already moving.
+ * Scroll is allocated at roughly 70vh per second of footage, so every plate
+ * scrubs at the same rate and the sequence never changes pace at a seam.
  */
 const BEATS = [
-  ["turn", 130], // hunter-turn   · 3.0s — he turns back to the valley; the opening leaves
-  ["prey", 170], // valley-prey   · 5.0s — the deer walks in and grazes
-  ["draw", 180], // hunter-draw   · 5.0s — he raises the bow and draws
-  ["strike", 200], // hunter-strike · 7.0s — the camera pushes in to the draw
+  ["turn", 210], // hunter-turn   · 3.0s — he turns back to the valley
+  ["prey", 380], // valley-prey   · 5.0s — the deer walks in and grazes
+  ["draw", 380], // hunter-draw   · 5.0s — he raises the bow and draws
+  ["strike", 520], // hunter-strike · 7.0s — the camera pushes in to the draw
   // Section 4 leaves here, over the plate's closing frame and nothing else.
   // The release is the loudest moment in the sequence and the text must be off
   // the screen before it, not sliding out across it.
-  ["clear", 60],
-  ["arrow", 220], // arrow-learns  · 6.7s — the release, and the world goes dark
-  // The paragraph lights up a word at a time and the edge light draws itself
-  // round the frame; both finish with the beat.
-  ["learn", 150],
+  ["clear", 160],
+  ["arrow", 520], // arrow-learns  · 6.7s — the release, and the world goes dark
+  // The last word going white is the end of the section, not the middle of it —
+  // both the paragraph and the ring finish within a hair of the beat's end, so
+  // there is no stretch of scroll left over once the sentence is complete.
+  ["learn", 340],
   // Section 5 leaves, the arrow goes with it, and the frame dips through black
   // before the next morning fades up. The one handover that is not a cut.
-  ["depart", 80],
-  ["miss", 180], // forest-miss   · 4.4s — the arrow is in the tree, the deer runs
-  // The psychology features, one per stretch of scroll.
-  ["traits", 300],
-  // Section 6 lifts away and the forest goes with it, onto the page's own
-  // black, and section 7 rises out of it.
-  ["fall", 70],
+  //
+  // Every vh of this is *moving* — the words go, the arrow goes, the morning
+  // arrives — which is why it can be this short. What made the old 240 feel
+  // long was not the handover but the 100vh of nothing in front of it, before
+  // `LEARN_LEAD` was taken to the end of its own beat.
+  ["depart", 150],
+  ["miss", 420], // forest-miss   · 4.4s — the arrow is in the tree, the deer runs
+  // The psychology features, one per stretch of scroll. The deck finishes with
+  // the beat — see `TRAIT_LEAD` — so there is no stretch left over once the
+  // last feature is up.
+  ["traits", 560],
+  // Section 6 lifts away and the forest goes with it, leaving the frame black.
+  // The last plate of the sequence has nothing after it to cut to, so this one
+  // ends on the page's own ground rather than on another shot.
+  ["fall", 180],
+  // The film ends here. Everything below is ordinary document — see `Stage`'s
+  // `after` — vertical sections one after another, scrolled like any page.
+] as const;
+
+/**
+ * The real duration of each beat, in seconds.
+ *
+ * Video beats use the source clip's duration. The composited beats between
+ * clips have no video clock, so they retain the existing 70vh-per-second
+ * pacing. A step's length is taken from the footage it crosses — see
+ * `STEP_MS`.
+ */
+const BEAT_SECONDS = [
+  ["turn", 3],
+  ["prey", 5.041667],
+  ["draw", 5.041667],
+  ["strike", 7.041667],
+  ["clear", 160 / 70],
+  ["arrow", 6.7],
+  ["learn", 340 / 70],
+  ["depart", 150 / 70],
+  ["miss", 4.4],
+  ["traits", 560 / 70],
+  ["fall", 180 / 70],
 ] as const;
 
 /**
  * Cue points, as a fraction of each plate's duration.
  *
- * Fractions rather than seconds so the same numbers still land when there is no
- * video at all — under reduced motion nothing downloads and the stills carry the
- * sequence. The ones named after something in the footage were measured off it
- * frame by frame.
+ * Measured off the footage frame by frame. They are fractions rather than
+ * seconds so the same numbers still land when there is no video at all — under
+ * reduced motion nothing downloads and the stills carry the sequence.
  */
 const DEER_ENTERS = 0.4 / 5.041667; // clears the right edge of frame
+const DEER_GRAZES = 3.6 / 5.041667; // drops its head to feed
+const BOW_SET = 2.5 / 5.041667; // the draw settles into the aim
+const AIM_HELD = 4.0 / 7.041667; // camera on the draw, roughly 70% back
 const ARROW_MID = 2.0 / 6.7; // the arrow crisp and dead centre in the air
 const WORLD_GONE = 5.15 / 6.7; // the valley has fallen away behind it
 const ARROW_STRUCK = 0.67 / 4.4; // it buries itself in the tree
 const DEER_BOLTS = 1.3 / 4.4; // the stag turns and runs
 const DEER_CLEARS = 3.95 / 4.4; // the last of it leaves the frame
 
-/** How much of a plate's own progress each reveal group takes to complete. */
-const TITLE_SPAN = 0.12;
-const REST_SPAN = 0.15;
-
 /**
  * One entry per scrubbed plate: which beat scrubs it, which panel it carries,
- * the two cues that panel's reveal hangs on, and the window in the *next* beat
- * it leaves during — so it slides out over a plate that is already running.
+ * and the two cues that panel's reveal hangs on.
  *
- * The panels arrive early in their plate and then stay. They used to wait on
- * late moments in the footage — section 2's body on the deer lowering its head
- * at 71% of its shot, sections 3 and 4 on the aim settling at 50% and 57% — and
- * a reader scrolling through saw a headline alone, or nothing but footage, for
- * two and three screens at a time. Now each panel is complete about a third of
- * the way into its plate, and the rest of the plate, plus the start of the
- * next, is the panel at rest with its shot still moving behind it: roughly a
- * screen of scroll in which to read it, wherever the reader stops.
+ * `exit` names the beat the panel leaves *during*, which is always the one
+ * after its own, plus the window inside it. That is what removes the pauses: a
+ * panel slides out over the next plate, which is already running, instead of
+ * over a frozen frame. There is room for it — every cue lands in the first half
+ * of its plate, so the outgoing text is long gone before the next one arrives.
  *
- * Section 2's headline still lands on the deer's entrance. Its body follows as
- * soon as the headline has settled.
+ * The first plate carries the hero, which is markup of its own, so it has no
+ * panel here. Sections 3 and 4 have a single cue in the footage, so their two
+ * reveal groups fire off the same moment a beat apart — the headline still
+ * leads, exactly as it does in section 2.
  */
 const SCENES = [
   { plate: "turn", beat: "turn", panel: null, exit: null, cues: null },
@@ -143,23 +200,23 @@ const SCENES = [
     beat: "prey",
     panel: "p1",
     exit: ["draw", 0, 0.2],
-    cues: [DEER_ENTERS, DEER_ENTERS + TITLE_SPAN],
+    cues: [DEER_ENTERS, DEER_GRAZES],
   },
   {
     plate: "draw",
     beat: "draw",
     panel: "p2",
     exit: ["strike", 0, 0.18],
-    cues: [0.36, 0.38],
+    cues: [BOW_SET, BOW_SET + 0.02],
   },
   {
     plate: "strike",
     beat: "strike",
     panel: "p3",
-    // Finished well inside its own beat: the closing plate must open on an
-    // empty frame.
+    // Its own beat, and finished well inside it: the closing plate must open on
+    // an empty frame.
     exit: ["clear", 0, 0.72],
-    cues: [0.4, 0.42],
+    cues: [AIM_HELD, AIM_HELD + 0.02],
   },
   { plate: "arrow", beat: "arrow", panel: null, exit: null, cues: null },
   { plate: "miss", beat: "miss", panel: null, exit: null, cues: null },
@@ -171,19 +228,24 @@ const SCENES = [
  * Handovers are cuts, not dissolves. Each clip was rendered as one continuous
  * shot and cut into pieces, so a plate's closing frame and the next plate's
  * opening frame are the *same frame* — measured, under 2% of pixels differ by
- * more than 12/255, and that residue is codec noise on the silhouette edge. A
- * dissolve between two such frames shows the figure twice, a few frames apart,
- * so exactly one plate is composited at any moment.
+ * more than 12/255, and that residue is codec noise on the silhouette edge.
+ *
+ * A dissolve between them was worse than useless: the outgoing plate sits on
+ * its closing frame while the incoming one is already running, so halfway
+ * through a cross-fade there are literally two hunters on screen, a few frames
+ * apart, at half opacity each. That double exposure was the "character
+ * displacement". Exactly one plate is composited at any moment now, and at the
+ * instant of the cut the two frames are identical, so nothing moves.
  */
 const PLATES = ["dawn", "turn", "prey", "draw", "strike", "arrow", "miss"] as const;
 const PLATE_BEAT = [null, "turn", "prey", "draw", "strike", "arrow", "miss"] as const;
 
-/**
- * The opening leaves over the first beat: it holds for the first stretch of
- * scroll, so a reader who nudges the page is not rewarded with an empty frame,
- * and is gone about a screen in.
- */
-const HERO_EXIT = [0.3, 0.8];
+/** The hero leaves late in the first plate, once the head has come back round. */
+const HERO_EXIT = [0.55, 0.92];
+
+/** How much of a plate's own progress each reveal group takes to complete. */
+const TITLE_SPAN = 0.12;
+const REST_SPAN = 0.15;
 
 /**
  * Section 5's two entrances, as fractions of the closing plate. The headline
@@ -265,13 +327,13 @@ const BODY_IN = [0.15, 0.6];
  */
 export const RAIL = [
   { name: "hero", from: "turn", at: ["turn", 0] },
-  { name: "panel1", from: "prey", at: ["prey", 0.62] },
-  { name: "panel2", from: "draw", at: ["draw", 0.76] },
-  { name: "panel3", from: "strike", at: ["strike", 0.78] },
-  // Whole when the last word goes white, at the very end of `learn`.
+  { name: "panel1", from: "prey", at: ["prey", 0.93] },
+  { name: "panel2", from: "draw", at: ["draw", 0.85] },
+  { name: "panel3", from: "strike", at: ["strike", 0.88] },
+  // Section 5 spans three beats; it is whole when the last word goes white,
+  // which `LEARN_LEAD` puts at 95–97% of `learn`. Past all of them.
   { name: "closing", from: "arrow", at: ["learn", 0.99] },
-  // The statement is whole and has not yet started to give way.
-  { name: "miss", from: "miss", at: ["miss", 0.4] },
+  { name: "miss", from: "miss", at: ["miss", 0.34] },
   // Below the film, and so not beats at all: elements in ordinary flow. The
   // mark goes to where the element *is*, read while the jump runs, because a
   // document's offsets are not fixed the way a timeline's are.
@@ -307,11 +369,13 @@ export const stageScript = inlineScript(`
    * and those are read instead — same mechanism, same rules, its own shots.
    */
   var HOME_BEATS = ${JSON.stringify(BEATS)};
+  var HOME_BEAT_SECONDS = ${JSON.stringify(BEAT_SECONDS)};
   var HOME_SCENES = ${JSON.stringify(SCENES)};
   var HOME_PLATES = ${JSON.stringify(PLATES)};
   var HOME_PLATE_BEAT = ${JSON.stringify(PLATE_BEAT)};
   var HOME_HERO_EXIT = ${JSON.stringify(HERO_EXIT)};
   var BEATS = HOME_BEATS;
+  var BEAT_SECONDS = HOME_BEAT_SECONDS;
   var SCENES = HOME_SCENES;
   var PLATES = HOME_PLATES;
   var PLATE_BEAT = HOME_PLATE_BEAT;
@@ -336,6 +400,9 @@ export const stageScript = inlineScript(`
   var FONT_WAIT_MS = ${FONT_WAIT_MS};
   var OPENING_BUFFER_S = ${OPENING_BUFFER_S}, RATE_MARGIN = ${RATE_MARGIN};
   var OPENING_RUSH = ${OPENING_RUSH}, HANDOVER_MS = ${HANDOVER_MS};
+  var STEP_MIN = ${STEP_MIN}, STEP_MAX = ${STEP_MAX};
+  var STEP_BASE = ${STEP_BASE}, STEP_PER_S = ${STEP_PER_S};
+  var GESTURE_GAP_MS = ${GESTURE_GAP_MS}, HOLD_MS = ${HOLD_MS};
 
   var reduced = window.matchMedia
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -349,6 +416,7 @@ export const stageScript = inlineScript(`
   // ── beat boundaries, as fractions of the film ────────────────────────────
   var total = 0, i;
   var edge = {};
+  var secondsByBeat = {};
 
   /*
    * Called twice, and it has to be. This script runs before the track element
@@ -367,6 +435,7 @@ export const stageScript = inlineScript(`
       } catch (e) { return home; }
     }
     BEATS = declared('beats', HOME_BEATS);
+    BEAT_SECONDS = declared('beat-seconds', HOME_BEAT_SECONDS);
     SCENES = declared('scenes', HOME_SCENES);
     PLATES = declared('plates', HOME_PLATES);
     PLATE_BEAT = declared('plate-beat', HOME_PLATE_BEAT);
@@ -381,6 +450,11 @@ export const stageScript = inlineScript(`
     for (k = 0; k < BEATS.length; k++) {
       edge[BEATS[k][0]] = [run / total, (run + BEATS[k][1]) / total];
       run += BEATS[k][1];
+    }
+
+    secondsByBeat = {};
+    for (k = 0; k < BEAT_SECONDS.length; k++) {
+      secondsByBeat[BEAT_SECONDS[k][0]] = BEAT_SECONDS[k][1];
     }
   }
   readSequence();
@@ -908,6 +982,9 @@ export const stageScript = inlineScript(`
 
     var glide = null;
     function stopGlide() {
+      // The hand-off onto the page is a step, not a jump: it finishes. Cut
+      // short, its completion never ran and every wheel after it was held.
+      if (handoffGlide) return;
       if (glide === null) return;
       cancelAnimationFrame(glide);
       glide = null;
@@ -917,7 +994,7 @@ export const stageScript = inlineScript(`
     // section below the film can change height while the jump is running —
     // a face or a lazy image landing — and a target fixed at the start would
     // land short of it.
-    function goTo(where) {
+    function goTo(where, done) {
       var from = window.scrollY;
       function target() {
         var max = document.documentElement.scrollHeight - window.innerHeight;
@@ -927,14 +1004,16 @@ export const stageScript = inlineScript(`
       }
       var first = target(), dist = Math.abs(first - from);
       stopGlide();
-      if (reduced || dist < 2) { window.scrollTo(0, first); return; }
+      if (reduced || dist < 2) { window.scrollTo(0, first); if (done) done(); return; }
       var ms = GLIDE_MS[0]
         + clamp01(dist / (document.documentElement.scrollHeight || 1)) * GLIDE_MS[1];
       var t0 = performance.now();
       (function step(now) {
         var t = clamp01((now - t0) / ms);
         window.scrollTo(0, from + (target() - from) * ease(t));
+        apply();
         glide = t < 1 ? requestAnimationFrame(step) : null;
+        if (t >= 1 && done) done();
       })(t0);
     }
 
@@ -968,6 +1047,345 @@ export const stageScript = inlineScript(`
     for (i = 0; i < takeover.length; i++) {
       window.addEventListener(takeover[i], stopGlide, { passive: true });
     }
+
+    // ── stepping the film ──────────────────────────────────────────────────
+    //
+    // Native scroll is still the rendering clock. Inside the film, input does
+    // not write it directly: one intent picks the adjacent complete story state
+    // and a travel carries the page there, playing the footage in between.
+    // Below the film the page scrolls natively, in both directions.
+    //
+    // A story state is a point where the choreography has finished a readable
+    // thought. They come from the same cue and beat tables \`apply\` paints
+    // from, so retiming a scene moves its stop with it.
+    function filmPoint(beat, progress) {
+      var b = edge[beat];
+      return (b[0] + (b[1] - b[0]) * progress) * filmMax;
+    }
+
+    function beatSeconds(beat) {
+      var video = plateOf(beat);
+      return video && video.duration ? video.duration : secondsByBeat[beat];
+    }
+
+    function filmSecondsAt(position) {
+      var point = filmMax ? clamp01(position / filmMax) : 0;
+      var seconds = 0;
+      for (var b = 0; b < BEATS.length; b++) {
+        var beat = BEATS[b][0], bounds = edge[beat], duration = beatSeconds(beat) || 0;
+        if (point <= bounds[1] || b === BEATS.length - 1) {
+          return seconds + duration * span(point, bounds[0], bounds[1]);
+        }
+        seconds += duration;
+      }
+      return seconds;
+    }
+
+    // The inverse of \`filmSecondsAt\`: both walk the same table.
+    function filmPositionAtSeconds(seconds) {
+      var acc = 0;
+      for (var b = 0; b < BEATS.length; b++) {
+        var beat = BEATS[b][0], bounds = edge[beat], duration = beatSeconds(beat) || 0;
+        if (seconds <= acc + duration || b === BEATS.length - 1) {
+          var within = duration > 0 ? clamp01((seconds - acc) / duration) : 0;
+          return (bounds[0] + (bounds[1] - bounds[0]) * within) * filmMax;
+        }
+        acc += duration;
+      }
+      return filmMax;
+    }
+
+    /*
+     * The travel's shape, in film time: ramp in, run at a constant rate, ramp
+     * out. An ease-out starts the film at three times its average speed and
+     * the camera leaves before it is seen to go; the ramps only exist so a
+     * travel does not start and stop with a jerk.
+     */
+    var FILM_RAMP = 0.15;
+    function filmEase(t) {
+      var r = FILM_RAMP, k = 2 * r * (1 - r);
+      if (t <= r) return (t * t) / k;
+      if (t >= 1 - r) { var u = 1 - t; return 1 - (u * u) / k; }
+      return (t - r / 2) / (1 - r);
+    }
+
+    // How long a step takes, from the seconds of footage it crosses.
+    function stepMs(seconds) {
+      var s = Math.min(seconds, STEP_BASE + STEP_PER_S * seconds);
+      return 1000 * Math.max(STEP_MIN, Math.min(STEP_MAX, s));
+    }
+
+    // Where the film hands over to the page: section 7's top, which is also
+    // where its rail mark goes. On a film with nothing after it, its own end.
+    function storyLimit() {
+      if (!flows.length) return filmMax;
+      return flows[0].el.getBoundingClientRect().top + window.scrollY;
+    }
+
+    function storyStops() {
+      var stops = [0];
+      /*
+       * A film rests where a panel has finished arriving: every scene that
+       * carries one contributes a stop at its second cue plus the stagger —
+       * the moment the last line of that panel is up. Read from the scene
+       * table, so another film gets its stops from its own shots.
+       */
+      for (var sc = 0; sc < SCENES.length; sc++) {
+        var cfg = SCENES[sc];
+        if (!cfg.panel || !cfg.cues || !edge[cfg.beat]) continue;
+        stops.push(filmPoint(cfg.beat, Math.min(1, cfg.cues[1] + REST_SPAN)));
+      }
+      // The home film's later chapters. A film without these beats simply has
+      // no stop there.
+      if (edge.arrow) stops.push(filmPoint('arrow', BODY_AT + BODY_SPAN));
+      if (edge.learn) stops.push(filmPoint('learn', 0.99));
+      if (edge.miss) stops.push(filmPoint('miss', Math.min(1, MISS_STRUCK + MISS_SPAN)));
+      var n = traitEls.length;
+      if (n && edge.traits) {
+        var reachAll = (n - 1) + TRAIT_HOLD;
+        for (var t = 0; t < n; t++) {
+          stops.push(filmPoint('traits', TRAIT_LEAD * (t + TRAIT_HOLD) / reachAll));
+        }
+      }
+      // The fall is a handover, not a chapter: the next stop is section 7.
+      if (flows.length) stops.push(storyLimit());
+
+      var max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      stops.sort(function (a, b) { return a - b; });
+      var out = [];
+      for (var k = 0; k < stops.length; k++) {
+        var at = Math.round(Math.max(0, Math.min(stops[k], max)));
+        if (!out.length || Math.abs(at - out[out.length - 1]) > 2) out.push(at);
+      }
+      return out;
+    }
+
+    var storyGlide = null, storyLocked = false, handoffGlide = false;
+    var storyFrom = 0, storyTo = 0, storyStarted = 0, storyDuration = 0;
+    var storyOrigin = 0, storyTravelDirection = 0, storyCarriesFilm = false;
+    var storyFilmFrom = 0, storyFilmTo = 0;
+    var nextDir = 0, nextCount = 0;  // intents kept for when the travel lands
+    var holdDir = 0, holdUntil = 0;  // input still at strength: carry straight on
+    var openingIntent = false;
+
+    function landed() {
+      storyGlide = null;
+      storyLocked = false;
+      var went = storyTravelDirection;
+      storyTravelDirection = 0;
+      // A second intent that came in while travelling, or a wheel or key that
+      // is still going, continues into the next state. Momentum has decayed
+      // by now, so a single swipe stays a single step.
+      var dir = nextCount ? nextDir : performance.now() < holdUntil ? holdDir : 0;
+      if (nextCount) nextCount--;
+      if (!nextCount) nextDir = 0;
+      if (dir && dir === went) travelStory(dir);
+    }
+
+    function travelStory(direction, force, target, origin) {
+      if ((!force && storyLocked) || !direction) return;
+      if (typeof target !== 'number') {
+        // The next state *ahead*, not the one after the nearest: from anywhere
+        // between two states — after a rail jump, a restored scroll, a travel
+        // turned round — a step down goes to the one below, never past it.
+        var stops = storyStops(), y = window.scrollY, next = -1, k;
+        if (direction > 0) {
+          for (k = 0; k < stops.length; k++) if (stops[k] > y + 2) { next = k; break; }
+        } else {
+          for (k = stops.length - 1; k >= 0; k--) if (stops[k] < y - 2) { next = k; break; }
+        }
+        if (next < 0) return;
+        // Onto the page: the same target and glide as section 7's rail mark,
+        // after which the document scrolls natively.
+        if (direction > 0 && flows.length && next === stops.length - 1) {
+          handoffGlide = true;
+          storyTravelDirection = 1;
+          goTo(storyLimit, function () { handoffGlide = false; storyTravelDirection = 0; });
+          return;
+        }
+        target = stops[next];
+        var back = next - direction;
+        origin = back >= 0 && back < stops.length && Math.abs(stops[back] - y) < 3 ? stops[back] : y;
+      }
+
+      var from = window.scrollY, to = target;
+      storyLocked = true;
+      storyTravelDirection = direction;
+      storyOrigin = typeof origin === 'number' ? origin : from;
+      if (reduced || Math.abs(to - from) < 2) {
+        window.scrollTo(0, to);
+        apply();
+        // No travel to wait for, so a held key would otherwise run through
+        // every state in one call. A beat's pause makes it one state a beat.
+        setTimeout(landed, 250);
+        return;
+      }
+
+      // A travel that carries footage is timed in film time, so each shot
+      // plays at one steady rate however much track it happens to own. One
+      // that starts or ends on the page below is a plain eased move.
+      storyFilmFrom = filmSecondsAt(from);
+      storyFilmTo = filmSecondsAt(to);
+      var seconds = Math.abs(storyFilmTo - storyFilmFrom);
+      storyCarriesFilm = seconds > 0.05 && Math.max(from, to) <= filmMax + 1;
+      storyDuration = stepMs(Math.max(seconds, storyCarriesFilm ? 0 : 1.2));
+      storyStarted = performance.now();
+      storyFrom = from;
+      storyTo = to;
+      (function step(now) {
+        var t = clamp01((now - storyStarted) / storyDuration);
+        var at = storyCarriesFilm
+          ? filmPositionAtSeconds(storyFilmFrom + (storyFilmTo - storyFilmFrom) * filmEase(t))
+          : storyFrom + (storyTo - storyFrom) * ease(t);
+        // The stops themselves, not whatever the table rounds to: a resting
+        // position a pixel off is one the next step measures from.
+        if (t >= 1) at = storyTo;
+        window.scrollTo(0, at);
+        // Painted in the same frame it moves, rather than a frame later from
+        // the scroll event it raises.
+        apply();
+        if (t < 1) { storyGlide = requestAnimationFrame(step); return; }
+        landed();
+      })(storyStarted);
+    }
+
+    // Reverse to the exact state the active travel left.
+    function redirectStory(direction) {
+      if (!storyLocked || direction === storyTravelDirection) return;
+      if (storyGlide !== null) cancelAnimationFrame(storyGlide);
+      storyGlide = null;
+      storyLocked = false;
+      nextDir = 0;
+      nextCount = 0;
+      travelStory(direction, true, storyOrigin, storyTo);
+    }
+
+    function intend(direction) {
+      if (handoffGlide) return;
+      if (openingState === 'waiting') retireOpening();
+      // The opening is still playing and the page has not moved: run the rest
+      // of the shot quickly and step the moment it ends, so the film continues
+      // from its last frame instead of cutting out of the middle of it.
+      if (openingState === 'playing' && window.scrollY < 2) {
+        if (direction > 0 && !openingIntent) {
+          openingIntent = true;
+          warm();
+          apply();
+          // A shot that never reports its end must not hold the step for ever.
+          setTimeout(function () {
+            if (!openingIntent) return;
+            openingIntent = false;
+            retireOpening();
+            travelStory(1);
+          }, 2500);
+        } else if (direction < 0) {
+          openingIntent = false;
+        }
+        return;
+      }
+      if (!storyLocked) { travelStory(direction); return; }
+      if (direction !== storyTravelDirection) { redirectStory(direction); return; }
+      // Up to two kept: a quick run of flicks is honoured without a long
+      // string of them turning into a runaway.
+      nextDir = direction;
+      if (nextCount < 2) nextCount++;
+    }
+
+    // Whether an input in this direction belongs to the film. Down, anywhere
+    // above the handover; up, anywhere at or above it — so from section 7's
+    // top one step goes back into the film, and further down the page
+    // scrolls up natively. (It used to take any upward scroll below the film
+    // back to its last chapter in one jump, from section 9 as readily as 7.)
+    function inStory(down) {
+      var y = window.scrollY, limit = storyLimit();
+      return down ? y < limit - 1 : y <= limit + 1;
+    }
+
+    var wheelT = 0, wheelDir = 0, wheelAvg = 0, wheelPeak = 0;
+    var wheelTravel = 0, wheelTaken = false;
+    function storyWheel(e) {
+      if (!e.deltaY || e.ctrlKey) return; // ctrl + wheel is zoom
+      var down = e.deltaY > 0;
+      if (handoffGlide) { e.preventDefault(); return; }
+      if (!inStory(down)) return;
+      e.preventDefault();
+      // The event's own time, not the time it is handled: behind a busy frame
+      // a trackpad's momentum arrives in a clump, and measured on arrival its
+      // gaps looked like new swipes.
+      var now = e.timeStamp || performance.now(), dir = down ? 1 : -1;
+      var mag = Math.abs(e.deltaY) * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1);
+      // A new gesture: after a pause, on a change of direction, or a sharp
+      // rise once the previous swipe's momentum has decayed.
+      var fresh = now - wheelT > GESTURE_GAP_MS || dir !== wheelDir
+        || (wheelAvg < wheelPeak * 0.4 && mag > wheelAvg * 2 && mag > 8);
+      if (fresh) {
+        wheelPeak = mag;
+        wheelAvg = mag;
+        wheelTravel = 0;
+        wheelTaken = false;
+      } else {
+        wheelPeak = Math.max(wheelPeak, mag);
+        wheelAvg = wheelAvg * 0.6 + mag * 0.4;
+      }
+      wheelT = now;
+      wheelDir = dir;
+      wheelTravel += mag;
+      if (mag >= wheelPeak * 0.5) { holdDir = dir; holdUntil = performance.now() + HOLD_MS; }
+      // A gesture is an intent once it has moved far enough to mean it — one
+      // notch of a wheel always has; the last crumbs of a momentum tail never do.
+      if (!wheelTaken && wheelTravel >= 12) {
+        wheelTaken = true;
+        intend(dir);
+      }
+    }
+
+    function storyKey(e) {
+      if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
+      var el = e.target, tag = (el && el.tagName) || '';
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(tag) || (el && el.isContentEditable)) return;
+      var k = e.key;
+      var down = k === 'ArrowDown' || k === 'PageDown' || (k === ' ' && !e.shiftKey);
+      var up = k === 'ArrowUp' || k === 'PageUp' || (k === ' ' && e.shiftKey);
+      if (!down && !up) return;
+      // Space presses a focused control; it is only a page key otherwise.
+      if (k === ' ' && el && el.closest && el.closest('a, button, summary, [role="button"]')) return;
+      if (handoffGlide) { e.preventDefault(); return; }
+      if (!inStory(down)) return;
+      e.preventDefault();
+      var dir = down ? 1 : -1;
+      // A held key repeats: it carries on at each landing rather than
+      // queueing a step per repeat.
+      holdDir = dir;
+      holdUntil = performance.now() + HOLD_MS;
+      if (!e.repeat) intend(dir);
+    }
+
+    var touchX = null, touchY = null, touchDone = false;
+    window.addEventListener('wheel', storyWheel, { passive: false, capture: true });
+    window.addEventListener('keydown', storyKey, { passive: false, capture: true });
+    window.addEventListener('touchstart', function (e) {
+      if (e.touches.length !== 1) { touchY = null; return; }
+      touchX = e.touches[0].clientX;
+      touchY = e.touches[0].clientY;
+      touchDone = false;
+    }, { passive: true, capture: true });
+    window.addEventListener('touchmove', function (e) {
+      if (touchY === null || e.touches.length !== 1) return;
+      var dx = touchX - e.touches[0].clientX, dy = touchY - e.touches[0].clientY;
+      // A sideways drag belongs to whatever is under it (the bar's links
+      // scroll sideways on a phone).
+      if (Math.abs(dx) > Math.abs(dy)) return;
+      var down = dy > 0;
+      if (handoffGlide) { if (e.cancelable) e.preventDefault(); return; }
+      if (!inStory(down)) return;
+      if (e.cancelable) e.preventDefault();
+      // One swipe, one step: decided once, as soon as it has a direction.
+      if (!touchDone && Math.abs(dy) >= 12) {
+        touchDone = true;
+        intend(down ? 1 : -1);
+      }
+    }, { passive: false, capture: true });
+    window.addEventListener('touchend', function () { touchY = null; }, { passive: true, capture: true });
 
     // ── the opening ────────────────────────────────────────────────────────
     //
@@ -1040,6 +1458,7 @@ export const stageScript = inlineScript(`
         if (openingState !== 'playing') return;
         openingState = 'done';
         warm();
+        if (openingIntent) { openingIntent = false; travelStory(1); return; }
         // The viewer is already into the first beat: ease the plate after it
         // from this very frame up to wherever the scroll has reached.
         if (window.scrollY > 0) { handoverAt = performance.now(); runHandover(); }
@@ -1048,9 +1467,11 @@ export const stageScript = inlineScript(`
     }
 
     // ── one frame ──────────────────────────────────────────────────────────
+    var lastY = -1;
     function apply() {
       // Reads first — every measurement this frame needs, before any write.
       var y = window.scrollY, h = window.innerHeight;
+      lastY = y;
       var docEnd = document.documentElement.scrollHeight - h;
       var boxes = [];
       for (var f = 0; f < flows.length; f++) boxes.push(flows[f].el.getBoundingClientRect());
@@ -1075,7 +1496,7 @@ export const stageScript = inlineScript(`
       if (openingState === 'playing' && p >= heroGoneAt) retireOpening();
       var holding = openingState !== 'done';
       if (openingState === 'playing') {
-        var rate = p > 0 ? OPENING_RUSH : 1;
+        var rate = p > 0 || openingIntent ? OPENING_RUSH : 1;
         if (opening.playbackRate !== rate) opening.playbackRate = rate;
       }
 
@@ -1233,21 +1654,29 @@ export const stageScript = inlineScript(`
     // The bar grows when its faces land; watch it rather than guess when.
     if (bar && window.ResizeObserver) new ResizeObserver(measure).observe(bar);
 
-    var queued = false;
-    function onScroll() {
+    // A travel paints each position itself, in the frame it moves; the scroll
+    // event that follows is then a frame already painted and is skipped.
+    var queued = false, forced = false;
+    function schedule(force) {
+      if (force) forced = true;
       if (queued) return;
       queued = true;
-      requestAnimationFrame(function () { queued = false; apply(); });
+      requestAnimationFrame(function () {
+        queued = false;
+        if (forced || window.scrollY !== lastY) { forced = false; apply(); }
+      });
     }
+    function onScroll() { schedule(false); }
+    function refresh() { schedule(true); }
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', function () { measure(); onScroll(); });
+    window.addEventListener('resize', function () { measure(); refresh(); });
     // A page restored from the back/forward cache comes back where the viewer
     // left it, with every plate where it was; this only re-syncs the frame.
     window.addEventListener('pageshow', function (e) {
       if (e.persisted) { measure(); apply(); }
     });
     each('[data-scene-video]', function (v) {
-      v.addEventListener('loadedmetadata', onScroll);
+      v.addEventListener('loadedmetadata', refresh);
     });
     apply();
   });

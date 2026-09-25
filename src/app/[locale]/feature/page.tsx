@@ -82,7 +82,9 @@ const PLATES = [
    * frame still carries one readable English callout: "Execution." sits nearest
    * the zoom axis, so it blurs least and outlives the other seven. Checked frame
    * by frame — legible at the first, gone by the third. Two frames is 0.08s of a
-   * 2.2s move and takes nothing from it.
+   * 2.2s move and takes nothing from it. The
+   * magnetic step takes its length from the shot's own seconds, so restoring
+   * the full dive is also what makes it play at the speed it was cut at.
    */
   { id: "council", slug: "commander-council", lead: false, codecs: ["webm", "mp4"] },
   /*
@@ -98,9 +100,9 @@ const PLATES = [
 /*
  * The film.
  *
- * The lead plate has no beat. It plays on arrival and the film starts on the
- * shot after it, exactly as the home sequence does — its table also begins on
- * the second shot, not the first.
+ * The lead plate has no beat. It plays before the timeline unlocks and the
+ * film starts on the shot after it, exactly as the home sequence does — its
+ * table also begins on the second shot, not the first.
  *
  * Every number below is a fraction of the one shot this film currently is, and
  * they are read off the footage rather than chosen: the camera holds on the
@@ -115,10 +117,13 @@ const PLATES = [
  *                          opening on screen past the point where this slide's
  *                          own headline has arrived underneath it.
  *   cues[0]   0.45         the head, over a map that has just opened out.
- *   cues[1]   0.85         nothing: this panel's head is its only group.
+ *   cues[1]   0.85         the rule under it.
  *
- * Scroll is native, so a panel is only as readable as the stretch of scroll in
- * which it is complete. Each scene below says where that stretch is.
+ * The second cue is 0.85 and not a rounder number because `REST_SPAN` is 0.15:
+ * the film rests where a panel has finished arriving, so a scene completing at
+ * 0.85 + 0.15 rests exactly at the end of its own shot. On the *last* scene
+ * that is also the foot of the page — any earlier and the wheel would stop at a
+ * magnetic point with document still below it and no way to reach it.
  *
  * Slide 3 gets 230vh against slide 2's 380 because its shot is 3.04s against
  * 5.04s, and this page's rule is 380vh per five seconds — so both slides scroll
@@ -135,6 +140,12 @@ const SEQUENCE = {
      * at the seam.
      */
     ["desk", 230],
+  ],
+  beatSeconds: [
+    ["battlemap", 5.041667],
+    ["scatter", 0.875],
+    ["council", 2.1256],
+    ["desk", 3.042],
   ],
   plates: ["commander", "battlemap", "scatter", "council", "desk"],
   plateBeat: [null, "battlemap", "scatter", "council", "desk"],
@@ -173,14 +184,18 @@ const SEQUENCE = {
        * turn and then the sentence they add up to, the stagger completing at
        * `cues[1] + REST_SPAN`.
        *
-       * Early in the beat, so the slide is whole from 0.45 to the exit at 0.87
-       * — about a screen of scroll to read it in. The map is the same picture
-       * from the first frame of this shot to the last (checked frame by frame),
-       * so the labels land on the places they name wherever they arrive. It
-       * used to complete at 0.87, the moment the exit begins, which only ever
-       * worked while the page stopped the scroll there.
+       * That sum has to land *inside* this beat, not at the end of it. At 0.85
+       * it came to exactly 1.0 — the boundary where the next plate takes the
+       * frame — so the slide came to rest on the first frame of the dive with
+       * its labels pinned over it, naming a map that was no longer there. It
+       * was right while this was the last slide and the end of the beat was the
+       * foot of the document; adding a fourth made the same number wrong.
+       *
+       * 0.72 rests at 0.87 of the beat: the shot is settled, the map is under
+       * the words that name it, and the last eighth is a hold to read it in
+       * before the camera leaves.
        */
-      cues: [0.05, 0.3],
+      cues: [0.05, 0.72],
       /*
        * Slide 3 leaves inside its own beat, over the map it is naming.
        *
@@ -193,9 +208,14 @@ const SEQUENCE = {
        * the way back from slide 4: the headline arrived at full opacity with the
        * dive still blurring past underneath it, before the map had returned.
        *
-       * So it belongs before the boundary, not after: the words only ever exist
-       * while the map is on screen — leaving over it going forward, arriving
-       * over it coming back.
+       * So it belongs before the boundary, not after. The stagger completes at
+       * `cues[1] + REST_SPAN` = 0.87 and the exit runs from there to the end of
+       * the beat, which means the words only ever exist while the map is on
+       * screen — leaving over it going forward, arriving over it coming back.
+       * It costs the eighth of a beat that used to be a hold to read the
+       * sentence in; the sentence is legible for the whole of the stagger before
+       * it, and a hold that can only be spent going one direction was not worth
+       * a handover that was wrong going the other.
        */
       exit: ["scatter", 0.87, 1],
     },
@@ -235,11 +255,16 @@ const SEQUENCE = {
       dissolve: 0.1,
       /*
        * The head lands once the camera has stopped moving — the shot settles by
-       * about two thirds — and the rest of the block follows straight after it,
-       * whole by 0.81 and read over the rest of this shot and the start of the
-       * next.
+       * about two thirds — and the rest of the block follows it.
+       *
+       * `cues[1]` is 0.80 and not 0.85 because a fifth slide arrived. At 0.85
+       * the stop came to `cues[1] + REST_SPAN` = 1.0 exactly, which was right
+       * while this was the last scene and the end of its beat was the foot of
+       * the page — and becomes a stop sitting on a beat boundary the moment
+       * anything follows it, which is the fault slide 3 had and the same
+       * arithmetic. 0.80 rests at 0.95, inside its own shot.
        */
-      cues: [0.62, 0.66],
+      cues: [0.62, 0.8],
     },
     {
       plate: "desk",
@@ -247,15 +272,17 @@ const SEQUENCE = {
       panel: "f5",
       exit: null,
       /*
-       * Whole by 0.6, and it stays until the film lets go of the frame, so the
-       * last slide is read over the last four tenths of the shot.
+       * The last scene, so `cues[1] + REST_SPAN` has to come to exactly 1.0:
+       * the film's final magnetic stop is the foot of the document, and
+       * anything short of it is scroll the wheel refuses to travel while the
+       * scrollbar still says there is more.
        *
        * The head at 0.35 rather than the council's 0.62 because this shot has
        * nowhere to arrive — the camera is already in the room and only drifts,
        * so there is no settling to wait for. It reads as the words appearing
        * over a scene that was already there.
        */
-      cues: [0.35, 0.45],
+      cues: [0.35, 0.85],
     },
   ],
 } as const;
@@ -289,7 +316,7 @@ export default async function FeaturePage({
        * Below the film, and so not part of it.
        *
        * The sequence ends on the desk, and everything here is ordinary document
-       * — no beat, no scrubbing. The last slide hands over to
+       * — no beat, no scrubbing, no magnetic stop. The last slide hands over to
        * plain scroll, which is the same arrangement the home page has had since
        * its own film stopped carrying the whole page.
        */

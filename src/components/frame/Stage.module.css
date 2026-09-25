@@ -11,12 +11,11 @@
  * viewport.
  *
  * `lvh` — the large viewport, the height with a phone's toolbars retracted —
- * because a phone's toolbar slides away under a native scroll and back when it
- * reverses. Sized from the window, the track changed by seventeen toolbars'
- * height each time — well over a thousand pixels — and the film jumped under
- * the reader's finger. The large viewport does not move with the toolbar.
- * (Never seen while the film took touch input away from the browser: a
- * toolbar only retracts under a native scroll.) `vh` first, for a browser
+ * because a phone's toolbar slides away as the page below the film is scrolled
+ * and back when it reverses. The track was sized from the window, so each time
+ * it changed by thirty-eight toolbars' height — about three thousand pixels —
+ * all of it *above* the reader, and the page they were reading jumped. The
+ * large viewport does not move with the toolbar. `vh` first, for a browser
  * without `lvh`, which drops the second declaration.
  */
 .film {

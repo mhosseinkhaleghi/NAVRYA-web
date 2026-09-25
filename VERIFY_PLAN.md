@@ -109,7 +109,8 @@ wheel gesture was being swallowed. With two stops the first one is also
 `length - 2`, so the film took the home page's hand-off-to-section-7 branch on
 the opening gesture and glided back to the top. What is asserted:
 
-- one gesture moves the page at all;
+- one gesture moves the page at all — within three seconds, because a first
+  step taken while the opening shot is playing runs the shot out at 4× first;
 - the opening and the slide's headline are never legible at the same time —
   sampled all the way through the travel, not only at the ends. Read off
   `[data-hero-part]`, which is the element the exit opacity is on, and never off
@@ -124,8 +125,11 @@ the opening gesture and glided back to the top. What is asserted:
   animation overrides the exit declaration, so the cue was pinned on screen over
   the arriving slide. The entrance now lives on an inner span and the exit on
   the part, which is the arrangement the rest of the hero already uses;
-- the wheel reaches the end of the film: nothing below the film's last frame
-  is unreachable by an ordinary wheel;
+- the film's last stop is the foot of the document. Anything short of
+  it is scroll the wheel refuses to travel while the scrollbar says there is
+  more, and the fix is the film's own timing, never a shorter track: a resting
+  stop is `cues[1] + REST_SPAN` of its beat, so a last scene resting at the end
+  of its shot is what makes the two agree;
 - at rest the panel is active, its reveal is complete, the headline is painted
   with a box, and the shot has actually reached its end;
 - the rule under the headline is present, has a real width, and **does not cross
@@ -263,25 +267,23 @@ opening plays. One, not the whole tier — preloading six 1080p plates at once
 cost the home film 580ms on its unlock, not for want of bandwidth but because
 demuxing fourteen megabytes competes with playing the shot on screen.
 
-Two corrections to the features walk, made when the scroll became native and
-said here as the contract requires. Neither makes a check weaker; both made a
-check look at the wrong sample:
+Corrections to the features walk, said here as the contract requires. None
+makes a check weaker; each made a check look at the wrong sample:
 
 - **The lead plate is exempt from the readiness gate.** It is played, not
   scrubbed, and has no light copy that could be standing in for it, so it never
-  carries `data-plate-ready` (the stylesheet does not gate it either). With the
-  opening holding the frame while its copy leaves, the walk's first steps land
-  on it, and the check reported "commander plate composited but not ready —
+  carries `data-plate-ready` (the stylesheet does not gate it either). A first
+  step taken during the opening waits for the shot to end, so the walk's first
+  samples land on it, and the check reported "commander plate composited but not ready —
   100% buffered" about a shot playing at full resolution. Its visibility is
   what matters, and that is asserted by the opening checks.
 - **A slide mid-exit is not "at rest".** Slide 4 leaves over the opening of the
-  desk shot by design, and its own clock has reached its end by then; under
-  magnetic stops no sample ever landed in that window, under native scroll one
-  does, and it outscored the real resting sample. Samples with any `--exit` are
-  now excluded when the resting stop is chosen.
-- **A slide rests while the film holds the frame.** The walk's last wheel step
-  now goes past the film's end into the document below, where the stage is
-  scrolling away with the page; the last slide's clock is at its end there too,
+  desk shot by design, and its own clock has reached its end by then; a sample
+  that lands in that window outscored the real resting sample. Samples with any
+  `--exit` are now excluded when the resting stop is chosen.
+- **A slide rests while the film holds the frame.** Below the film the page
+  scrolls natively, so a walk step past the film's end lands in the document
+  below, where the stage is scrolling away with the page; the last slide's clock is at its end there too,
   so that sample won and slide 5 was judged half off the top of a phone it fits
   at rest. Resting stops are chosen only from samples inside the film, and the
   walk wheels back to the film's exact last frame to take one there — which is

@@ -4,8 +4,8 @@ import styles from "./ScenarioSection.module.css";
  * Scenarios — the second section below the film.
  *
  * Reached by ordinary document scroll, like the session workspace above it. No
- * beat, no scrub: the film handed over one section ago and nothing here is
- * driven by the stage controller.
+ * beat, no scrub, no magnetic stop: the film handed over one section ago and
+ * nothing here is driven by the stage controller.
  *
  * ── The gallery, and why it is not `CircularGallery` ─────────────────────────
  *
@@ -23,9 +23,9 @@ import styles from "./ScenarioSection.module.css";
  *      that currently sends none of it.
  *   3. Its `App` binds `wheel`, `mousewheel`, `mousedown/move/up` and
  *      `touchstart/move/end` on **`window`**, and converts vertical wheel delta
- *      into horizontal travel. On this page the vertical wheel scrolls the
- *      document, and the document's scroll is the film. Two things reading the
- *      same gesture is not a layout problem, it is a fight.
+ *      into horizontal travel. On this page the vertical wheel belongs to the
+ *      film's controller, which owns the magnetic stops between shots. Two
+ *      things reading the same gesture is not a layout problem, it is a fight.
  *
  * So the composition and the motion are `CircularGallery`'s, and the mechanism
  * is this project's: the rail travels on its own, on a fixed cadence, and every

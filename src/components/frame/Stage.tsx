@@ -56,6 +56,8 @@ export function Stage({
    *
    *   beats        [name, vh][] — the order of the film and how much scroll
    *                each shot gets. Their sum is the track's height.
+   *   beatSeconds  [name, seconds][] — real durations, so a step's length is
+   *                taken from the footage it crosses rather than its scroll.
    *   plates       the plate ids, in the order they are composited.
    *   plateBeat    the beat each plate takes over on; null for the lead.
    *   scenes       which plate scrubs on which beat, and the panel it reveals.
@@ -66,6 +68,7 @@ export function Stage({
    */
   sequence?: {
     beats: readonly (readonly [string, number])[];
+    beatSeconds: readonly (readonly [string, number])[];
     plates: readonly string[];
     plateBeat: readonly (string | null)[];
     heroExit?: readonly [number, number];
@@ -135,6 +138,7 @@ export function Stage({
                 "--timeline-vh": sequence.beats.reduce((n, b) => n + b[1], 0),
               } as CSSProperties,
               "data-beats": JSON.stringify(sequence.beats),
+              "data-beat-seconds": JSON.stringify(sequence.beatSeconds),
               "data-plates": JSON.stringify(sequence.plates),
               "data-plate-beat": JSON.stringify(sequence.plateBeat),
               "data-scenes": JSON.stringify(sequence.scenes),

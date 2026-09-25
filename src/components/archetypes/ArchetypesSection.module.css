@@ -272,7 +272,7 @@
  * frame or sliding them out of it.
  *
  * An `<img>` rather than a background, because it can be lazy. This section is
- * the last on a page twenty-three screens long, and as backgrounds the four
+ * the last on a page forty-odd screens long, and as backgrounds the four
  * portraits — 350KB — were fetched with the page, competing with the opening.
  * The browser now fetches them as the reader approaches, with or without
  * JavaScript. `alt=""`: the caption on the same panel names the character.

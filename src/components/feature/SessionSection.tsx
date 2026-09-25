@@ -5,7 +5,7 @@ import styles from "./SessionSection.module.css";
  *
  * The film ends on the desk and hands over to ordinary document scroll here.
  * Nothing on this section is driven by the stage controller: no beat, no
- * scrubbing. It is reached the way anything on any page is
+ * scrubbing, no magnetic stop. It is reached the way anything on any page is
  * reached, which is what was asked for and one fewer thing that can behave
  * differently inside an embed.
  *

@@ -53,18 +53,11 @@ the only way onward is to chain to the parent. With it on both axes the wheel
 died at the bottom of an embed while the rail, which scrolls by script, kept
 working. Hence `overscroll-behavior-x`.
 
-The scroll is the viewer's. The controller never reads the wheel, touch or
-keyboard to decide where the page goes — the browser scrolls natively, with its
-own momentum, keyboard handling and accessibility, and every frame of the film
-is a pure function of where it has been scrolled to. The only scripted scrolls
-are ones a viewer explicitly asks for (a rail mark, section 6's dots), and any
-input of theirs takes the scroll straight back.
-
-(It used to intercept every input inside the film and glide between "story
-states" at the footage's own speed. One notch of a mouse wheel then moved the
-page 5.2 screens and took 8.7s to settle, holding the wheel took 50s to reach
-section 7, and further input was ignored until each glide finished. The film
-was 38 screens long, which is what made that seem necessary; it is 17 now.)
+Inside the film the page moves **one chapter per intent**. A wheel gesture, a
+swipe or a key picks the next complete story state and a travel carries the
+page there, playing the footage in between; every frame is still a pure
+function of scroll position, so the film runs backwards as readily as forwards.
+Below the film the page scrolls natively, in both directions. See *Stepping*.
 
 Scroll position feeds scene changes *inside* the frame. `Stage` renders a track
 below itself whose only job is to give the document height to scroll through;
@@ -77,8 +70,48 @@ is the no-JS fallback.
 The unit it is multiplied by is a clamped `lvh` (see `.film` in
 `Stage.module.css`): clamped so that a frame sized to its content cannot feed
 back into the track's length, and the *large* viewport so that a phone's
-toolbar sliding in and out under a native scroll does not resize a
-seventeen-screen track by seventeen toolbars.
+toolbar sliding in and out while the page below the film scrolls does not
+resize the thirty-eight-screen track above the reader by thirty-eight toolbars.
+
+### Stepping
+
+One intent, one chapter. The states are where the choreography has finished a
+readable thought — each panel complete, the closing sentence lit, the miss
+statement whole, each psychology card — and they are computed from the same cue
+and beat tables the frames are painted from, so retiming a scene moves its stop.
+The last step of the film is the hand-off onto the page: the same target and
+glide as section 7's rail mark.
+
+What a step does, and what it no longer does:
+
+- **Its length comes from the footage it crosses, compressed.** Short shots play
+  at their own speed; long ones are compressed so that every step lands in about
+  two seconds (`STEP_*` in `stage-script.ts`). A step used to play its footage
+  at 1× — 7.3s from the opening to section 2, 10.5s for the release — and the
+  page did nothing else until it had.
+- **Input during a step is kept, not dropped.** A flick while travelling is
+  taken the moment the travel lands (two are kept); a flick the other way turns
+  the travel round to the chapter it left.
+- **A held wheel or key carries on; momentum does not.** A gesture is a burst of
+  wheel events, timed by the events' own timestamps; input still at strength
+  when a step lands continues into the next one, and a trackpad's decaying tail
+  never does, so one swipe is one step.
+- **Space presses a focused button**, ctrl + wheel still zooms, and a sideways
+  swipe (the bar's links scroll sideways on a phone) is left alone.
+- **Upward below the film is ordinary scrolling.** From section 7's top one step
+  goes back into the film; further down the page scrolls up natively. It used
+  to take any upward wheel below the film — from section 9 as readily as 7 —
+  straight back to the film's last chapter.
+- **Nothing waits on the opening.** A first step taken while the opening shot is
+  still playing runs the rest of it at 4× and steps the moment it ends, so the
+  film continues from its last frame rather than cutting out of the middle.
+- **A travel paints each frame itself**, in the frame it moves, instead of a
+  frame later from the scroll event it raises.
+
+Measured against the original on the same build setup: one notch to section 2
+took 8.7s and takes 2.3s; a held wheel reached section 7 in 58.6s and reaches
+it in 19.6s; on a phone the first swipe landed after 8.1s and lands after 1.6s,
+and reaching section 7 took 43 swipes and 44s against 16 and 15s.
 
 ### Where the film stops
 
@@ -128,24 +161,22 @@ fires once. `components/frame/stage-script.ts` maps scroll onto the beats:
 
 | beat | scroll | what happens |
 | ---- | ------ | ------------ |
-| — | on load | The bar, the headline and both calls to action are up at first paint — held only for the opening's typefaces, at most 500ms. `hunter-dawn` plays once it can run without stalling. Nothing is locked: a viewer who scrolls while it plays runs it on at 2.5× so it finishes under them, and the first scrubbed plate eases up from its last frame. |
-| `turn` | 130vh | `hunter-turn` scrubs: he turns back to the valley. The hero holds for the first 30% and leaves by 80%. |
-| `prey` | 170vh | `valley-prey` scrubs. The deer clears the frame edge at **0.40s** and section 2's headline lands on it; the rest of the panel follows straight after and is whole about a third of the way in. |
-| `draw` | 180vh | `hunter-draw` scrubs. Section 2 leaves over its first fifth, and section 3 is whole by just past half. |
-| `strike` | 200vh | `hunter-strike` scrubs: the camera circles and pushes in to the draw. Section 3 leaves over its first fifth; section 4 is whole by 57%. |
-| `clear` | 60vh | Section 4 leaves, over the closing frame and nothing else. The release is the loudest moment in the sequence and the text is off the screen before it. |
-| `arrow` | 220vh | `arrow-learns` scrubs: the release, the flight, the fall to black. At **2.00s** the arrow is dead centre and section 5's headline arrives above it; from **5.15s** the valley falls away and the paragraph fades up with it. |
-| `learn` | 150vh | The paragraph lights up a word at a time and the edge light draws itself round the frame. Both finish as the beat does — the sentence completing *is* the end of the section. |
-| `depart` | 80vh | Section 5's words leave, the arrow follows them off, the frame dips through black, and the next morning fades up. |
-| `miss` | 180vh | `forest-miss` scrubs. The arrow buries itself in the tree at **0.67s** and section 6's statement lands on it; the block lifts as the stag turns and runs at **1.30s**; the frame is empty by **3.95s**. |
-| `traits` | 300vh | The psychology features, one slide per stretch of scroll, over the plate's own last frame — which stays. |
-| `fall` | 70vh | Section 6 lifts away and the forest goes down behind it, onto the page's own black, and section 7 rises out of it. |
+| — | on load | The bar, the headline and both calls to action are up at first paint — held only for the opening's typefaces, at most 500ms. `hunter-dawn` plays once it can run without stalling; at **4.33s** the hunter turns to face the viewer. Nothing is locked: a first step taken while it plays runs the rest of it at 4× and steps the moment it ends. |
+| `turn` | 210vh | `hunter-turn` scrubs: he turns back to the valley. The hero block leaves over it. |
+| `prey` | 380vh | `valley-prey` scrubs. The deer clears the frame edge at **0.40s** and section 2's headline lands on it; at **3.60s** it drops its head to graze and the rest of the panel assembles. |
+| `draw` | 380vh | `hunter-draw` scrubs. The draw settles into the aim at **2.50s** and section 3 arrives. Section 2 leaves over it. |
+| `strike` | 520vh | `hunter-strike` scrubs. The camera reaches the draw at **4.00s**, about 70% back, and section 4 arrives. Section 3 leaves over it. |
+| `clear` | 160vh | Section 4 leaves, over the closing frame and nothing else. The release is the loudest moment in the sequence and the text is off the screen before it. |
+| `arrow` | 520vh | `arrow-learns` scrubs: the release, the flight, the fall to black. At **2.00s** the arrow is dead centre and section 5's headline arrives above it; from **5.15s** the valley falls away and the paragraph fades up with it. |
+| `learn` | 340vh | The paragraph lights up a word at a time and the edge light draws itself round the frame. Both finish as the beat does — the sentence completing *is* the end of the section, so the last word goes white at 95–97% of the beat, depending on how many words the locale's sentence has. |
+| `depart` | 150vh | Section 5's words leave, the arrow follows them off, the frame dips through black, and the next morning fades up. Every vh of it is moving, which is what lets it be this short. |
+| `miss` | 420vh | `forest-miss` scrubs. The arrow buries itself in the tree at **0.67s** and section 6's statement lands on it; the block lifts as the stag turns and runs at **1.30s**; the frame is empty by **3.95s**. |
+| `traits` | 560vh | The psychology features, one slide per stretch of scroll, over the plate's own last frame — which stays. The deck finishes at 96% of the beat rather than 75%, so the last feature landing is the end of the section. |
+| `fall` | 180vh | Section 6 lifts away and the forest goes down behind it, leaving the frame on the page's own black. The one handover with no plate on the other side, and the end of the film — section 7 begins on the next pixel. |
 
-The shape repeats: a plate runs, its panel arrives early in it, rests for
-roughly a screen of scroll with the shot still moving behind it, and leaves
-again **over the next plate**, which is already moving. A panel is complete
-wherever a reader stops inside that stretch — there is no need for the page to
-stop them there. There are no held frames anywhere in the chain — a still image followed
+The shape repeats: a plate runs, its panel arrives on a cue taken from the
+footage, and the panel leaves again **over the next plate**, which is already
+moving. There are no held frames anywhere in the chain — a still image followed
 by sudden motion reads as a jump however well the frames match. Sections 2, 3
 and 4 are one component rendered three times —
 `components/panel/PanelSection` — differing only in copy and icon.
@@ -294,7 +325,7 @@ brand names do; the kind and the tagline are translated.
 
 One mark per section down the **trailing** edge of the frame — right in English,
 Turkish and Spanish, left in Persian and Arabic — with the current one drawn
-long. The page is ~23 screens of scroll end to end, which is right for
+long. The sequence is ~44 screens of scroll end to end, which is right for
 watching it and wrong for going back to something.
 
 It is not a component with state. Which mark is lit and where each one lands are
@@ -305,9 +336,10 @@ puts every boundary on a plate handover.
 
 Where a mark *goes* is deliberately not where its section starts: jumping to a
 section's first frame lands on a headline mid-blur with its panel still
-assembling. The targets are inside each section's resting stretch: the panel
-built, the closing sentence complete, section 6's statement whole and not yet
-lifting. Marks below the film re-read their target on every frame of the jump,
+assembling. The targets are each section at rest: the panel built, the closing
+sentence complete, section 6's statement whole and not yet lifting — the same
+states a step lands on. Marks below the film re-read their target on every frame
+of the jump,
 because a section's height can change while the page is travelling to it.
 
 A jump is travelled, not teleported. Every frame is a pure function of scroll
@@ -375,15 +407,15 @@ trim length as an argument and does it in the delivery encode.
 
 Three tiers, and most things are in none of them:
 
-- **Primary — the film.** Plates cut on shared frames, the one dip to black,
-  panels leaving over the shot that follows. This is the story, and it is
-  scrubbed by scroll so it runs backwards as readily as forwards.
+- **Primary — the film.** One step per chapter: the shot plays, the old panel
+  leaves over the next plate, the new one arrives, and the step lands on the
+  chapter complete. Plates cut on shared frames; the one dip to black is the
+  release into the next morning. Scrubbed by scroll position, so it runs
+  backwards as readily as forwards.
 - **Secondary — arrivals.** A headline resolves, its body follows, a rule
-  draws from the text's leading edge. Every chapter's copy is complete about a
-  third of the way into its shot and then *rests* for roughly a screen of
-  scroll, so wherever a reader stops inside that stretch it is whole. Below the
-  film a section's head is up by the time its top is a third of the way up the
-  screen, and its body by half way.
+  draws from the text's leading edge, timed on cues taken from the footage.
+  Below the film a section's head is up by the time its top is a third of the
+  way up the screen, and its body by half way.
 - **Micro — feedback.** Hover and press states, the scroll cue, the rail.
 
 What is deliberately still: the plates between cues, the held frame under
@@ -394,8 +426,8 @@ leaving, section 5's bloom stroke) are dropped — each is a full-size repaint o
 every frame of the scroll — and the rise and fade carry the motion alone.
 Layers (`will-change`) exist only while their section is on screen. Under
 `prefers-reduced-motion` nothing downloads, the stills carry the film, entrances
-do not animate, and scroll moves the story on exactly as it does for everyone
-else.
+do not animate, and each step moves to the next chapter at once instead of
+travelling to it.
 
 ## The plates
 
@@ -483,10 +515,9 @@ Nothing carries `autoplay`. It begins at `canplay`, which promises exactly one
 more decodable frame, and the hitch that follows is what made the opening look
 broken. The controller starts the plate only once it is buffered *or* the file
 is arriving faster than it plays, and only while the viewer is still at the top
-to watch it. If they scroll first, it is let go once the opening copy starts to
-leave. If they scroll while it plays, it runs on at 2.5× and the first scrubbed
-plate eases from its last frame to wherever the scroll has reached — the two
-frames either side are the same picture, so it reads as one quickened shot.
+to watch it. A first step taken while it plays runs the rest of it at 4× and
+steps the moment it ends: the plate after it opens on the frame it closes on,
+so the film continues rather than cutting into the middle of the shot.
 
 Seeks are queued one at a time per plate — a seek issued while another is
 resolving is dropped by the browser — which keeps the picture as close to the
@@ -494,8 +525,10 @@ scroll as the decoder allows. Each frame of the controller reads every
 measurement it needs before it writes anything, so it never forces a layout
 mid-frame; it costs under a millisecond per frame.
 
-To retime anything: `BEATS` for how much scroll each beat gets, the `cues` on
-`SCENES` for where each panel lands, and `RAIL` for where each mark goes. The
+To retime anything: `BEATS` for how much scroll each beat gets, the cue
+constants (`DEER_ENTERS`, `DEER_GRAZES`, `BOW_SET`, `AIM_HELD`) for where each
+panel lands — and so where each step rests — `STEP_*` for how long a step takes,
+and `RAIL` for where each mark goes. The
 reveal styling itself lives in the `Intro` / `Reveal` sections of the component
 stylesheets.
 
