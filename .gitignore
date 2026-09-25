@@ -46,3 +46,6 @@ next-env.d.ts
 # thousand screenshots and the raw reports are not
 /verification/**/*.png
 /verification/**/report.json
+
+# /brag-slim output (generated launch videos + intermediate frames/screenshots)
+/brag-output*/
