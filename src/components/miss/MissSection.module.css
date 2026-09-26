@@ -96,9 +96,10 @@
 /*
  * The device the product will be shown in.
  *
- * Outline only — the interior has to stay transparent, because the plate holds
- * still behind it and that stillness is the point of the shot. Two rounded
- * frames, the inner one's top edge interrupted for the notch.
+ * The interior carries the AI-chart-analysis loop, windowed by two rounded
+ * frames, the inner one's top edge interrupted for the notch. The loop is one
+ * clip for the whole carousel — it does not change with the trait dots — so
+ * it is a sibling of `.rail`, not part of `.deck`.
  */
 .bezel {
   position: relative;
@@ -113,9 +114,56 @@
   transform: translateY(calc((1 - var(--told)) * 2.5rem));
 }
 
+/* The loop's own window, inset to match `.bezel::before` exactly so its
+ * rounded corners sit flush behind the drawn frame. Below the frame and the
+ * notch in paint order — both get an explicit `z-index` because an
+ * absolutely-positioned video sibling would otherwise paint over the
+ * pseudo-element border by simple DOM order. */
+.bezelMedia {
+  position: absolute;
+  inset: clamp(0.5rem, 0.75vw, 0.9rem);
+  overflow: hidden;
+  border-radius: clamp(0.6rem, 1vw, 1.15rem);
+  z-index: 0;
+}
+
+.bezelStill {
+  position: absolute;
+  inset: 0;
+  background-image: var(--bezel-still-landscape);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+}
+
+/* `cover`, not `contain`: unlike the film's plates this loop is a UI capture
+ * meant to fill its window edge to edge. Never mirrored for RTL — the clip
+ * carries real on-screen chart labels, and flipping it would flip the text. */
+.bezelVideo {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+@media (max-aspect-ratio: 1 / 1) {
+  .bezelStill {
+    background-image: var(--bezel-still-portrait);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bezelVideo {
+    display: none;
+  }
+}
+
 .bezel::before {
   content: "";
   position: absolute;
+  z-index: 2;
   inset: clamp(0.5rem, 0.75vw, 0.9rem);
   border-radius: clamp(0.6rem, 1vw, 1.15rem);
   /* Left, right and bottom are a border; the top is drawn as two bars with a
@@ -134,6 +182,7 @@
  * pixels and never distort with the frame. */
 .bezelNotch {
   position: absolute;
+  z-index: 3;
   inset-block-start: clamp(0.5rem, 0.75vw, 0.9rem);
   /* Physical `left`, not `inset-inline-start`. The notch is symmetric, so
    * centring it has no direction — but pairing the logical offset with a

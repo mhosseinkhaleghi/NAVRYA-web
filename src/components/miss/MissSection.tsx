@@ -53,6 +53,47 @@ export function MissSection({ miss }: { miss: Dictionary["miss"] }) {
       {/* The features, over the held frame. */}
       <div className={styles.traits}>
         <div className={styles.bezel}>
+          <div
+            className={styles.bezelMedia}
+            style={
+              {
+                "--bezel-still-landscape": `url("${miss.media.landscape.poster}")`,
+                "--bezel-still-portrait": `url("${miss.media.portrait.poster}")`,
+              } as React.CSSProperties
+            }
+          >
+            <div className={styles.bezelStill} />
+            <video
+              className={styles.bezelVideo}
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="auto"
+              tabIndex={-1}
+            >
+              <source
+                src={miss.media.landscape.webm}
+                type="video/webm"
+                media="(min-aspect-ratio: 1/1) and (prefers-reduced-motion: no-preference)"
+              />
+              <source
+                src={miss.media.landscape.mp4}
+                type="video/mp4"
+                media="(min-aspect-ratio: 1/1) and (prefers-reduced-motion: no-preference)"
+              />
+              <source
+                src={miss.media.portrait.webm}
+                type="video/webm"
+                media="(max-aspect-ratio: 1/1) and (prefers-reduced-motion: no-preference)"
+              />
+              <source
+                src={miss.media.portrait.mp4}
+                type="video/mp4"
+                media="(max-aspect-ratio: 1/1) and (prefers-reduced-motion: no-preference)"
+              />
+            </video>
+          </div>
           <span className={styles.bezelNotch} />
         </div>
 
