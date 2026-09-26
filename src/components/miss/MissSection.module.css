@@ -130,15 +130,18 @@
 .bezelStill {
   position: absolute;
   inset: 0;
-  background-image: var(--bezel-still-landscape);
+  background-image: var(--bezel-still);
   background-repeat: no-repeat;
   background-position: center;
   background-size: cover;
 }
 
 /* `cover`, not `contain`: unlike the film's plates this loop is a UI capture
- * meant to fill its window edge to edge. Never mirrored for RTL — the clip
- * carries real on-screen chart labels, and flipping it would flip the text. */
+ * meant to fill its window edge to edge — the bezel is a fixed 16/10.4
+ * "device" shape on every viewport (see `.bezel` below), so one landscape
+ * clip covers it cleanly on a phone exactly as it does on a desktop. Never
+ * mirrored for RTL — the clip carries real on-screen chart labels, and
+ * flipping it would flip the text. */
 .bezelVideo {
   position: absolute;
   inset: 0;
@@ -146,12 +149,6 @@
   block-size: 100%;
   object-fit: cover;
   object-position: center;
-}
-
-@media (max-aspect-ratio: 1 / 1) {
-  .bezelStill {
-    background-image: var(--bezel-still-portrait);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
