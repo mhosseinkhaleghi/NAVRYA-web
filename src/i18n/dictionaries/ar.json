@@ -112,14 +112,14 @@
         ],
         "media": {
           "landscape": {
-            "mp4": "/traits/discipline-score-en-1920x1080.mp4",
-            "webm": "/traits/discipline-score-en-1920x1080.webm",
-            "poster": "/traits/discipline-score-en-1920x1080-first.jpg"
+            "mp4": "/traits/discipline-score-ar-1920x1080.mp4",
+            "webm": "/traits/discipline-score-ar-1920x1080.webm",
+            "poster": "/traits/discipline-score-ar-1920x1080-first.jpg"
           },
           "portrait": {
-            "mp4": "/traits/discipline-score-en-1080x1920.mp4",
-            "webm": "/traits/discipline-score-en-1080x1920.webm",
-            "poster": "/traits/discipline-score-en-1080x1920-first.jpg"
+            "mp4": "/traits/discipline-score-ar-1080x1920.mp4",
+            "webm": "/traits/discipline-score-ar-1080x1920.webm",
+            "poster": "/traits/discipline-score-ar-1080x1920-first.jpg"
           }
         }
       },
