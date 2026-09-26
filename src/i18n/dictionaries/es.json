@@ -82,23 +82,23 @@
     "traitsLabel": "Psicología",
     "media": {
       "landscape": {
-        "mp4": "/traits/ai-chart-analysis-en-1920x1080.mp4",
-        "webm": "/traits/ai-chart-analysis-en-1920x1080.webm",
-        "poster": "/traits/ai-chart-analysis-en-1920x1080-first.jpg"
+        "mp4": "/traits/ai-chart-analysis-es-1920x1080.mp4",
+        "webm": "/traits/ai-chart-analysis-es-1920x1080.webm",
+        "poster": "/traits/ai-chart-analysis-es-1920x1080-first.jpg"
       },
       "portrait": {
-        "mp4": "/traits/ai-chart-analysis-en-1080x1920.mp4",
-        "webm": "/traits/ai-chart-analysis-en-1080x1920.webm",
-        "poster": "/traits/ai-chart-analysis-en-1080x1920-first.jpg"
+        "mp4": "/traits/ai-chart-analysis-es-1080x1920.mp4",
+        "webm": "/traits/ai-chart-analysis-es-1080x1920.webm",
+        "poster": "/traits/ai-chart-analysis-es-1080x1920-first.jpg"
       }
     },
     "traits": [
       {
         "index": "01",
-        "title": "Rastreo Emocional",
+        "title": "Análisis de Gráficos con IA",
         "body": [
-          "Descubre cómo el miedo, la codicia, la confianza",
-          "y la duda influyen en tus operaciones."
+          "Muéstrale el gráfico a NAVRYA: lee el",
+          "planteamiento, el contexto y los riesgos, antes de entrar."
         ]
       },
       {
