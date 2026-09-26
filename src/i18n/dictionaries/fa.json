@@ -80,13 +80,25 @@
     ],
     "subline": "پیش از شلیک بعدی، دلیلش را بدان.",
     "traitsLabel": "روان‌شناسی",
+    "media": {
+      "landscape": {
+        "mp4": "/traits/ai-chart-analysis-fa-1920x1080.mp4",
+        "webm": "/traits/ai-chart-analysis-fa-1920x1080.webm",
+        "poster": "/traits/ai-chart-analysis-fa-1920x1080-first.jpg"
+      },
+      "portrait": {
+        "mp4": "/traits/ai-chart-analysis-fa-1080x1920.mp4",
+        "webm": "/traits/ai-chart-analysis-fa-1080x1920.webm",
+        "poster": "/traits/ai-chart-analysis-fa-1080x1920-first.jpg"
+      }
+    },
     "traits": [
       {
         "index": "۰۱",
-        "title": "ردیابی احساسات",
+        "title": "تحلیل هوشمند نمودار",
         "body": [
-          "ببین ترس، طمع، اعتماد و تردید",
-          "چگونه بر معامله‌هایت اثر می‌گذارند."
+          "نمودار را به NAVRYA نشان بده؛ پیش از ورود",
+          "ستاپ، بستر و ریسک معامله را می‌خواند."
         ]
       },
       {

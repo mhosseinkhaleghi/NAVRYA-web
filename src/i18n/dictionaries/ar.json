@@ -80,6 +80,18 @@
     ],
     "subline": "اعرف السبب قبل أن ترمي مرة أخرى.",
     "traitsLabel": "علم النفس",
+    "media": {
+      "landscape": {
+        "mp4": "/traits/ai-chart-analysis-en-1920x1080.mp4",
+        "webm": "/traits/ai-chart-analysis-en-1920x1080.webm",
+        "poster": "/traits/ai-chart-analysis-en-1920x1080-first.jpg"
+      },
+      "portrait": {
+        "mp4": "/traits/ai-chart-analysis-en-1080x1920.mp4",
+        "webm": "/traits/ai-chart-analysis-en-1080x1920.webm",
+        "poster": "/traits/ai-chart-analysis-en-1080x1920-first.jpg"
+      }
+    },
     "traits": [
       {
         "index": "٠١",

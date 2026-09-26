@@ -80,13 +80,25 @@
     ],
     "subline": "Know the reason before you take the next shot.",
     "traitsLabel": "Psychology",
+    "media": {
+      "landscape": {
+        "mp4": "/traits/ai-chart-analysis-en-1920x1080.mp4",
+        "webm": "/traits/ai-chart-analysis-en-1920x1080.webm",
+        "poster": "/traits/ai-chart-analysis-en-1920x1080-first.jpg"
+      },
+      "portrait": {
+        "mp4": "/traits/ai-chart-analysis-en-1080x1920.mp4",
+        "webm": "/traits/ai-chart-analysis-en-1080x1920.webm",
+        "poster": "/traits/ai-chart-analysis-en-1080x1920-first.jpg"
+      }
+    },
     "traits": [
       {
         "index": "01",
-        "title": "Emotional Tracking",
+        "title": "AI Chart Analysis",
         "body": [
-          "Discover how fear, greed, confidence,",
-          "and hesitation influence your trades."
+          "Show NAVRYA the chart. It reads the setup,",
+          "context and risks — before you commit."
         ]
       },
       {
