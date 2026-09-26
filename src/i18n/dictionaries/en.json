@@ -80,18 +80,6 @@
     ],
     "subline": "Know the reason before you take the next shot.",
     "traitsLabel": "Psychology",
-    "media": {
-      "landscape": {
-        "mp4": "/traits/ai-chart-analysis-en-1920x1080.mp4",
-        "webm": "/traits/ai-chart-analysis-en-1920x1080.webm",
-        "poster": "/traits/ai-chart-analysis-en-1920x1080-first.jpg"
-      },
-      "portrait": {
-        "mp4": "/traits/ai-chart-analysis-en-1080x1920.mp4",
-        "webm": "/traits/ai-chart-analysis-en-1080x1920.webm",
-        "poster": "/traits/ai-chart-analysis-en-1080x1920-first.jpg"
-      }
-    },
     "traits": [
       {
         "index": "01",
@@ -99,7 +87,19 @@
         "body": [
           "Show NAVRYA the chart. It reads the setup,",
           "context and risks — before you commit."
-        ]
+        ],
+        "media": {
+          "landscape": {
+            "mp4": "/traits/ai-chart-analysis-en-1920x1080.mp4",
+            "webm": "/traits/ai-chart-analysis-en-1920x1080.webm",
+            "poster": "/traits/ai-chart-analysis-en-1920x1080-first.jpg"
+          },
+          "portrait": {
+            "mp4": "/traits/ai-chart-analysis-en-1080x1920.mp4",
+            "webm": "/traits/ai-chart-analysis-en-1080x1920.webm",
+            "poster": "/traits/ai-chart-analysis-en-1080x1920-first.jpg"
+          }
+        }
       },
       {
         "index": "02",
@@ -107,7 +107,19 @@
         "body": [
           "See how closely you followed your own",
           "rules, trade after trade."
-        ]
+        ],
+        "media": {
+          "landscape": {
+            "mp4": "/traits/discipline-score-en-1920x1080.mp4",
+            "webm": "/traits/discipline-score-en-1920x1080.webm",
+            "poster": "/traits/discipline-score-en-1920x1080-first.jpg"
+          },
+          "portrait": {
+            "mp4": "/traits/discipline-score-en-1080x1920.mp4",
+            "webm": "/traits/discipline-score-en-1080x1920.webm",
+            "poster": "/traits/discipline-score-en-1080x1920-first.jpg"
+          }
+        }
       },
       {
         "index": "03",
@@ -115,7 +127,8 @@
         "body": [
           "Recognise the mistakes you repeat,",
           "before you repeat them again."
-        ]
+        ],
+        "media": null
       }
     ]
   },

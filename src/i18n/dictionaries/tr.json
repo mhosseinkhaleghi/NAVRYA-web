@@ -80,18 +80,6 @@
     ],
     "subline": "Sonraki atışı yapmadan önce nedenini bil.",
     "traitsLabel": "Psikoloji",
-    "media": {
-      "landscape": {
-        "mp4": "/traits/ai-chart-analysis-en-1920x1080.mp4",
-        "webm": "/traits/ai-chart-analysis-en-1920x1080.webm",
-        "poster": "/traits/ai-chart-analysis-en-1920x1080-first.jpg"
-      },
-      "portrait": {
-        "mp4": "/traits/ai-chart-analysis-en-1080x1920.mp4",
-        "webm": "/traits/ai-chart-analysis-en-1080x1920.webm",
-        "poster": "/traits/ai-chart-analysis-en-1080x1920-first.jpg"
-      }
-    },
     "traits": [
       {
         "index": "01",
@@ -99,7 +87,19 @@
         "body": [
           "Korkunun, açgözlülüğün, güvenin ve tereddüdün",
           "işlemlerini nasıl etkilediğini keşfet."
-        ]
+        ],
+        "media": {
+          "landscape": {
+            "mp4": "/traits/ai-chart-analysis-en-1920x1080.mp4",
+            "webm": "/traits/ai-chart-analysis-en-1920x1080.webm",
+            "poster": "/traits/ai-chart-analysis-en-1920x1080-first.jpg"
+          },
+          "portrait": {
+            "mp4": "/traits/ai-chart-analysis-en-1080x1920.mp4",
+            "webm": "/traits/ai-chart-analysis-en-1080x1920.webm",
+            "poster": "/traits/ai-chart-analysis-en-1080x1920-first.jpg"
+          }
+        }
       },
       {
         "index": "02",
@@ -107,7 +107,19 @@
         "body": [
           "Kendi kurallarına ne kadar bağlı kaldığını",
           "işlem işlem gör."
-        ]
+        ],
+        "media": {
+          "landscape": {
+            "mp4": "/traits/discipline-score-en-1920x1080.mp4",
+            "webm": "/traits/discipline-score-en-1920x1080.webm",
+            "poster": "/traits/discipline-score-en-1920x1080-first.jpg"
+          },
+          "portrait": {
+            "mp4": "/traits/discipline-score-en-1080x1920.mp4",
+            "webm": "/traits/discipline-score-en-1080x1920.webm",
+            "poster": "/traits/discipline-score-en-1080x1920-first.jpg"
+          }
+        }
       },
       {
         "index": "03",
@@ -115,7 +127,8 @@
         "body": [
           "Tekrarladığın hataları, yeniden",
           "tekrarlamadan önce fark et."
-        ]
+        ],
+        "media": null
       }
     ]
   },

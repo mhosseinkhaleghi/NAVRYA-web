@@ -80,18 +80,6 @@
     ],
     "subline": "اعرف السبب قبل أن ترمي مرة أخرى.",
     "traitsLabel": "علم النفس",
-    "media": {
-      "landscape": {
-        "mp4": "/traits/ai-chart-analysis-ar-1920x1080.mp4",
-        "webm": "/traits/ai-chart-analysis-ar-1920x1080.webm",
-        "poster": "/traits/ai-chart-analysis-ar-1920x1080-first.jpg"
-      },
-      "portrait": {
-        "mp4": "/traits/ai-chart-analysis-ar-1080x1920.mp4",
-        "webm": "/traits/ai-chart-analysis-ar-1080x1920.webm",
-        "poster": "/traits/ai-chart-analysis-ar-1080x1920-first.jpg"
-      }
-    },
     "traits": [
       {
         "index": "٠١",
@@ -99,7 +87,19 @@
         "body": [
           "أظهر الرسم البياني لناڤريا؛ فهو يقرأ الإعداد",
           "والسياق والمخاطر — قبل أن تدخل الصفقة."
-        ]
+        ],
+        "media": {
+          "landscape": {
+            "mp4": "/traits/ai-chart-analysis-ar-1920x1080.mp4",
+            "webm": "/traits/ai-chart-analysis-ar-1920x1080.webm",
+            "poster": "/traits/ai-chart-analysis-ar-1920x1080-first.jpg"
+          },
+          "portrait": {
+            "mp4": "/traits/ai-chart-analysis-ar-1080x1920.mp4",
+            "webm": "/traits/ai-chart-analysis-ar-1080x1920.webm",
+            "poster": "/traits/ai-chart-analysis-ar-1080x1920-first.jpg"
+          }
+        }
       },
       {
         "index": "٠٢",
@@ -107,7 +107,19 @@
         "body": [
           "انظر كم التزمت بقواعدك أنت،",
           "صفقة بعد صفقة."
-        ]
+        ],
+        "media": {
+          "landscape": {
+            "mp4": "/traits/discipline-score-en-1920x1080.mp4",
+            "webm": "/traits/discipline-score-en-1920x1080.webm",
+            "poster": "/traits/discipline-score-en-1920x1080-first.jpg"
+          },
+          "portrait": {
+            "mp4": "/traits/discipline-score-en-1080x1920.mp4",
+            "webm": "/traits/discipline-score-en-1080x1920.webm",
+            "poster": "/traits/discipline-score-en-1080x1920-first.jpg"
+          }
+        }
       },
       {
         "index": "٠٣",
@@ -115,7 +127,8 @@
         "body": [
           "تعرّف على الأخطاء التي تكررها،",
           "قبل أن تكررها من جديد."
-        ]
+        ],
+        "media": null
       }
     ]
   },
