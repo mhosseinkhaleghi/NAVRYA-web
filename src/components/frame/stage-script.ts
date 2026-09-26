@@ -430,11 +430,19 @@ export const stageScript = inlineScript(`
   var reduced = window.matchMedia
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // A connection that has asked to be spared, or cannot carry the shipping
-  // plates, gets the film on the light tier alone. The picture is softer; the
-  // sequence, every cue and every word are identical.
+  // A connection that has asked to be spared gets the film on the light tier
+  // alone. The picture is softer; the sequence, every cue and every word are
+  // identical.
+  //
+  // Only \`saveData\`, never \`effectiveType\`. Chromium derives effectiveType
+  // from round-trip time alone, so any line past ~270ms RTT reads as "3g"
+  // whatever its bandwidth — a VPN or an international route at 10Mbps+ was
+  // put on the 480p proxy for good, and the shipping plates never loaded. A
+  // genuinely slow line loses nothing by being offered them: the proxy still
+  // carries the motion from the first scroll, and the plates queue behind it
+  // one at a time and sharpen each shot as they land.
   var conn = navigator.connection;
-  var lite = !!(conn && (conn.saveData || /2g|3g/.test(conn.effectiveType || '')));
+  var lite = !!(conn && conn.saveData);
 
   // ── beat boundaries, as fractions of the film ────────────────────────────
   var total = 0, i;

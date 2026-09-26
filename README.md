@@ -486,7 +486,10 @@ seven used to come with the page) and the section 10 portraits, which are lazy
 that comes sooner — the controller fetches the rest in the order they are
 watched, one file at a time: the light tier first, then the shipping plates. A
 plate the viewer reaches before the queue does jumps it. A connection that asks
-to save data, or reports 2G/3G, gets the light tier alone.
+to save data gets the light tier alone. `effectiveType` is deliberately not
+consulted: Chromium derives it from round-trip time only, so a fast line with
+high latency (a VPN, an international route) reads as "3g" and was kept on the
+480p proxy for good.
 
 Nothing is fetched *while* the opening plays. A second decoder spinning up under
 the playing shot stalled the main thread for 1.3s in measurement (1.6s of total
