@@ -54,8 +54,12 @@ export function MissSection({ miss }: { miss: Dictionary["miss"] }) {
       {/* The features, over the held frame. */}
       <div className={styles.traits}>
         <div className={styles.bezel}>
-          <BezelVideo media={miss.media} />
+          <BezelVideo traits={miss.traits} />
           <span className={styles.bezelNotch} />
+          <span className={styles.bezelCorner} data-corner="tl" />
+          <span className={styles.bezelCorner} data-corner="tr" />
+          <span className={styles.bezelCorner} data-corner="bl" />
+          <span className={styles.bezelCorner} data-corner="br" />
         </div>
 
         <div className={styles.rail}>

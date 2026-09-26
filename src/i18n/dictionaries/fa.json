@@ -82,18 +82,6 @@
     ],
     "subline": "پیش از شلیک بعدی، دلیلش را بدان.",
     "traitsLabel": "روان‌شناسی",
-    "media": {
-      "landscape": {
-        "mp4": "/traits/ai-chart-analysis-fa-1920x1080.mp4",
-        "webm": "/traits/ai-chart-analysis-fa-1920x1080.webm",
-        "poster": "/traits/ai-chart-analysis-fa-1920x1080-first.jpg"
-      },
-      "portrait": {
-        "mp4": "/traits/ai-chart-analysis-fa-1080x1920.mp4",
-        "webm": "/traits/ai-chart-analysis-fa-1080x1920.webm",
-        "poster": "/traits/ai-chart-analysis-fa-1080x1920-first.jpg"
-      }
-    },
     "traits": [
       {
         "index": "۰۱",
@@ -101,7 +89,19 @@
         "body": [
           "نمودار را به ناوریا نشان بده. او ستاپ،",
           "زمینه و ریسک‌ها را پیش از ورودت می‌خواند."
-        ]
+        ],
+        "media": {
+          "landscape": {
+            "mp4": "/traits/ai-chart-analysis-fa-1920x1080.mp4",
+            "webm": "/traits/ai-chart-analysis-fa-1920x1080.webm",
+            "poster": "/traits/ai-chart-analysis-fa-1920x1080-first.jpg"
+          },
+          "portrait": {
+            "mp4": "/traits/ai-chart-analysis-fa-1080x1920.mp4",
+            "webm": "/traits/ai-chart-analysis-fa-1080x1920.webm",
+            "poster": "/traits/ai-chart-analysis-fa-1080x1920-first.jpg"
+          }
+        }
       },
       {
         "index": "۰۲",
@@ -109,7 +109,19 @@
         "body": [
           "ببین در هر معامله چقدر به قواعد",
           "خودت پایبند مانده‌ای."
-        ]
+        ],
+        "media": {
+          "landscape": {
+            "mp4": "/traits/discipline-score-fa-1920x1080.mp4",
+            "webm": "/traits/discipline-score-fa-1920x1080.webm",
+            "poster": "/traits/discipline-score-fa-1920x1080-first.jpg"
+          },
+          "portrait": {
+            "mp4": "/traits/discipline-score-fa-1080x1920.mp4",
+            "webm": "/traits/discipline-score-fa-1080x1920.webm",
+            "poster": "/traits/discipline-score-fa-1080x1920-first.jpg"
+          }
+        }
       },
       {
         "index": "۰۳",
@@ -117,7 +129,8 @@
         "body": [
           "ناوریا در کنار تو در هر معامله همراه است،",
           "و رفتار تو را در طول مسیرت می‌خواند."
-        ]
+        ],
+        "media": null
       }
     ]
   },

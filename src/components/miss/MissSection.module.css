@@ -96,12 +96,17 @@
 /*
  * The device the product will be shown in.
  *
- * The interior carries the AI-chart-analysis loop, windowed by two rounded
- * frames, the inner one's top edge interrupted for the notch. The loop is one
- * clip for the whole carousel — it does not change with the trait dots — so
- * it is a sibling of `.rail`, not part of `.deck`.
+ * The interior carries whichever trait's clip is current, windowed by two
+ * rounded frames, the inner one's top edge interrupted for the notch — the
+ * deck's own carousel, read off the dots rather than driven separately (see
+ * `BezelVideo`). A trait without a clip yet shows the brand mark instead of
+ * an empty hole.
+ *
+ * `--s6-corner` sizes the four viewfinder brackets; kept local rather than a
+ * token because nothing outside this panel uses it.
  */
 .bezel {
+  --s6-corner: clamp(1.1rem, 1.6vw, 1.85rem);
   position: relative;
   grid-column: 2;
   grid-row: 2;
@@ -112,6 +117,57 @@
   border: var(--hairline) solid var(--c-gold-line-strong);
   border-radius: clamp(0.9rem, 1.5vw, 1.75rem);
   transform: translateY(calc((1 - var(--told)) * 2.5rem));
+  /* A soft gold ambient glow lifts the panel off the plate behind it, and a
+   * dark grounding shadow gives it weight — both barely-there, since the comp
+   * everywhere else works in hairlines, not glows. */
+  box-shadow:
+    0 0 min(4vw, 3rem) rgb(216 166 75 / 0.1),
+    0 1.5rem 3rem rgb(0 0 0 / 0.45);
+}
+
+/* Four viewfinder ticks at the outer corners — the same "instrument" language
+ * as the notch's dip and diamond, extended to the frame itself. Each is one
+ * element with two adjacent border sides and the matching quarter of the
+ * frame's own corner radius, so the bracket follows the curve rather than
+ * cutting across it. */
+.bezelCorner {
+  position: absolute;
+  z-index: 3;
+  inline-size: var(--s6-corner);
+  block-size: var(--s6-corner);
+  pointer-events: none;
+}
+
+.bezelCorner[data-corner="tl"] {
+  inset-block-start: calc(var(--hairline) * -1);
+  inset-inline-start: calc(var(--hairline) * -1);
+  border-block-start: var(--hairline) solid var(--c-gold);
+  border-inline-start: var(--hairline) solid var(--c-gold);
+  border-start-start-radius: clamp(0.9rem, 1.5vw, 1.75rem);
+}
+
+.bezelCorner[data-corner="tr"] {
+  inset-block-start: calc(var(--hairline) * -1);
+  inset-inline-end: calc(var(--hairline) * -1);
+  border-block-start: var(--hairline) solid var(--c-gold);
+  border-inline-end: var(--hairline) solid var(--c-gold);
+  border-start-end-radius: clamp(0.9rem, 1.5vw, 1.75rem);
+}
+
+.bezelCorner[data-corner="bl"] {
+  inset-block-end: calc(var(--hairline) * -1);
+  inset-inline-start: calc(var(--hairline) * -1);
+  border-block-end: var(--hairline) solid var(--c-gold);
+  border-inline-start: var(--hairline) solid var(--c-gold);
+  border-end-start-radius: clamp(0.9rem, 1.5vw, 1.75rem);
+}
+
+.bezelCorner[data-corner="br"] {
+  inset-block-end: calc(var(--hairline) * -1);
+  inset-inline-end: calc(var(--hairline) * -1);
+  border-block-end: var(--hairline) solid var(--c-gold);
+  border-inline-end: var(--hairline) solid var(--c-gold);
+  border-end-end-radius: clamp(0.9rem, 1.5vw, 1.75rem);
 }
 
 /* The loop's own window, inset to match `.bezel::before` exactly so its
@@ -130,6 +186,7 @@
 .bezelStill {
   position: absolute;
   inset: 0;
+  background-color: var(--c-bg);
   background-image: var(--bezel-still);
   background-repeat: no-repeat;
   background-position: center;
@@ -155,6 +212,35 @@
   .bezelVideo {
     display: none;
   }
+}
+
+/* A faint edge vignette, over the still and the video alike, so the capture
+ * reads as seated behind glass rather than a flat rectangle pasted into the
+ * frame. Painted last (after the video in the DOM) and `pointer-events:none`
+ * so it never intercepts a click meant for the deck below. */
+.bezelVignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 clamp(1.5rem, 3vw, 3.5rem) rgb(0 0 0 / 0.45);
+}
+
+/* The trait a viewer has not reached a clip for yet: the panel keeps its
+ * shape and simply shows the mark instead of standing empty. */
+.bezelIdle {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(ellipse at center, rgb(216 166 75 / 0.14), transparent 68%),
+    var(--c-bg);
+}
+
+.bezelIdleMark {
+  inline-size: clamp(2.75rem, 6vw, 4.5rem);
+  block-size: clamp(2.75rem, 6vw, 4.5rem);
+  opacity: 0.55;
 }
 
 .bezel::before {
